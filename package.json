@@ -2,14 +2,21 @@
   "name": "sf-new-org",
   "version": "1.0.0",
   "description": "This template quickstarts the ability of onboarding a new Salesforce org. Quickly get started and enable:",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "ts-build": "tsc"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "prettier": "3.4.1",
-    "prettier-plugin-apex": "2.2.2"
+    "prettier-plugin-apex": "2.2.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@salesforce/lightning-types": "^0.3.0",
+    "lwc": "^8.13.3"
   }
 }

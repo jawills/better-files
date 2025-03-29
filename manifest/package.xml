@@ -1,32 +1,39 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
     <types>
-        <members>*</members>
+        <members>Collection</members>
+        <members>CollectionConditions</members>
+        <members>CollectionImpl</members>
+        <members>CollectionTest</members>
+        <members>Comparators</members>
+        <members>Condition</members>
+        <members>Conditions</members>
+        <members>ConditionsTest</members>
+        <members>ContentDocumentLinkQuery</members>
+        <members>DML</members>
+        <members>DMLOptionsBuilder</members>
+        <members>DMLOptionsBuilderTest</members>
+        <members>DatabaseService</members>
+        <members>DatabaseServiceTest</members>
+        <members>DatabaseUnitOfWork</members>
+        <members>DatabaseUnitOfWorkTest</members>
+        <members>FileListController</members>
+        <members>Query</members>
+        <members>QueryBindings</members>
+        <members>QueryBuilder</members>
+        <members>QueryCache</members>
+        <members>QueryConditions</members>
+        <members>QueryObject</members>
+        <members>QueryObjectTest</members>
+        <members>QueryResults</members>
+        <members>QueryTest</members>
+        <members>Runtime</members>
+        <members>RuntimeTest</members>
         <name>ApexClass</name>
     </types>
     <types>
-        <members>*</members>
-        <name>ApexComponent</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>ApexPage</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>ApexTestSuite</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>ApexTrigger</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>AuraDefinitionBundle</name>
-    </types>
-    <types>
-        <members>*</members>
+        <members>fileList</members>
         <name>LightningComponentBundle</name>
     </types>
-    <version>59.0</version>
+    <version>60.0</version>
 </Package>

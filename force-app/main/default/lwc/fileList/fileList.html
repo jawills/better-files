@@ -1,0 +1,32 @@
+<template>
+  <lightning-card icon-name="standard:file" variant="base">
+    <template if:true={isLoading}>
+      <lightning-spinner
+        alternative-text="Loading"
+        size="small"
+        variant="brand"
+      ></lightning-spinner>
+    </template>
+    <div slot="title">Files</div>
+    <div slot="actions">
+      <lightning-file-upload
+        if:true={showFileUpload}
+        name="fileUploader"
+        record-id={recordId}
+        onuploadfinished={handleUploadFinished}
+        multiple="true"
+      >
+      </lightning-file-upload>
+    </div>
+    <div slot="footer"></div>
+    <div>
+      <c-file-card file={dataTableFiles[0]}></c-file-card>
+      <lightning-datatable
+        key-field="id"
+        data={dataTableFiles}
+        columns={columns}
+      >
+      </lightning-datatable>
+    </div>
+  </lightning-card>
+</template>

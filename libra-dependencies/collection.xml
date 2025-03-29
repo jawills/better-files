@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>CollectionConditions</members>
+        <members>CollectionImpl </members>
+        <members>Collection</members>
+        <members>CollectionTest</members>
+        <members>Comparators</members>
+        <name>ApexClass</name>
+    </types>
+    <version>62.0</version>
+</Package>
