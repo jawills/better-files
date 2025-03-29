@@ -1,3 +1,16 @@
 <template>
-  <p>{file}</p>
+  <li>
+    <div class="slds-size_12-of-12 slds-grid">
+      <div
+        class="slds-show_inline-block slds-float_left slds-align-middle thumbnailImg medium"
+      >
+        <img src={imageUrl} />
+      </div>
+      <div
+        class="slds-show_inline-block slds-float_left slds-p-left--x-small slds-truncate slds-m-right_x-small"
+      >
+        - <a href={viewUrl}>{file.Title}</a>
+      </div>
+    </div>
+  </li>
 </template>

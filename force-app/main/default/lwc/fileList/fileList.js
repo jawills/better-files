@@ -1,29 +1,40 @@
-import { LightningElement, wire, api } from "lwc";
+import { LightningElement, wire, api, track } from "lwc";
 import getFiles from "@salesforce/apex/FileListController.getFiles";
+import { NavigationMixin } from "lightning/navigation";
 
 const ACTIONS = [{ label: "Delete", name: "delete" }];
 
-export default class FileList extends LightningElement {
+export default class FileList extends NavigationMixin(LightningElement) {
   @api recordId;
-  loading = false;
+  loading = true;
   showFileUpload = true;
+  fileCount = 0;
+  showFileCount = false;
   wiredFiles;
   dataTableFiles;
   @wire(getFiles, { recordId: "$recordId" })
   wiredContacts({ error, data }) {
     if (data) {
       this.wiredFiles = data;
-      console.log(data);
-      this.dataTableFiles = this.wiredFiles.map((file) => ({
-        Id: file.ContentDocument.Id,
-        Title: file.ContentDocument.Title,
-        CreatedDate: file.ContentDocument.CreatedDate,
-        ContentSize: this.formatBytes(file.ContentDocument.ContentSize),
-        FileExtension: file.ContentDocument.FileExtension,
-        icon: this.getFileIcon(file.ContentDocument.FileExtension)
-      }));
-      console.log(JSON.stringify(this.dataTableFiles));
-
+      this.dataTableFiles = this.wiredFiles.map((file) => {
+        return {
+          Id: file.Id,
+          ContentDocumentId: file.ContentDocument.Id,
+          Title: file.ContentDocument.Title,
+          CreatedDate: file.ContentDocument.CreatedDate,
+          ContentSize: this.formatBytes(file.ContentDocument.ContentSize),
+          FileExtension: file.ContentDocument.FileExtension,
+          VersionData: file.VersionData,
+          hasPreview: this.hasPreview(file.ContentDocument.FileExtension),
+          imageUrl: `/sfc/servlet.shepherd/version/renditionDownload?rendition=thumb120by90&versionId=${file.Id}`,
+          fileUrl: `/lightning/r/${file.ContentDocument.Id}/view`,
+          icon: this.getFileIcon(file.ContentDocument.FileExtension)
+        };
+      });
+      this.selectedFile = this.dataTableFiles[0];
+      this.fileCount = this.dataTableFiles.length;
+      this.showFileCount = true;
+      this.loading = false;
       this.error = undefined;
     } else if (error) {
       this.error = error;
@@ -32,15 +43,41 @@ export default class FileList extends LightningElement {
     }
   }
   columns = [
-    { label: "Image", fieldName: "Image" },
+    {
+      label: "",
+      fieldName: "Image",
+      type: "image",
+      typeAttributes: {
+        imageUrl: {
+          fieldName: "imageUrl"
+        },
+        icon: {
+          fieldName: "icon"
+        },
+        altText: {
+          fieldName: "Title"
+        },
+        hasPreview: {
+          fieldName: "hasPreview"
+        }
+      }
+    },
     {
       label: "Title",
-      fieldName: "Title",
-      wrapText: true,
-      cellAttributes: {
-        iconName: { fieldName: "icon" },
-        iconPosition: "left"
-      }
+      fieldName: "fileUrl",
+      type: "imagePreview",
+      typeAttributes: {
+        Title: {
+          fieldName: "Title"
+        },
+        ContentDocumentId: {
+          fieldName: "ContentDocumentId"
+        },
+        ContentVersionId: {
+          fieldName: "Id"
+        }
+      },
+      wrapText: true
     },
     { label: "CreatedDate", fieldName: "CreatedDate", type: "date" },
     { label: "ContentSize", fieldName: "ContentSize" },
@@ -122,5 +159,42 @@ export default class FileList extends LightningElement {
     };
 
     return extensionToIcon[lowerExtension] || "doctype:unknown";
+  }
+
+  /**
+   * Checks if a file extension is previewable.
+   *
+   * @param {string} fileExtension The file extension to check (e.g., 'pdf', 'jpg').
+   * @returns {boolean} True if the extension is previewable, false otherwise.
+   */
+  hasPreview(fileExtension) {
+    if (!fileExtension) {
+      return false; // Or handle the null/undefined case as needed
+    }
+
+    const supportedExtensions = [
+      "pdf",
+      "doc",
+      "docx",
+      "xlsx",
+      "ppt",
+      "pptx",
+      "jpg",
+      "jpeg",
+      "png",
+      "gif",
+      "bmp",
+      "txt",
+      "csv"
+    ];
+
+    const lowerCaseExtension = fileExtension.toLowerCase();
+    return supportedExtensions.includes(lowerCaseExtension);
+  }
+
+  handleUploadFinished(event) {
+    // Get the list of uploaded files
+    const uploadedFiles = event.detail.files;
+    alert("No. of files uploaded : " + uploadedFiles.length);
   }
 }

@@ -1,0 +1,18 @@
+<template>
+  <template if:true={typeAttributes.hasPreview}>
+    <img
+      src={typeAttributes.imageUrl}
+      alt={typeAttributes.altText}
+      class="thumbnailImg medium"
+    />
+  </template>
+  <template if:false={typeAttributes.hasPreview}>
+    <lightning-icon
+      icon-name={typeAttributes.icon}
+      alternative-text={typeAttributes.altText}
+      title={typeAttributes.altText}
+      class="medium"
+    >
+    </lightning-icon>
+  </template>
+</template>

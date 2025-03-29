@@ -7,7 +7,9 @@
         variant="brand"
       ></lightning-spinner>
     </template>
-    <div slot="title">Files</div>
+    <div slot="title" class="slds-page-header">
+      Files <template if:true={showFileCount}> ({fileCount})</template>
+    </div>
     <div slot="actions">
       <lightning-file-upload
         if:true={showFileUpload}
@@ -20,13 +22,13 @@
     </div>
     <div slot="footer"></div>
     <div>
-      <c-file-card file={dataTableFiles[0]}></c-file-card>
-      <lightning-datatable
-        key-field="id"
-        data={dataTableFiles}
-        columns={columns}
-      >
-      </lightning-datatable>
+      <!-- <ul>
+        <template for:each={dataTableFiles} for:item="file">
+          <c-file-card key={file.Id} file={file}></c-file-card>
+        </template>
+      </ul> -->
+      <c-file-data-table key-field="id" data={dataTableFiles} columns={columns}>
+      </c-file-data-table>
     </div>
   </lightning-card>
 </template>
