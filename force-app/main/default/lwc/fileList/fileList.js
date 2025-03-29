@@ -1,15 +1,26 @@
 import { LightningElement, wire, api, track } from "lwc";
 import getFiles from "@salesforce/apex/FileListController.getFiles";
+// import deleteFiles from "@salesforce/apex/FileListController.deleteFiles";
+import deleteFile from "@salesforce/apex/FileListController.deleteFile";
 import { NavigationMixin } from "lightning/navigation";
+import { ShowToastEvent } from "lightning/platformShowToastEvent";
+import { refreshApex } from "@salesforce/apex";
 
-const ACTIONS = [{ label: "Delete", name: "delete" }];
+//@todo make dynamic
+const ACTIONS = [
+  { label: "Preview", name: "Preview" },
+  { label: "Download", name: "Download" },
+  { label: "Delete", name: "Delete" }
+];
 
 export default class FileList extends NavigationMixin(LightningElement) {
   @api recordId;
-  loading = true;
+  isLoading = true;
+  hasSelectedRecords = false;
+  @track selectedRecords = [];
   showFileUpload = true;
   fileCount = 0;
-  showFileCount = false;
+  cardTitle = "Files";
   wiredFiles;
   dataTableFiles;
   @wire(getFiles, { recordId: "$recordId" })
@@ -26,6 +37,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
           FileExtension: file.ContentDocument.FileExtension,
           VersionData: file.VersionData,
           hasPreview: this.hasPreview(file.ContentDocument.FileExtension),
+          downloadUrl: `/sfc/servlet.shepherd/document/download/${file.ContentDocumentId}`,
           imageUrl: `/sfc/servlet.shepherd/version/renditionDownload?rendition=thumb120by90&versionId=${file.Id}`,
           fileUrl: `/lightning/r/${file.ContentDocument.Id}/view`,
           icon: this.getFileIcon(file.ContentDocument.FileExtension)
@@ -33,8 +45,8 @@ export default class FileList extends NavigationMixin(LightningElement) {
       });
       this.selectedFile = this.dataTableFiles[0];
       this.fileCount = this.dataTableFiles.length;
-      this.showFileCount = true;
-      this.loading = false;
+      this.cardTitle = `Files (${this.getFileCount(this.dataTableFiles.length)})`;
+      this.isLoading = false;
       this.error = undefined;
     } else if (error) {
       this.error = error;
@@ -60,7 +72,8 @@ export default class FileList extends NavigationMixin(LightningElement) {
         hasPreview: {
           fieldName: "hasPreview"
         }
-      }
+      },
+      cellAttributes: { alignment: "center" }
     },
     {
       label: "Title",
@@ -196,5 +209,99 @@ export default class FileList extends NavigationMixin(LightningElement) {
     // Get the list of uploaded files
     const uploadedFiles = event.detail.files;
     alert("No. of files uploaded : " + uploadedFiles.length);
+  }
+
+  getFileCount(fileCount) {
+    return fileCount <= 6 ? fileCount : "6+";
+  }
+
+  getSelectedRecords(event) {
+    this.selectedRecords = event.detail.selectedRows;
+    this.hasSelectedRecords = this.selectedRecords.length > 0;
+    this.showFileUpload = this.selectedRecords.length === 0;
+  }
+
+  handleRowAction(event) {
+    const actionName = event.detail.action.name;
+    const row = event.detail.row;
+    switch (actionName) {
+      case "Preview":
+        this.previewFile(row);
+        break;
+      case "Download":
+        this.downloadFile(row);
+        break;
+      case "Delete":
+        this.deleteCurrentRecord(row);
+        break;
+      default:
+    }
+  }
+
+  deleteSelectedRecords() {
+    this.isLoading = true;
+    const records = this.selectedRecords;
+    const promises = records.map((record) => deleteRecord(record.Id));
+    Promise.all(promises)
+      .then(() => {
+        this.showToast("Success", "Files deleted", "success");
+        return refreshApex(this.wiredFiles).then(() => {
+          this.isLoading = false;
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        this.isLoading = false;
+        this.showToast("Error deleting records", error.body.message, "error");
+      });
+  }
+
+  showToast(title, message, variant) {
+    this.dispatchEvent(new ShowToastEvent({ title, message, variant }));
+  }
+
+  deleteCurrentRecord(row) {
+    this.isLoading = true;
+    console.log(row.ContentDocumentId);
+    deleteFile({ contentDocumentId: row.ContentDocumentId })
+      .then(() => {
+        this.showToast("Success", "File deleted", "success");
+        return refreshApex(this.wiredFiles).then(() => {
+          this.isLoading = false;
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        this.isLoading = false;
+
+        this.showToast("Error deleting record", error?.body?.message, "error");
+      });
+  }
+
+  downloadFile(file) {
+    this[NavigationMixin.Navigate](
+      {
+        type: "standard__webPage",
+        attributes: {
+          url: file.downloadUrl
+        }
+      },
+      false
+    );
+  }
+
+  previewFile(file) {
+    this[NavigationMixin.Navigate](
+      {
+        type: "standard__namedPage",
+        attributes: {
+          pageName: "filePreview"
+        },
+        state: {
+          selectedRecordId: file.ContentDocumentId
+        }
+      },
+      false
+    );
   }
 }

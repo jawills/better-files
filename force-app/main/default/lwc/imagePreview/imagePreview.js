@@ -16,7 +16,6 @@ export default class ImagePreview extends NavigationMixin(LightningElement) {
   }
 
   previewFile() {
-    console.log(this.contentdocumentid);
     this[NavigationMixin.Navigate](
       {
         type: "standard__namedPage",
