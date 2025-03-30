@@ -21,6 +21,15 @@
             </span>
           </div>
           <div class="slds-media__body">
+            <lightning-breadcrumbs>
+              <lightning-breadcrumb label={baseObjectName} href={baseObjectUrl}>
+              </lightning-breadcrumb>
+              <lightning-breadcrumb
+                label={relatedRecordName}
+                href={relatedRecordUrl}
+              >
+              </lightning-breadcrumb>
+            </lightning-breadcrumbs>
             <h2 class="slds-card__header-title">{cardTitle}</h2>
           </div>
         </div>

@@ -1,3 +1,10 @@
 <template>
+  <template if:true={iconname}>
+    <lightning-icon
+      icon-name={iconname}
+      alternative-text={title}
+      title={title}
+    ></lightning-icon
+  ></template>
   <a onclick={previewFile} target={title}>{title}</a>
 </template>

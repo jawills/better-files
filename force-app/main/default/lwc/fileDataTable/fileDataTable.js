@@ -14,7 +14,8 @@ export default class SalesforceCodexDataTable extends LightningDatatable {
         "Title",
         "ContentVersionId",
         "ContentDocumentId",
-        "FallbackLink"
+        "FallbackLink",
+        "IconName"
       ]
     }
   };

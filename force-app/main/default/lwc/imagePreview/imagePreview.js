@@ -6,6 +6,7 @@ export default class ImagePreview extends NavigationMixin(LightningElement) {
   @api title;
   @api contentdocumentid;
   @api contentversionid;
+  @api iconname;
   @api fallbackLink;
 
   handleClick(event) {
