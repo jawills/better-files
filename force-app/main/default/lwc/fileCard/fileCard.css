@@ -9,3 +9,17 @@
     max-width: 30px;
     max-height: 35px;
 }
+
+.secondaryFields {
+    color: var(--lwc-colorTextWeak, rgb(68, 68, 68));
+}
+
+.secondaryFields span:not(:last-child):after {
+    content: "\2022";
+    margin: 0 5px;
+}
+
+.secondaryFields lightning-formatted-date-time:after {
+    content: "\2022";
+    margin: 0 5px;
+}

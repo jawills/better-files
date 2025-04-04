@@ -1,16 +1,31 @@
 <template>
-  <li>
-    <div class="slds-size_12-of-12 slds-grid">
-      <div
-        class="slds-show_inline-block slds-float_left slds-align-middle thumbnailImg medium"
-      >
-        <img src={imageUrl} />
+  <li
+    class="slds-col slds-var-p-horizontal_medium slds-var-p-vertical_xx-small"
+  >
+    <a href={file.fileUrl} onclick={handleClick}>
+      <div class="slds-size_12-of-12 slds-grid">
+        <template if:true={file.hasPreview}>
+          <div
+            class="slds-show_inline-block slds-float_left slds-align-middle thumbnailImg medium"
+          >
+            <img src={file.imageUrl} /></div
+        ></template>
+        <template if:false={file.hasPreview}
+          ><lightning-icon icon-name={file.icon}></lightning-icon
+        ></template>
+        <div
+          class="slds-show_inline-block slds-float_left slds-var-p-left_x-small slds-truncate slds-var-m-right_x-small"
+        >
+          <span title={file.Title}>{file.Title}</span>
+          <p
+            class="secondaryFields slds-m-around_none secondaryFields slds-text-body_small slds-truncate"
+          >
+            <lightning-formatted-date-time value={file.CreatedDate}>
+            </lightning-formatted-date-time
+            ><span>{file.ContentSize}</span><span>{file.FileExtension}</span>
+          </p>
+        </div>
       </div>
-      <div
-        class="slds-show_inline-block slds-float_left slds-p-left--x-small slds-truncate slds-m-right_x-small"
-      >
-        - <a href={viewUrl}>{file.Title}</a>
-      </div>
-    </div>
+    </a>
   </li>
 </template>

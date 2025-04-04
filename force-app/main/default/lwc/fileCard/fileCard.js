@@ -5,22 +5,41 @@ export default class FileCard extends NavigationMixin(LightningElement) {
   @api file;
   imageUrl;
   viewUrl;
-  connectedCallback() {
-    this.renderImage();
+
+  handleClick(event) {
+    event.preventDefault();
+    this.previewFile();
   }
 
-  async renderImage() {
-    if (this.file && this.file.VersionData) {
-      this.imageUrl = `/sfc/servlet.shepherd/version/renditionDownload?rendition=thumb120by90&versionId=${this.file.Id}&operationContext=CHATTER`;
-      this[NavigationMixin.GenerateUrl]({
-        type: "standard__recordPage",
+  connectedCallback() {
+    this[NavigationMixin.GenerateUrl](
+      {
+        type: "standard__namedPage",
         attributes: {
-          recordId: this.file.ContentDocumentId,
-          actionName: "view"
+          pageName: "filePreview"
+        },
+        state: {
+          selectedRecordId: this.file.ContentDocumentId
         }
-      }).then((url) => {
-        this.viewUrl = url;
-      });
-    }
+      },
+      false
+    ).then((data) => {
+      console.log(data);
+    });
+  }
+
+  previewFile() {
+    this[NavigationMixin.Navigate](
+      {
+        type: "standard__namedPage",
+        attributes: {
+          pageName: "filePreview"
+        },
+        state: {
+          selectedRecordId: this.file.ContentDocumentId
+        }
+      },
+      false
+    );
   }
 }
