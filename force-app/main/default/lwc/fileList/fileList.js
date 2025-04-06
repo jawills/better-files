@@ -2,11 +2,18 @@ import { LightningElement, wire, api, track } from "lwc";
 import { NavigationMixin } from "lightning/navigation";
 import { getFileIcon, formatBytes, hasPreview, getFileCount } from "c/util";
 import getFiles from "@salesforce/apex/FileListController.getFiles";
+import fileListSkeleton from "./fileListSkeleton.html";
+import fileList from "./fileList.html";
 
 export default class FileList extends NavigationMixin(LightningElement) {
   @api recordId;
   @api objectApiName;
   cardTitle = "Files";
+  isLoading = true;
+
+  render() {
+    return this.isLoading ? fileListSkeleton : fileList;
+  }
   viewAllRecords() {
     this[NavigationMixin.Navigate](
       {

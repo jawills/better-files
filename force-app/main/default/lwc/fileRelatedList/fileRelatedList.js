@@ -90,7 +90,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   relatedRecord({ data, error }) {
     if (data) {
       this.relatedRecordName = data?.fields?.Name?.value;
-      this.getRelatedRecordUrl();
     } else if (error) {
       console.error(error);
     }
@@ -223,19 +222,19 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       }
     }).then((url) => {
       this.baseObjectUrl = url;
+      this.relatedRecordUrl = url;
     });
   }
 
-  getRelatedRecordUrl() {
-    this[NavigationMixin.GenerateUrl]({
+  viewRelatedRecord(event) {
+    event.preventDefault();
+    this[NavigationMixin.Navigate]({
       type: "standard__recordPage",
       attributes: {
         objectApiName: this.baseObjectName,
         recordId: this.baseRecordId,
         actionName: "view"
       }
-    }).then((url) => {
-      this.relatedRecordUrl = url;
     });
   }
 

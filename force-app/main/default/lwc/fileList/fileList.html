@@ -1,14 +1,21 @@
 <template>
   <template if:true={isLoading}>
-    <lightning-spinner
+    <!-- <lightning-spinner
       alternative-text="Loading"
       size="small"
       variant="brand"
-    ></lightning-spinner>
+    ></lightning-spinner> -->
   </template>
   <lightning-card icon-name="standard:file" variant="base">
-    <div slot="title">{cardTitle}</div>
-    <div slot="actions"></div>
+    <div slot="title">
+      <a class="slds-card__header-link" onclick={viewAllRecords}>{cardTitle}</a>
+    </div>
+    <div slot="actions">
+      <lightning-button
+        variant="neutral"
+        label="Upload Files"
+      ></lightning-button>
+    </div>
     <div slot="footer"><a onclick={viewAllRecords}>View All</a></div>
     <div>
       <ul class="slds-grid slds-gutters slds-wrap">

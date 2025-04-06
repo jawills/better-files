@@ -1,0 +1,11 @@
+<template>
+  <template for:each={items} for:item="item">
+    <section
+      key={item}
+      class="slds-var-m-vertical_small container"
+      style={containerStyle}
+    >
+      <div class="loading" style={loadingBackgroundColor}></div>
+    </section>
+  </template>
+</template>
