@@ -11,16 +11,23 @@
       <a class="slds-card__header-link" onclick={viewAllRecords}>{cardTitle}</a>
     </div>
     <div slot="actions">
-      <lightning-button
-        variant="neutral"
-        label="Upload Files"
-      ></lightning-button>
+      <lightning-file-upload
+        accept={accept}
+        record-id={recordId}
+        onuploadfinished={handleUploadFinished}
+        multiple
+      >
+      </lightning-file-upload>
     </div>
     <div slot="footer"><a onclick={viewAllRecords}>View All</a></div>
     <div>
-      <ul class="slds-grid slds-gutters slds-wrap">
+      <ul class="slds-grid slds-gutters slds-grid_align-space slds-wrap">
         <template for:each={dataTableFiles} for:item="file">
-          <c-file-card key={file.Id} file={file}></c-file-card>
+          <c-file-card
+            class="uiAbstractList"
+            key={file.Id}
+            file={file}
+          ></c-file-card>
         </template>
       </ul>
     </div>

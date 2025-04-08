@@ -3,10 +3,10 @@
     class="slds-col slds-var-p-horizontal_medium slds-var-p-vertical_xx-small"
   >
     <a href={file.fileUrl} onclick={handleClick}>
-      <div class="slds-size_12-of-12 slds-grid">
+      <div class="slds-size_12-of-12 slds-grid slds-grid_align-end">
         <template if:true={file.hasPreview}>
           <div
-            class="slds-show_inline-block slds-float_left slds-align-middle thumbnailImg medium"
+            class="slds-show_inline-block slds-float_left thumbnailImg medium"
           >
             <img src={file.imageUrl} /></div
         ></template>
@@ -16,11 +16,11 @@
         <div
           class="slds-show_inline-block slds-float_left slds-var-p-left_x-small slds-truncate slds-var-m-right_x-small"
         >
-          <span title={file.Title}>{file.Title}</span>
+          <span title={file.Title} class="slds-truncate">{file.Title}</span>
           <p
             class="secondaryFields slds-m-around_none secondaryFields slds-text-body_small slds-truncate"
           >
-            <lightning-formatted-date-time value={file.CreatedDate}>
+            <lightning-formatted-date-time value={file.LastModifiedDate}>
             </lightning-formatted-date-time
             ><span>{file.ContentSize}</span><span>{file.FileExtension}</span>
           </p>

@@ -5,6 +5,8 @@ import deleteFile from "@salesforce/apex/FileListController.deleteFile";
 import { NavigationMixin, CurrentPageReference } from "lightning/navigation";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { refreshApex } from "@salesforce/apex";
+import fileRelatedList from "./fileRelatedList.html";
+import fileRelatedListSkeleton from "./fileRelatedListSkeleton.html";
 import { getRecord } from "lightning/uiRecordApi";
 import { getFileIcon, formatBytes, hasPreview } from "c/util";
 //@todo make dynamic
@@ -28,10 +30,14 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   cardTitle = "Files";
   wiredFiles;
   dataTableFiles;
+
+  render() {
+    // return fileRelatedListSkeleton;
+    return this.isLoading ? fileRelatedListSkeleton : fileRelatedList;
+  }
   @wire(CurrentPageReference)
   getCurrentPageReference(currentPageReference) {
     this.currentPageReference = currentPageReference;
-    //show spinner if processing is long
     new Promise((resolve, reject) => {
       setTimeout(() => {
         if (this.currentPageReference) {
@@ -126,14 +132,10 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     }
   ];
 
-  handleUploadFinish(e) {
-    console.log(e);
-  }
-
-  handleUploadFinished(event) {
-    // Get the list of uploaded files
-    const uploadedFiles = event.detail.files;
-    alert("No. of files uploaded : " + uploadedFiles.length);
+  handleUploadFinished() {
+    return refreshApex(this.wiredFiles).then(() => {
+      this.isLoading = false;
+    });
   }
 
   getSelectedRecords(event) {

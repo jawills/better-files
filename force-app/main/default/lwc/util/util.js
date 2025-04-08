@@ -98,6 +98,6 @@ export function hasPreview(fileExtension) {
   return supportedExtensions.includes(lowerCaseExtension);
 }
 
-export function getFileCount(fileCount) {
+export function getFormattedFileCount(fileCount) {
   return fileCount <= 6 ? fileCount : "6+";
 }
