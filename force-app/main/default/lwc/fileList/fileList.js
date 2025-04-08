@@ -11,6 +11,8 @@ import getFileCount from "@salesforce/apex/FileListController.getFileCount";
 import fileListSkeleton from "./fileListSkeleton.html";
 import fileList from "./fileList.html";
 import { refreshApex } from "@salesforce/apex";
+import { loadStyle } from "lightning/platformResourceLoader";
+import dropzoneStyle from "@salesforce/resourceUrl/dropzone";
 
 export default class FileList extends NavigationMixin(LightningElement) {
   @api recordId;
@@ -19,10 +21,15 @@ export default class FileList extends NavigationMixin(LightningElement) {
 
   cardTitle = "Files";
   isLoading = true;
+  showDropZone = false;
   wiredFiles;
 
   render() {
     return this.isLoading ? fileListSkeleton : fileList;
+  }
+
+  renderedCallback() {
+    Promise.all([loadStyle(this, dropzoneStyle)]);
   }
   viewAllRecords() {
     this[NavigationMixin.Navigate](
@@ -63,7 +70,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
         };
       });
       this.selectedFile = this.dataTableFiles[0];
-      this.fileCount = this.dataTableFiles.length;
+      this.showDropZone = this.dataTableFiles.length === 0;
       this.isLoading = false;
       this.error = undefined;
     } else if (result.error) {

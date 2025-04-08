@@ -1,0 +1,25 @@
+.file-selector-image .slds-file-selector {
+    display: block;
+}
+
+.file-selector-image .slds-file-selector__dropzone {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    margin: auto;
+    padding: 1rem;
+}
+
+.file-selector-image .slds-file-selector__dropzone slot {
+    width: 100%;
+}
+
+.file-selector-image .slds-file-selector_files .slds-file-selector__body {
+    display: block;
+    text-align: center;
+}
+
+.file-selector-image .slds-file-selector_files .slds-file-selector__text {
+    margin-top: 0.75rem;
+}
