@@ -22,7 +22,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
   cardTitle = "Files";
   isLoading = true;
   showDropZone = false;
-  wiredFiles;
+  @track wiredFiles;
 
   render() {
     return this.isLoading ? fileListSkeleton : fileList;
@@ -69,7 +69,6 @@ export default class FileList extends NavigationMixin(LightningElement) {
           icon: getFileIcon(file.ContentDocument.FileExtension)
         };
       });
-      this.selectedFile = this.dataTableFiles[0];
       this.showDropZone = this.dataTableFiles.length === 0;
       this.isLoading = false;
       this.error = undefined;

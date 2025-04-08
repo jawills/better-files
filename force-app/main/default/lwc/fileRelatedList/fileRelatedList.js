@@ -73,7 +73,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
           icon: getFileIcon(file.ContentDocument.FileExtension)
         };
       });
-      this.selectedFile = this.dataTableFiles[0];
       this.fileCount = this.dataTableFiles.length;
       this.isLoading = false;
       this.error = undefined;
