@@ -5,8 +5,6 @@ import deleteFile from "@salesforce/apex/FileListController.deleteFile";
 import { NavigationMixin, CurrentPageReference } from "lightning/navigation";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { refreshApex } from "@salesforce/apex";
-import fileRelatedList from "./fileRelatedList.html";
-import fileRelatedListSkeleton from "./fileRelatedListSkeleton.html";
 import { getRecord } from "lightning/uiRecordApi";
 import { getFileIcon, formatBytes, hasPreview } from "c/util";
 //@todo make dynamic
@@ -31,10 +29,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   wiredFiles;
   dataTableFiles;
 
-  render() {
-    // return fileRelatedListSkeleton;
-    return this.isLoading ? fileRelatedListSkeleton : fileRelatedList;
-  }
   @wire(CurrentPageReference)
   getCurrentPageReference(currentPageReference) {
     this.currentPageReference = currentPageReference;
