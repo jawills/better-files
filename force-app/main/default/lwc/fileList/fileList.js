@@ -17,7 +17,8 @@ import dropzoneStyle from "@salesforce/resourceUrl/dropzone";
 export default class FileList extends NavigationMixin(LightningElement) {
   @api recordId;
   @api objectApiName;
-  @api accept = ".csv,.doc,.xsl,.pdf,.png,.jpg,.jpeg,.docx,.doc";
+  @api accept;
+  @api multiple;
 
   cardTitle = "Files";
   isLoading = true;

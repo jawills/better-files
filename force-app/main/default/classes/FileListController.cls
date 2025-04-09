@@ -1,15 +1,11 @@
 public with sharing class FileListController {
   @AuraEnabled(cacheable=true)
-  public static List<ContentVersion> getFiles(Id recordId) {
-    return getFiles(recordId, 25);
-  }
-
-  @AuraEnabled(cacheable=true)
   public static List<ContentVersion> getPartialFiles(Id recordId) {
     return getFiles(recordId, 6);
   }
 
-  private static List<ContentVersion> getFiles(Id recordId, Integer fileLimit) {
+  @AuraEnabled(cacheable=true)
+  public static List<ContentVersion> getFiles(Id recordId, Integer fileLimit) {
     List<ContentDocumentLink> cdls = new ContentDocumentLinkQuery()
       .byLinkedEntityId(recordId)
       .withLimit(fileLimit)
@@ -33,15 +29,9 @@ public with sharing class FileListController {
   }
 
   @AuraEnabled
-  public static void deleteFiles(List<String> contentDocumentIds) {
-    // DatabaseService databaseService = new DatabaseService()
-    //   .asUser()
-    //   .deleteRecords(contentDocumentIds);
-    // Database.delete(contentDocumentIds);
-  }
-  @AuraEnabled
   public static void deleteFile(String contentDocumentId) {
-    System.debug(contentDocumentId);
-    Database.delete(contentDocumentId);
+    if (Schema.sObjectType.ContentDocument.isDeletable()) {
+      Database.delete(contentDocumentId);
+    }
   }
 }

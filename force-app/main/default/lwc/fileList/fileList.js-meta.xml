@@ -9,6 +9,12 @@
             <supportedFormFactors>
                 <supportedFormFactor type="Large" />
             </supportedFormFactors>
+            <property name="accept" type="String"
+                default="*"
+                label="Accepted File Formats" />
+            <property name="multiple" type="Boolean"
+                default="true"
+                label="Allow multiple file uploads at once" />
         </targetConfig>
     </targetConfigs>
     <isExposed>true</isExposed>

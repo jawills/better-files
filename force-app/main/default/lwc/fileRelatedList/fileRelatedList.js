@@ -53,7 +53,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
         this.isLoading = false;
       });
   }
-  @wire(getFiles, { recordId: "001fL000009dbKKQAY" })
+  @wire(getFiles, { recordId: "$baseRecordId", limit: 25 })
   getWiredFiles(result) {
     this.wiredFiles = result;
     if (result.data) {

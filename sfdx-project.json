@@ -5,8 +5,8 @@
       "default": true
     }
   ],
-  "name": "sf-org-template",
-  "namespace": "",
+  "name": "1sync-file",
+  "namespace": "file1sync",
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "60.0"
 }
