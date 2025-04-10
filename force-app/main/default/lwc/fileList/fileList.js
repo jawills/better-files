@@ -37,7 +37,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
       {
         type: "standard__component",
         attributes: {
-          componentName: "c__fileRelatedList",
+          componentName: "file1sync__fileRelatedList",
           recordId: this.recordId
         },
         state: {
@@ -81,17 +81,21 @@ export default class FileList extends NavigationMixin(LightningElement) {
   }
 
   @wire(getFileCount, { recordId: "$recordId" })
-  getWiredFileCount({ error, data }) {
-    if (data) {
-      this.cardTitle = `Files (${getFormattedFileCount(data)})`;
-    } else if (error) {
-      console.error(error);
-      this.error = error;
+  getWiredFileCount(result) {
+    this.wiredFileCount = result;
+    if (result.data) {
+      this.cardTitle = `Files (${result.data})`;
+    } else if (result.error) {
+      console.error(result.error);
+      this.error = result.error;
     }
   }
 
   handleUploadFinished() {
-    return refreshApex(this.wiredFiles).then(() => {
+    refreshApex(this.wiredFiles).then(() => {
+      this.isLoading = false;
+    });
+    refreshApex(this.wiredFileCount).then(() => {
       this.isLoading = false;
     });
   }

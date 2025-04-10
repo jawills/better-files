@@ -1,6 +1,5 @@
 import { LightningElement, wire, api, track } from "lwc";
 import getFiles from "@salesforce/apex/FileListController.getFiles";
-// import deleteFiles from "@salesforce/apex/FileListController.deleteFiles";
 import deleteFile from "@salesforce/apex/FileListController.deleteFile";
 import { NavigationMixin, CurrentPageReference } from "lightning/navigation";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
@@ -53,10 +52,11 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
         this.isLoading = false;
       });
   }
-  @wire(getFiles, { recordId: "$baseRecordId", limit: 25 })
+  @wire(getFiles, { recordId: "$baseRecordId", fileLimit: 25 })
   getWiredFiles(result) {
     this.wiredFiles = result;
     if (result.data) {
+      console.log(result.data);
       this.dataTableFiles = this.wiredFiles.data.map((file) => {
         return {
           Id: file.Id,

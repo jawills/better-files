@@ -1,3 +1,4 @@
 {
-  "target-org": "file-app"
+  "target-org": "file-app",
+  "target-dev-hub": "1sync"
 }

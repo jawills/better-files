@@ -1,12 +1,19 @@
 {
   "packageDirectories": [
     {
+      "versionName": "ver 0.1",
+      "versionNumber": "0.1.0.NEXT",
       "path": "force-app",
-      "default": true
+      "default": true,
+      "package": "1Sync File App",
+      "versionDescription": ""
     }
   ],
   "name": "1sync-file",
   "namespace": "file1sync",
   "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "60.0"
+  "sourceApiVersion": "60.0",
+  "packageAliases": {
+    "1Sync File App": "0HoQl00000000mPKAQ"
+  }
 }

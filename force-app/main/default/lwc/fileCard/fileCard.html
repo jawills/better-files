@@ -6,7 +6,7 @@
       <div class="slds-size_12-of-12 slds-grid slds-grid_align-end">
         <template if:true={file.hasPreview}>
           <div
-            class="slds-show_inline-block slds-float_left thumbnailImg medium"
+            class="slds-show_inline-block slds-size_1-of-12 slds-float_left thumbnailImg medium"
           >
             <img src={file.imageUrl} /></div
         ></template>
@@ -14,7 +14,7 @@
           ><lightning-icon icon-name={file.icon}></lightning-icon
         ></template>
         <div
-          class="slds-show_inline-block slds-float_left slds-var-p-left_x-small slds-truncate slds-var-m-right_x-small"
+          class="slds-show_inline-block slds-float_left slds-size_11-of-12 slds-var-p-left_x-small slds-truncate slds-var-m-right_x-small"
         >
           <span title={file.Title} class="slds-truncate">{file.Title}</span>
           <p
