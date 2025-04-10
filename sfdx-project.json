@@ -6,7 +6,7 @@
       "path": "force-app",
       "default": true,
       "package": "1Sync File App",
-      "versionDescription": ""
+      "versionDescription": "Manage files with mass deletion"
     }
   ],
   "name": "1sync-file",
