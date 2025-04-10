@@ -7,6 +7,10 @@ A better way of managing files in Salesforce
 - Multi drop files
 - Multi delete files
 
+## Install
+
+[Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tQl000000EHllIAG)
+
 ## Dependencies
 
 - [Apex Libra](https://apexlibra.org/apex/)

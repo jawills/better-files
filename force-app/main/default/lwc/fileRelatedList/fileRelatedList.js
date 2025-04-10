@@ -1,10 +1,10 @@
 import { LightningElement, wire, api, track } from "lwc";
 import getFiles from "@salesforce/apex/FileListController.getFiles";
 import deleteFile from "@salesforce/apex/FileListController.deleteFile";
+import getRecordName from "@salesforce/apex/FileListController.getRecordName";
 import { NavigationMixin, CurrentPageReference } from "lightning/navigation";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { refreshApex } from "@salesforce/apex";
-import { getRecord } from "lightning/uiRecordApi";
 import { getFileIcon, formatBytes, hasPreview } from "c/util";
 //@todo make dynamic
 const ACTIONS = [
@@ -41,6 +41,16 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
             ? this.currentPageReference.state.c__objectName
             : null;
           this.getBaseObjectUrl();
+          getRecordName({
+            recordId: this.baseRecordId,
+            objectAPIName: this.baseObjectName
+          })
+            .then((data) => {
+              this.relatedRecordName = data;
+            })
+            .catch((err) => {
+              console.error(err);
+            });
           resolve();
         }
       }, 0);
@@ -56,7 +66,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   getWiredFiles(result) {
     this.wiredFiles = result;
     if (result.data) {
-      console.log(result.data);
       this.dataTableFiles = this.wiredFiles.data.map((file) => {
         return {
           Id: file.Id,
@@ -80,17 +89,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       this.error = result.error;
       this.wiredFiles = undefined;
       console.error("Error loading files:", result.error); // Log the error
-    }
-  }
-  @wire(getRecord, {
-    recordId: "001fL000009dbKKQAY",
-    fields: [`Account.Name`]
-  })
-  relatedRecord({ data, error }) {
-    if (data) {
-      this.relatedRecordName = data?.fields?.Name?.value;
-    } else if (error) {
-      console.error(error);
     }
   }
 
@@ -180,7 +178,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
 
   deleteCurrentRecord(row) {
     this.isLoading = true;
-    console.log(row.ContentDocumentId);
     deleteFile({ contentDocumentId: row.ContentDocumentId })
       .then(() => {
         this.showToast("Success", "File deleted", "success");

@@ -32,4 +32,21 @@ public with sharing class FileListController {
   public static void deleteFile(String contentDocumentId) {
     new DatabaseService().asUser().deleteRecord((Id) contentDocumentId);
   }
+
+  @AuraEnabled(cacheable=true)
+  public static string getRecordName(Id recordId, String objectAPIName) {
+    String query =
+      'SELECT Id, Name FROM ' +
+      objectAPIName +
+      ' WHERE Id = \'' +
+      String.escapeSingleQuotes(recordId) +
+      '\'';
+    try {
+      SObject record = Database.query(query);
+      return (String) record.get('Name');
+    } catch (Exception e) {
+      System.debug(e);
+    }
+    return '';
+  }
 }

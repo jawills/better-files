@@ -6,7 +6,7 @@
       "path": "force-app",
       "default": true,
       "package": "1Sync File App",
-      "versionDescription": "Manage files with mass deletion.zs"
+      "versionDescription": "Manage files with mass deletion."
     }
   ],
   "name": "1sync-file",
@@ -15,6 +15,9 @@
   "sourceApiVersion": "60.0",
   "packageAliases": {
     "1Sync File App": "0HoQl00000000mPKAQ",
-    "1Sync File App@0.1.0-1": "04tQl000000EHdhIAG"
+    "1Sync File App@0.1.0-1": "04tQl000000EHdhIAG",
+    "1Sync File App@0.1.0-3": "04tQl000000EHiXIAW",
+    "1Sync File App@0.1.0-4": "04tQl000000EHk9IAG",
+    "1Sync File App@0.1.0-5": "04tQl000000EHllIAG"
   }
 }

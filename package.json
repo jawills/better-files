@@ -1,15 +1,14 @@
 {
-  "name": "sf-new-org",
+  "name": "1sync-file-manager",
   "version": "1.0.0",
-  "description": "This template quickstarts the ability of onboarding a new Salesforce org. Quickly get started and enable:",
+  "description": "Better manage files related to records",
   "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "ts-build": "tsc"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "jawills",
   "devDependencies": {
     "prettier": "3.4.1",
     "prettier-plugin-apex": "2.2.2",
