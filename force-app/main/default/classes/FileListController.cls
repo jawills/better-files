@@ -30,8 +30,6 @@ public with sharing class FileListController {
 
   @AuraEnabled
   public static void deleteFile(String contentDocumentId) {
-    if (Schema.sObjectType.ContentDocument.isDeletable()) {
-      Database.delete(contentDocumentId);
-    }
+    new DatabaseService().asUser().deleteRecord((Id) contentDocumentId);
   }
 }

@@ -6,7 +6,7 @@
       "path": "force-app",
       "default": true,
       "package": "1Sync File App",
-      "versionDescription": "Manage files with mass deletion"
+      "versionDescription": "Manage files with mass deletion.zs"
     }
   ],
   "name": "1sync-file",
@@ -14,6 +14,7 @@
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "60.0",
   "packageAliases": {
-    "1Sync File App": "0HoQl00000000mPKAQ"
+    "1Sync File App": "0HoQl00000000mPKAQ",
+    "1Sync File App@0.1.0-1": "04tQl000000EHdhIAG"
   }
 }
