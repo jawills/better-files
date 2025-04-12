@@ -13,4 +13,12 @@ public with sharing class ContentVersionQuery extends QueryObject {
       ContentVersion.SObjectType
     );
   }
+
+  public ContentVersionQuery likeTitle(String title) {
+    return (ContentVersionQuery) byField(
+      ContentVersion.Title,
+      'LIKE',
+      '%' + String.escapeSingleQuotes(title) + '%'
+    );
+  }
 }

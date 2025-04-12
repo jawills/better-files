@@ -38,8 +38,21 @@
 
       <div class="slds-page-header__col-actions">
         <div class="slds-page-header__controls">
-          <div class="slds-page-header__control">
-            <lightning-button-group lwc:if={hasSelectedRecords}>
+          <div
+            class="slds-page-header__control slds-grid slds-gutters slds-grid_vertical-align-center"
+          >
+            <lightning-input
+              class="slds-col"
+              type="search"
+              placeholder="Search files..."
+              onchange={handleSearchKeyChange}
+              value={searchTerm}
+            >
+            </lightning-input>
+            <lightning-button-group
+              lwc:if={hasSelectedRecords}
+              class="slds-col slds-p-top_small"
+            >
               <lightning-button
                 label="Download"
                 onclick={downloadSelectedRecords}
@@ -55,6 +68,7 @@
               name="fileUploader"
               record-id={baseRecordId}
               onuploadfinished={handleUploadFinished}
+              class="slds-col"
               multiple="true"
             >
             </lightning-file-upload>

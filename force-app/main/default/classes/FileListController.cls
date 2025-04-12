@@ -6,6 +6,18 @@ public with sharing class FileListController {
 
   @AuraEnabled(cacheable=true)
   public static List<ContentVersion> getFiles(Id recordId, Integer fileLimit) {
+    Set<Id> cvIds = getContentVersionIdsByRelatedRecord(recordId, fileLimit);
+    return new ContentVersionQuery()
+      .byId(cvIds)
+      .orderBy('ContentDocument.LastModifiedDate DESC')
+      .withLimit(fileLimit)
+      .getList();
+  }
+
+  private static Set<Id> getContentVersionIdsByRelatedRecord(
+    Id recordId,
+    Integer fileLimit
+  ) {
     List<ContentDocumentLink> cdls = new ContentDocumentLinkQuery()
       .byLinkedEntityId(recordId)
       .withLimit(fileLimit)
@@ -16,11 +28,7 @@ public with sharing class FileListController {
     for (ContentDocumentLink cdl : cdls) {
       cvIds.add(cdl.ContentDocument.LatestPublishedVersionId);
     }
-    return new ContentVersionQuery()
-      .byId(cvIds)
-      .orderBy('ContentDocument.LastModifiedDate DESC')
-      .withLimit(fileLimit)
-      .getList();
+    return cvIds;
   }
 
   @AuraEnabled(cacheable=true)
@@ -50,17 +58,6 @@ public with sharing class FileListController {
     return '';
   }
 
-  /*
-   * @method uploadFile()
-   * @desc Creates a content version from a given file's base64 and name
-   *
-   * @param {String} base64 - base64 string that represents the file
-   * @param {String} filename - full file name with extension, i.e. 'products.csv'
-   * @param {String} recordId - Id of the record you want to attach this file to
-   *
-   * @return {ContentVersion} - returns the created ContentDocumentLink Id if the
-   *   upload was successful, otherwise returns null
-   */
   @AuraEnabled
   public static String uploadFile(
     String base64,
@@ -107,5 +104,20 @@ public with sharing class FileListController {
       return result.id;
     }
     return null;
+  }
+
+  @AuraEnabled(cacheable=true)
+  public static List<ContentVersion> searchContentVersions(
+    String searchTerm,
+    String recordId
+  ) {
+    System.debug(recordId);
+    Set<Id> cvIds = getContentVersionIdsByRelatedRecord(recordId, 20);
+    return new ContentVersionQuery()
+      .likeTitle(searchTerm)
+      .byId(cvIds)
+      .orderBy('ContentDocument.LastModifiedDate DESC')
+      .withLimit(20)
+      .getList();
   }
 }

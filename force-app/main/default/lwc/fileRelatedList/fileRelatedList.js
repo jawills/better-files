@@ -2,6 +2,7 @@ import { LightningElement, wire, api, track } from "lwc";
 import getFiles from "@salesforce/apex/FileListController.getFiles";
 import deleteFile from "@salesforce/apex/FileListController.deleteFile";
 import getRecordName from "@salesforce/apex/FileListController.getRecordName";
+import searchContentVersions from "@salesforce/apex/FileListController.searchContentVersions";
 import { NavigationMixin, CurrentPageReference } from "lightning/navigation";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { refreshApex } from "@salesforce/apex";
@@ -15,10 +16,13 @@ const ACTIONS = [
   { label: "Delete", name: "Delete" }
 ];
 
+const DELAY = 350; // Debounce delay in milliseconds
+
 export default class FileRelatedList extends NavigationMixin(LightningElement) {
   @api baseObjectName;
   @api baseObjectUrl;
-  @api baseRecordId;
+  @track baseRecordId;
+  @track searchTerm = "";
   @track relatedRecordName;
   @track relatedRecordUrl;
   @track selectedRecords = [];
@@ -28,7 +32,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   fileCount = 0;
   cardTitle = "Files";
   wiredFiles;
-  dataTableFiles;
+  @track dataTableFiles;
 
   @wire(CurrentPageReference)
   getCurrentPageReference(currentPageReference) {
@@ -68,21 +72,9 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   getWiredFiles(result) {
     this.wiredFiles = result;
     if (result.data) {
+      console.log("refresh base files");
       this.dataTableFiles = this.wiredFiles.data.map((file) => {
-        return {
-          Id: file.Id,
-          ContentDocumentId: file.ContentDocument.Id,
-          Title: file.ContentDocument.Title,
-          CreatedDate: file.ContentDocument.CreatedDate,
-          ContentSize: formatBytes(file.ContentDocument.ContentSize),
-          FileExtension: file.ContentDocument.FileExtension,
-          VersionData: file.VersionData,
-          hasPreview: hasPreview(file.ContentDocument.FileExtension),
-          downloadUrl: `/sfc/servlet.shepherd/document/download/${file.ContentDocumentId}`,
-          imageUrl: `/sfc/servlet.shepherd/version/renditionDownload?rendition=thumb120by90&versionId=${file.Id}`,
-          fileUrl: `/lightning/r/${file.ContentDocument.Id}/view`,
-          icon: getFileIcon(file.ContentDocument.FileExtension)
-        };
+        return this.mapFile(file);
       });
       this.fileCount = this.dataTableFiles.length;
       this.isLoading = false;
@@ -152,6 +144,60 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
         break;
       default:
     }
+  }
+
+  mapFile(file) {
+    return {
+      Id: file.Id,
+      ContentDocumentId: file.ContentDocument.Id,
+      Title: file.ContentDocument.Title,
+      CreatedDate: file.ContentDocument.CreatedDate,
+      ContentSize: formatBytes(file.ContentDocument.ContentSize),
+      FileExtension: file.ContentDocument.FileExtension,
+      VersionData: file.VersionData,
+      hasPreview: hasPreview(file.ContentDocument.FileExtension),
+      downloadUrl: `/sfc/servlet.shepherd/document/download/${file.ContentDocumentId}`,
+      imageUrl: `/sfc/servlet.shepherd/version/renditionDownload?rendition=thumb120by90&versionId=${file.Id}`,
+      fileUrl: `/lightning/r/${file.ContentDocument.Id}/view`,
+      icon: getFileIcon(file.ContentDocument.FileExtension)
+    };
+  }
+
+  handleSearchKeyChange(event) {
+    // Clear any pending debounce timeout
+    clearTimeout(this.delayTimeout);
+    const searchValue = event.target.value;
+    this.searchTerm = searchValue;
+
+    // If search field is empty, clear results
+    if (!searchValue.trim()) {
+      return refreshApex(this.wiredFiles).then(() => {
+        this.isLoading = false;
+      });
+    }
+
+    // Set loading state
+    this.isLoading = true;
+
+    // Debounce the search to avoid too many server calls
+    this.delayTimeout = setTimeout(() => {
+      searchContentVersions({
+        searchTerm: this.searchTerm,
+        recordId: this.baseRecordId
+      })
+        .then((result) => {
+          // Process results to add CreatedByName field
+          this.dataTableFiles = result.map((record) => {
+            return this.mapFile(record);
+          });
+          this.isLoading = false;
+        })
+        .catch((error) => {
+          console.error("Error searching content versions:", error);
+          console.error(error.message);
+          this.isLoading = false;
+        });
+    }, DELAY);
   }
 
   async deleteSelectedRecords() {
