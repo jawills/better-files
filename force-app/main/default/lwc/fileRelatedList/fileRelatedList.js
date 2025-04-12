@@ -6,7 +6,7 @@ import searchContentVersions from "@salesforce/apex/FileListController.searchCon
 import { NavigationMixin, CurrentPageReference } from "lightning/navigation";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { refreshApex } from "@salesforce/apex";
-import { getFileIcon, formatBytes, hasPreview } from "c/util";
+import { mapFile } from "c/util";
 import LightningConfirm from "lightning/confirm";
 
 //@todo make dynamic
@@ -72,9 +72,8 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   getWiredFiles(result) {
     this.wiredFiles = result;
     if (result.data) {
-      console.log("refresh base files");
       this.dataTableFiles = this.wiredFiles.data.map((file) => {
-        return this.mapFile(file);
+        return mapFile(file);
       });
       this.fileCount = this.dataTableFiles.length;
       this.isLoading = false;
@@ -107,9 +106,13 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       },
       wrapText: true
     },
-    { label: "CreatedDate", fieldName: "CreatedDate", type: "date" },
-    { label: "ContentSize", fieldName: "ContentSize" },
-    { label: "FileExtension", fieldName: "FileExtension" },
+    {
+      label: "Last Modified Date",
+      fieldName: "LastModifiedDate",
+      type: "date"
+    },
+    { label: "Content Size", fieldName: "ContentSize" },
+    { label: "File Extension", fieldName: "FileExtension" },
     {
       fieldName: "actions",
       type: "action",
@@ -146,23 +149,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     }
   }
 
-  mapFile(file) {
-    return {
-      Id: file.Id,
-      ContentDocumentId: file.ContentDocument.Id,
-      Title: file.ContentDocument.Title,
-      CreatedDate: file.ContentDocument.CreatedDate,
-      ContentSize: formatBytes(file.ContentDocument.ContentSize),
-      FileExtension: file.ContentDocument.FileExtension,
-      VersionData: file.VersionData,
-      hasPreview: hasPreview(file.ContentDocument.FileExtension),
-      downloadUrl: `/sfc/servlet.shepherd/document/download/${file.ContentDocumentId}`,
-      imageUrl: `/sfc/servlet.shepherd/version/renditionDownload?rendition=thumb120by90&versionId=${file.Id}`,
-      fileUrl: `/lightning/r/${file.ContentDocument.Id}/view`,
-      icon: getFileIcon(file.ContentDocument.FileExtension)
-    };
-  }
-
   handleSearchKeyChange(event) {
     // Clear any pending debounce timeout
     clearTimeout(this.delayTimeout);
@@ -188,7 +174,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
         .then((result) => {
           // Process results to add CreatedByName field
           this.dataTableFiles = result.map((record) => {
-            return this.mapFile(record);
+            return mapFile(record);
           });
           this.isLoading = false;
         })

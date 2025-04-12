@@ -101,3 +101,21 @@ export function hasPreview(fileExtension) {
 export function getFormattedFileCount(fileCount) {
   return fileCount <= 6 ? fileCount : "6+";
 }
+
+export function mapFile(file) {
+  return {
+    Id: file.Id,
+    ContentDocumentId: file.ContentDocument.Id,
+    Title: file.ContentDocument.Title,
+    CreatedDate: file.ContentDocument.CreatedDate,
+    ContentSize: formatBytes(file.ContentDocument.ContentSize),
+    LastModifiedDate: file.ContentDocument.LastModifiedDate,
+    FileExtension: file.ContentDocument.FileExtension,
+    VersionData: file.VersionData,
+    hasPreview: hasPreview(file.ContentDocument.FileExtension),
+    downloadUrl: `/sfc/servlet.shepherd/document/download/${file.ContentDocumentId}`,
+    imageUrl: `/sfc/servlet.shepherd/version/renditionDownload?rendition=thumb120by90&versionId=${file.Id}`,
+    fileUrl: `/lightning/r/${file.ContentDocument.Id}/view`,
+    icon: getFileIcon(file.ContentDocument.FileExtension)
+  };
+}

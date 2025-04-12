@@ -1,6 +1,6 @@
 import { LightningElement, wire, api, track } from "lwc";
 import { NavigationMixin } from "lightning/navigation";
-import { getFileIcon, formatBytes, hasPreview } from "c/util";
+import { mapFile } from "c/util";
 import getPartialFiles from "@salesforce/apex/FileListController.getPartialFiles";
 import getFileCount from "@salesforce/apex/FileListController.getFileCount";
 import uploadFile from "@salesforce/apex/FileListController.uploadFile";
@@ -26,6 +26,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
     "slds-col slds-small-size_1-of-1 slds-medium-size_1-of-3 slds-large-size_1-of-4";
   @track wiredFiles;
   @track wiredFileCount;
+  @track dataTableFiles;
   render() {
     return this.showSkeleton ? fileListSkeleton : fileList;
   }
@@ -72,21 +73,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
     this.wiredFiles = result;
     if (result.data) {
       this.dataTableFiles = this.wiredFiles.data.map((file) => {
-        return {
-          Id: file.Id,
-          ContentDocumentId: file.ContentDocument.Id,
-          Title: file.ContentDocument.Title,
-          CreatedDate: file.ContentDocument.CreatedDate,
-          LastModifiedDate: file.ContentDocument.LastModifiedDate,
-          ContentSize: formatBytes(file.ContentDocument.ContentSize),
-          FileExtension: file.ContentDocument.FileExtension,
-          VersionData: file.VersionData,
-          hasPreview: hasPreview(file.ContentDocument.FileExtension),
-          downloadUrl: `/sfc/servlet.shepherd/document/download/${file.ContentDocumentId}`,
-          imageUrl: `/sfc/servlet.shepherd/version/renditionDownload?rendition=thumb120by90&versionId=${file.Id}`,
-          fileUrl: `/lightning/r/${file.ContentDocument.Id}/view`,
-          icon: getFileIcon(file.ContentDocument.FileExtension)
-        };
+        return mapFile(file);
       });
       this.showDropZone = this.dataTableFiles.length === 0;
       this.isLoading = false;
@@ -111,9 +98,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
   }
 
   handleUploadFinished() {
-    console.log("refresh apex");
     refreshApex(this.wiredFiles).then(() => {
-      console.log("refresh file");
       this.isLoading = false;
     });
     refreshApex(this.wiredFileCount).then(() => {
