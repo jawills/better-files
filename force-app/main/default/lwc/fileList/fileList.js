@@ -22,6 +22,8 @@ export default class FileList extends NavigationMixin(LightningElement) {
   showSkeleton = true;
   showDropZone = false;
   isSmall = false;
+  cardSizeCss =
+    "slds-col slds-small-size_1-of-1 slds-medium-size_1-of-3 slds-large-size_1-of-4";
   @track wiredFiles;
   @track wiredFileCount;
   render() {
@@ -41,6 +43,9 @@ export default class FileList extends NavigationMixin(LightningElement) {
         const boundingRect = element.getBoundingClientRect().width;
         console.log(boundingRect);
         this.isSmall = boundingRect < 600;
+        if (this.isSmall) {
+          this.cardSizeCss = "slds-col slds-small-size_1-of-1";
+        }
       }
     }, 0);
   }

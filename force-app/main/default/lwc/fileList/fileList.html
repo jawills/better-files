@@ -54,7 +54,11 @@
     <div if:false={showDropZone}>
       <ul class="slds-grid slds-gutters slds-wrap">
         <template for:each={dataTableFiles} for:item="file">
-          <c-file-card key={file.Id} file={file}></c-file-card>
+          <c-file-card
+            class={cardSizeCss}
+            key={file.Id}
+            file={file}
+          ></c-file-card>
         </template>
       </ul>
     </div>
