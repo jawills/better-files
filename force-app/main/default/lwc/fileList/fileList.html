@@ -6,18 +6,37 @@
       variant="brand"
     ></lightning-spinner> -->
   </template>
-  <lightning-card icon-name="standard:file" variant="base">
+  <lightning-card data-id="card" icon-name="standard:file" variant="base">
     <div slot="title">
+      <input
+        id="fileInput"
+        type="file"
+        class="slds-hide"
+        accept={accept}
+        onchange={handleFileChange}
+        multiple={multiple}
+      />
       <a class="slds-card__header-link" onclick={viewAllRecords}>{cardTitle}</a>
     </div>
     <div slot="actions">
       <lightning-file-upload
+        if:false={isSmall}
         accept={accept}
         record-id={recordId}
         onuploadfinished={handleUploadFinished}
         multiple={multiple}
       >
       </lightning-file-upload>
+
+      <lightning-button-menu
+        if:true={isSmall}
+        menu-alignment="auto"
+        style="height: 12px"
+        alternative-text="Show menu"
+      >
+        <lightning-menu-item label="Add Files" onclick={handleMenuUpload}>
+        </lightning-menu-item>
+      </lightning-button-menu>
     </div>
     <div slot="footer" if:false={showDropZone}>
       <a onclick={viewAllRecords}>View All</a>
@@ -35,11 +54,7 @@
     <div if:false={showDropZone}>
       <ul class="slds-grid slds-gutters slds-wrap">
         <template for:each={dataTableFiles} for:item="file">
-          <c-file-card
-            class="uiAbstractList"
-            key={file.Id}
-            file={file}
-          ></c-file-card>
+          <c-file-card key={file.Id} file={file}></c-file-card>
         </template>
       </ul>
     </div>
