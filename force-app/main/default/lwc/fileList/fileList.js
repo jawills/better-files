@@ -1,7 +1,7 @@
 import { LightningElement, wire, api, track } from "lwc";
 import { NavigationMixin } from "lightning/navigation";
 import { mapFile } from "c/util";
-import getPartialFiles from "@salesforce/apex/FileListController.getPartialFiles";
+import getFiles from "@salesforce/apex/FileListController.getFiles";
 import getFileCount from "@salesforce/apex/FileListController.getFileCount";
 import uploadFile from "@salesforce/apex/FileListController.uploadFile";
 import fileListSkeleton from "./fileListSkeleton.html";
@@ -68,7 +68,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
     );
   }
 
-  @wire(getPartialFiles, { recordId: "$recordId" })
+  @wire(getFiles, { recordId: "$recordId", limit: 6 })
   getWiredFiles(result) {
     this.wiredFiles = result;
     if (result.data) {

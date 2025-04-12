@@ -59,4 +59,39 @@ public with sharing class FileListControllerTest {
     fileVersions = FileListController.getFiles(acc.Id, 25);
     System.assertEquals(0, fileVersions.size(), 'File not deleted correctly');
   }
+
+  @isTest
+  static void testGetRecordName() {
+    Account a = [SELECT Id, Name FROM Account WHERE Name = 'Test 1Sync File'];
+    String accountName = FileListController.getRecordName(a.Id, 'Account');
+    System.assertEquals(
+      a.Name,
+      accountName,
+      'Could not get the account name correctly.'
+    );
+  }
+
+  @isTest
+  static void testUploadFile() {
+    Account a = [SELECT Id, Name FROM Account WHERE Name = 'Test 1Sync File'];
+    String contentDocumentId = FileListController.uploadFile(
+      'base64',
+      'File Name',
+      a.Id
+    );
+    System.assert(
+      contentDocumentId != null,
+      'Could not create content document successfully'
+    );
+  }
+
+  @isTest
+  static void testFileSearch() {
+    Account a = [SELECT Id, Name FROM Account WHERE Name = 'Test 1Sync File'];
+    List<ContentVersion> cvs = FileListController.searchContentVersions(
+      'test',
+      a.Id
+    );
+    System.assertEquals(1, cvs.size(), 'Incorrect file size');
+  }
 }

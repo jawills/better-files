@@ -1,10 +1,5 @@
 public with sharing class FileListController {
   @AuraEnabled(cacheable=true)
-  public static List<ContentVersion> getPartialFiles(Id recordId) {
-    return getFiles(recordId, 6);
-  }
-
-  @AuraEnabled(cacheable=true)
   public static List<ContentVersion> getFiles(Id recordId, Integer fileLimit) {
     Set<Id> cvIds = getContentVersionIdsByRelatedRecord(recordId, fileLimit);
     return new ContentVersionQuery()
