@@ -67,51 +67,27 @@ public with sharing class FileListController {
     String filename,
     String recordId
   ) {
-    ContentVersion cv = createContentVersion(base64, filename);
-    ContentDocumentLink cdl = createContentLink(cv.Id, recordId);
-    if (cv == null || cdl == null) {
+    Id cvId = createContentVersion(base64, filename);
+    if (cvId == null) {
+      // No content version created
       return null;
     }
-    return cdl.Id;
+    return createContentLink(cvId, recordId);
   }
-  /*
-   * @method createContentVersion() [private]
-   * @desc Creates a content version from a given file's base64 and name
-   *
-   * @param {String} base64 - base64 string that represents the file
-   * @param {String} filename - full file name with extension, i.e. 'products.csv'
-   *
-   * @return {ContentVersion} - returns the newly created ContentVersion, or null
-   *   if there was an error inserting the record
-   */
-  private static ContentVersion createContentVersion(
-    String base64,
-    String filename
-  ) {
+
+  private static Id createContentVersion(String base64, String filename) {
     ContentVersion cv = new ContentVersion();
     cv.VersionData = EncodingUtil.base64Decode(base64);
     cv.Title = filename;
     cv.PathOnClient = filename;
-    try {
-      insert cv;
-      return cv;
-    } catch (DMLException e) {
-      System.debug(e);
-      return null;
+    DML.Result result = new DatabaseService().asUser().insertRecord(cv);
+    if (result.success) {
+      return result.id;
     }
+    return null;
   }
 
-  /*
-   * @method createContentLink() [private]
-   * @desc Creates a content link for a given ContentVersion and record
-   *
-   * @param {String} contentVersionId - Id of the ContentVersion of the file
-   * @param {String} recordId - Id of the record you want to attach this file to
-   *
-   * @return {ContentDocumentLink} - returns the newly created ContentDocumentLink,
-   *   or null if there was an error inserting the record
-   */
-  private static ContentDocumentLink createContentLink(
+  private static Id createContentLink(
     String contentVersionId,
     String recordId
   ) {
@@ -119,22 +95,17 @@ public with sharing class FileListController {
       return null;
     }
     ContentDocumentLink cdl = new ContentDocumentLink();
-    cdl.ContentDocumentId = [
-      SELECT ContentDocumentId
-      FROM ContentVersion
-      WHERE Id = :contentVersionId
-    ]
-    .ContentDocumentId;
+    cdl.ContentDocumentId = (Id) new ContentVersionQuery()
+      .byId(contentVersionId)
+      .getFirstFieldOrNull(ContentVersion.ContentDocumentId);
     cdl.LinkedEntityId = recordId;
     // ShareType is either 'V', 'C', or 'I'
     // V = Viewer, C = Collaborator, I = Inferred
     cdl.ShareType = 'V';
-    try {
-      insert cdl;
-      return cdl;
-    } catch (DMLException e) {
-      System.debug(e);
-      return null;
+    DML.Result result = new DatabaseService().asUser().insertRecord(cdl);
+    if (result.success) {
+      return result.id;
     }
+    return null;
   }
 }

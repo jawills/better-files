@@ -39,12 +39,17 @@
       <div class="slds-page-header__col-actions">
         <div class="slds-page-header__controls">
           <div class="slds-page-header__control">
-            <lightning-button
-              lwc:if={hasSelectedRecords}
-              label="Delete"
-              variant="destructive"
-              onclick={deleteSelectedRecords}
-            ></lightning-button>
+            <lightning-button-group lwc:if={hasSelectedRecords}>
+              <lightning-button
+                label="Download"
+                onclick={downloadSelectedRecords}
+              ></lightning-button>
+              <lightning-button
+                label="Delete"
+                variant="destructive"
+                onclick={deleteSelectedRecords}
+              ></lightning-button>
+            </lightning-button-group>
             <lightning-file-upload
               if:true={showFileUpload}
               name="fileUploader"

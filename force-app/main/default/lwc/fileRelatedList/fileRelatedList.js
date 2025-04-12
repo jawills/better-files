@@ -6,6 +6,8 @@ import { NavigationMixin, CurrentPageReference } from "lightning/navigation";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { refreshApex } from "@salesforce/apex";
 import { getFileIcon, formatBytes, hasPreview } from "c/util";
+import LightningConfirm from "lightning/confirm";
+
 //@todo make dynamic
 const ACTIONS = [
   { label: "Preview", name: "Preview" },
@@ -152,15 +154,26 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     }
   }
 
-  deleteSelectedRecords() {
+  async deleteSelectedRecords() {
     this.isLoading = true;
     const records = this.selectedRecords;
+    const result = await LightningConfirm.open({
+      message: `Are you sure you wish do delete ${records.length} file${records.length === 1 ? "" : "s"}?`,
+      variant: "header",
+      label: "Delete Files?"
+    });
+    if (result === false) {
+      // Cancel file upload so early return
+      this.isLoading = false;
+      return;
+    }
     const promises = records.map((record) =>
       deleteFile({ contentDocumentId: record.ContentDocumentId })
     );
     Promise.all(promises)
       .then(() => {
         this.showToast("Success", "Files deleted", "success");
+        this.selectedRecords = undefined;
         return refreshApex(this.wiredFiles).then(() => {
           this.isLoading = false;
         });
@@ -170,6 +183,12 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
         this.isLoading = false;
         this.showToast("Error deleting records", error?.body?.message, "error");
       });
+  }
+
+  downloadSelectedRecords() {
+    for (const record of this.selectedRecords) {
+      this.downloadFile(record);
+    }
   }
 
   showToast(title, message, variant) {
