@@ -6,7 +6,7 @@
       "ancestorVersion": "HIGHEST",
       "path": "force-app",
       "default": true,
-      "package": "1Sync File App",
+      "package": "Better Files By 1Sync",
       "versionDescription": "Manage files with mass deletion."
     }
   ],
