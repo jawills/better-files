@@ -211,9 +211,24 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   }
 
   downloadSelectedRecords() {
+    let attatchmentIds = "";
     for (const record of this.selectedRecords) {
-      this.downloadFile(record);
+      attatchmentIds += record.Id + "/";
     }
+
+    if (attatchmentIds.length > 0) {
+      attatchmentIds = attatchmentIds.replace(/.$/, "?");
+    }
+
+    this[NavigationMixin.Navigate](
+      {
+        type: "standard__webPage",
+        attributes: {
+          url: "/sfc/servlet.shepherd/version/download/" + attatchmentIds
+        }
+      },
+      false
+    );
   }
 
   showToast(title, message, variant) {
