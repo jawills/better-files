@@ -68,7 +68,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
     );
   }
 
-  @wire(getFiles, { recordId: "$recordId", limit: 6 })
+  @wire(getFiles, { recordId: "$recordId", fileLimit: 6 })
   getWiredFiles(result) {
     this.wiredFiles = result;
     if (result.data) {

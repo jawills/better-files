@@ -155,13 +155,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     const searchValue = event.target.value;
     this.searchTerm = searchValue;
 
-    // If search field is empty, clear results
-    if (!searchValue.trim()) {
-      return refreshApex(this.wiredFiles).then(() => {
-        this.isLoading = false;
-      });
-    }
-
     // Set loading state
     this.isLoading = true;
 
