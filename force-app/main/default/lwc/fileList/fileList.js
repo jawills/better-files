@@ -10,7 +10,8 @@ import { refreshApex } from "@salesforce/apex";
 import { loadStyle } from "lightning/platformResourceLoader";
 import dropzoneStyle from "@salesforce/resourceUrl/dropzone";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
-
+import { RefreshEvent } from "lightning/refresh";
+import { notifyRecordUpdateAvailable } from "lightning/uiRecordApi";
 export default class FileList extends NavigationMixin(LightningElement) {
   @api recordId;
   @api objectApiName;
@@ -24,7 +25,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
   isSmall = false;
   cardSizeCss =
     "slds-col slds-small-size_1-of-1 slds-medium-size_1-of-3 slds-large-size_1-of-4";
-  @track wiredFiles;
+  wiredFiles;
   @track wiredFileCount;
   @track dataTableFiles;
   render() {
@@ -149,18 +150,24 @@ export default class FileList extends NavigationMixin(LightningElement) {
     // Once all files are processed, upload them
     Promise.all(filePromises)
       .then((fileRecords) => {
-        for (const file of fileRecords) {
-          uploadFile({
+        const uploadPromises = fileRecords.map((file) => {
+          return uploadFile({
             base64: file.fileContent,
             filename: file.fileName,
             recordId: this.recordId
           });
-        }
+        });
+        return Promise.all(uploadPromises);
       })
-      .then((result) => {
+      .then((results) => {
+        // console.log(record?Ids);
+        console.log("seconds");
         this.showToast("Success", `File uploaded successfully`, "success");
         // Reset the file input
         this.template.querySelector("input").value = "";
+        // notifyRecordUpdateAvailable(recordIds).then(() => {
+        // });
+        this.dispatchEvent(new RefreshEvent());
         this.handleUploadFinished();
       })
       .catch((error) => {
@@ -174,6 +181,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
       .finally(() => {
         this.isUploading = false;
       });
+    this.handleUploadFinished();
   }
 
   // Helper method to extract error messages

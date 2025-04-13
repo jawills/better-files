@@ -1,8 +1,8 @@
 {
   "packageDirectories": [
     {
-      "versionName": "Improved layout on smaller screens.",
-      "versionNumber": "0.2.0.NEXT",
+      "versionName": "Improved file upload and download.",
+      "versionNumber": "0.3.0.NEXT",
       "ancestorVersion": "HIGHEST",
       "path": "force-app",
       "default": true,
@@ -20,6 +20,7 @@
     "1Sync File App@0.1.0-3": "04tQl000000EHiXIAW",
     "1Sync File App@0.1.0-4": "04tQl000000EHk9IAG",
     "1Sync File App@0.1.0-5": "04tQl000000EHllIAG",
-    "1Sync File App@0.2.0-1": "04tQl000000EKrhIAG"
+    "1Sync File App@0.2.0-1": "04tQl000000EKrhIAG",
+    "1Sync File App@0.3.0-1": "04tQl000000EL1NIAW"
   }
 }
