@@ -17,7 +17,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
   @api objectApiName;
   @api accept;
   @api multiple;
-
+  @api fileLimit;
   cardTitle = "Files";
   isLoading = true;
   showSkeleton = true;
@@ -69,7 +69,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
     );
   }
 
-  @wire(getFiles, { recordId: "$recordId", fileLimit: 6 })
+  @wire(getFiles, { recordId: "$recordId", fileLimit: "$fileLimit" })
   getWiredFiles(result) {
     this.wiredFiles = result;
     if (result.data) {

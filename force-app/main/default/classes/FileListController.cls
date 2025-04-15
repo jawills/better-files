@@ -1,7 +1,12 @@
 public with sharing class FileListController {
+  public static final Integer FILE_LIMIT_FALLBACK = 6;
+
   @AuraEnabled(cacheable=true)
   public static List<ContentVersion> getFiles(Id recordId, Integer fileLimit) {
     Set<Id> cvIds = getContentVersionIdsByRelatedRecord(recordId, fileLimit);
+    if (fileLimit == null) {
+      fileLimit = FILE_LIMIT_FALLBACK;
+    }
     return new ContentVersionQuery()
       .byId(cvIds)
       .orderBy('ContentDocument.LastModifiedDate DESC')
@@ -13,6 +18,9 @@ public with sharing class FileListController {
     Id recordId,
     Integer fileLimit
   ) {
+    if (fileLimit == null) {
+      fileLimit = FILE_LIMIT_FALLBACK;
+    }
     List<ContentDocumentLink> cdls = new ContentDocumentLinkQuery()
       .byLinkedEntityId(recordId)
       .withLimit(fileLimit)
@@ -45,7 +53,7 @@ public with sharing class FileListController {
       String.escapeSingleQuotes(recordId) +
       '\'';
     try {
-      SObject record = Database.query(query);
+      SObject record = Database.query(String.escapeSingleQuotes(query));
       return (String) record.get('Name');
     } catch (Exception e) {
       System.debug(e);

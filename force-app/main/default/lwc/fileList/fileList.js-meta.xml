@@ -12,10 +12,13 @@
             </supportedFormFactors>
             <property name="accept" type="String"
                 default=".pdf,.doc,.docx,.rtf,.txt,.xls,.xlsx,.csv,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.zip"
-                label="Accepted File Formats" />
+                label="Accepted File Formats." />
             <property name="multiple" type="Boolean"
                 default="true"
-                label="Allow multiple file uploads at once" />
+                label="Allow multiple file uploads at once." />
+            <property name="fileLimit" type="Integer"
+                default="6"
+                label="How many files are displayed on the record page." />
         </targetConfig>
     </targetConfigs>
     <isExposed>true</isExposed>

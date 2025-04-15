@@ -48,6 +48,7 @@ apex-scripts/*
 .idea/
 IlluminatedCloud/
 *.iml
+*.csv
 
 
 #Ignore Build Files
