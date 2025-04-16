@@ -9,7 +9,7 @@ A better way of managing files in Salesforce
 
 ## Install
 
-[Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tQl000000EL1NIAW)
+[Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tQl000000EMn3IAG)
 
 ## Dependencies
 

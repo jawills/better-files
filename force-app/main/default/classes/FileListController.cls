@@ -46,14 +46,14 @@ public with sharing class FileListController {
 
   @AuraEnabled(cacheable=true)
   public static string getRecordName(Id recordId, String objectAPIName) {
-    String query =
-      'SELECT Id, Name FROM ' +
-      objectAPIName +
-      ' WHERE Id = \'' +
-      String.escapeSingleQuotes(recordId) +
-      '\'';
     try {
-      SObject record = Database.query(String.escapeSingleQuotes(query));
+      SObject record = Database.query(
+        'SELECT Id, Name FROM ' +
+          String.escapeSingleQuotes(objectAPIName) +
+          ' WHERE Id = \'' +
+          String.escapeSingleQuotes(recordId) +
+          '\''
+      );
       return (String) record.get('Name');
     } catch (Exception e) {
       System.debug(e);
