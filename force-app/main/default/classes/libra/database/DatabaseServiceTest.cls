@@ -30,7 +30,9 @@ private class DatabaseServiceTest {
             Name = 'Test'
         );
 
-        coverDatabaseServiceMethods(new DatabaseService().asUser(), acc);
+        DatabaseService dbUser = new DatabaseService().asUser();
+         coverDatabaseServiceMethods(new DatabaseService().asUser(), acc);
+        System.assert(dbUser != null, 'DBUser not initialized');
         coverDatabaseServiceMethods(new DatabaseService().asSystem(), acc);
         coverDatabaseServiceMethods(new DatabaseService().asSystemWithSharing(), acc);
         coverDatabaseServiceMethods(new DatabaseService().asSystemWithoutSharing(), acc);

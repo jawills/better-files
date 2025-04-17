@@ -383,7 +383,8 @@ public class QueryObjectTest {
             .stripInaccessible(AccessType.READABLE)
             .getFirstOrNull();
 
-        new TestUserQuery().byId(UserInfo.getUserId()).getCount();
+        Integer count = new TestUserQuery().byId(UserInfo.getUserId()).getCount();
+        System.assertEquals(1, count, 'User query failure');
         new TestUserQuery().byId(UserInfo.getUserId()).getMapById();
         new TestUserQuery().byId(UserInfo.getUserId()).getFirstOrNull();
         new TestUserQuery().byId(UserInfo.getUserId()).getFirstOrNull();
@@ -396,7 +397,7 @@ public class QueryObjectTest {
 
     @IsTest
     static void queryBuilderCoverage() {
-        new QueryBuilder()
+        String query =  new QueryBuilder()
             .addField(Account.Id)
             .addField('Name')
             .addFields(new List<SObjectField>{Account.Id})
@@ -408,7 +409,8 @@ public class QueryObjectTest {
             .setHaving('')
             .orderBy('Name')
             .setOffset(0)
-            .setLimit(100);
+            .setLimit(100).toSOQL();
+        System.assertEquals('SELECT Id, Name, ( SELECT Id FROM Contacts ) FROM Account WHERE Name != NULL GROUP BY Name ORDER BY Name LIMIT 100 OFFSET 0' ,query, 'Incorrect query statement');
     }
 
 

@@ -1,8 +1,8 @@
 {
   "packageDirectories": [
     {
-      "versionName": "v0.4.0",
-      "versionNumber": "0.4.0.NEXT",
+      "versionName": "v0.4.1",
+      "versionNumber": "0.4.1.NEXT",
       "ancestorVersion": "HIGHEST",
       "path": "force-app",
       "default": true,
@@ -23,6 +23,7 @@
     "1Sync File App@0.2.0-1": "04tQl000000EKrhIAG",
     "1Sync File App@0.3.0-1": "04tQl000000EL1NIAW",
     "1Sync File App@0.4.0-1": "04tQl000000EMlRIAW",
-    "1Sync File App@0.4.0-2": "04tQl000000EMn3IAG"
+    "1Sync File App@0.4.0-2": "04tQl000000EMn3IAG",
+    "1Sync File App@0.4.1-1": "04tQl000000EN9dIAG"
   }
 }

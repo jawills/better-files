@@ -148,15 +148,19 @@ private class CollectionTest {
 
     @IsTest
     static void testAddRemove() {
-        Collection.of(new List<Opportunity>())
+        Collection oppCollection = Collection.of(new List<Opportunity>())
             .addAll(opportunities)
             .add(newOpportunity(10, new Map<String, Object>()))
             .add(5, newOpportunity(10, new Map<String, Object>()))
             .remove(0)
             .removeLast();
 
-        Collection.of(new List<Integer>{1, 2, 3})
+        System.assertEquals(10, oppCollection.size(), 'Opp collection not combined correctly.');
+
+        Collection intCollection = Collection.of(new List<Integer>{1, 2, 3})
             .addAll(new Set<Object>{4, 5, 6});
+        
+        System.assertEquals(6, intCollection.size(), 'Int collection not combined correctly.');
     }
 
 
