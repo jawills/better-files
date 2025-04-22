@@ -21,4 +21,12 @@ public with sharing class ContentDocumentLinkQuery extends QueryObject {
       linkedEntityId
     );
   }
+
+  public ContentDocumentLinkQuery byContentDocumentTitle(String title) {
+    return (ContentDocumentLinkQuery) byField(
+      'ContentDocumentLink.ContentDocument.Title',
+      'LIKE',
+      '%' + title + '%'
+    );
+  }
 }

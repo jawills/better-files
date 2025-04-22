@@ -39,10 +39,12 @@
       <div class="slds-page-header__col-actions">
         <div class="slds-page-header__controls">
           <div
-            class="slds-page-header__control slds-grid slds-gutters slds-grid_vertical-align-center"
+            class="slds-page-header__control slds-grid slds-gutters slds-grid_vertical-align-center slds-media slds-media_center"
           >
+            <div class="slds-col slds-text-body_small">{selectedText}</div>
             <lightning-input
               class="slds-col"
+              style="margin-top: auto; margin-bottom: auto"
               type="search"
               placeholder="Search files..."
               onchange={handleSearchKeyChange}
@@ -51,7 +53,8 @@
             </lightning-input>
             <lightning-button-group
               lwc:if={hasSelectedRecords}
-              class="slds-col slds-var-p-top_small"
+              class="slds-col slds-var-p-top_medium"
+              style="margin-top: auto; margin-bottom: auto"
             >
               <lightning-button
                 label="Download"
@@ -94,5 +97,12 @@
         </ul>
       </div>
     </div>
+  </div>
+  <div class="slds-grid slds-grid_align-center" if:true={hasAdditionalFiles}>
+    <lightning-button
+      label="Get More Records"
+      class="slds-var-p-vertical_x-small"
+      onclick={getAdditionalFiles}
+    ></lightning-button>
   </div>
 </template>

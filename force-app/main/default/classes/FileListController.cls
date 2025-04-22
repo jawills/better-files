@@ -1,9 +1,17 @@
 public with sharing class FileListController {
   public static final Integer FILE_LIMIT_FALLBACK = 6;
-
+  public static final Integer PAGE_SIZE = 25;
   @AuraEnabled(cacheable=true)
-  public static List<ContentVersion> getFiles(Id recordId, Integer fileLimit) {
-    Set<Id> cvIds = getContentVersionIdsByRelatedRecord(recordId, fileLimit);
+  public static List<ContentVersion> getFiles(
+    Id recordId,
+    Integer fileLimit,
+    Integer page
+  ) {
+    Set<Id> cvIds = getContentVersionIdsByRelatedRecord(
+      recordId,
+      fileLimit,
+      page
+    );
     if (fileLimit == null) {
       fileLimit = FILE_LIMIT_FALLBACK;
     }
@@ -16,7 +24,8 @@ public with sharing class FileListController {
 
   private static Set<Id> getContentVersionIdsByRelatedRecord(
     Id recordId,
-    Integer fileLimit
+    Integer fileLimit,
+    Integer page
   ) {
     if (fileLimit == null) {
       fileLimit = FILE_LIMIT_FALLBACK;
@@ -25,7 +34,30 @@ public with sharing class FileListController {
       .byLinkedEntityId(recordId)
       .withLimit(fileLimit)
       .orderBy('SystemModstamp DESC')
+      .withOffset(page * PAGE_SIZE)
       .getList();
+    // Can't use collection api b/c nested relationship
+    Set<Id> cvIds = new Set<Id>();
+    for (ContentDocumentLink cdl : cdls) {
+      cvIds.add(cdl.ContentDocument.LatestPublishedVersionId);
+    }
+    return cvIds;
+  }
+
+  private static Set<Id> getContentVersionIdsByTitle(
+    Id recordId,
+    String title,
+    Integer fileLimit
+  ) {
+    if (fileLimit == null) {
+      fileLimit = FILE_LIMIT_FALLBACK;
+    }
+    ContentDocumentLinkQuery cdlQuery = (ContentDocumentLinkQuery) new ContentDocumentLinkQuery()
+      .byLinkedEntityId(recordId)
+      .byContentDocumentTitle(title)
+      .withLimit(fileLimit)
+      .orderBy('SystemModstamp DESC');
+    List<ContentDocumentLink> cdls = cdlQuery.getList();
     // Can't use collection api b/c nested relationship
     Set<Id> cvIds = new Set<Id>();
     for (ContentDocumentLink cdl : cdls) {
@@ -114,13 +146,12 @@ public with sharing class FileListController {
     String searchTerm,
     String recordId
   ) {
-    System.debug(recordId);
-    Set<Id> cvIds = getContentVersionIdsByRelatedRecord(recordId, 20);
+    Set<Id> cvIds = getContentVersionIdsByTitle(recordId, searchTerm, 20);
     return new ContentVersionQuery()
       .likeTitle(searchTerm)
       .byId(cvIds)
       .orderBy('ContentDocument.LastModifiedDate DESC')
-      .withLimit(20)
+      .withLimit(25)
       .getList();
   }
 }

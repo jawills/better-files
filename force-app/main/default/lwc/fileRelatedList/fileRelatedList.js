@@ -1,5 +1,6 @@
 import { LightningElement, wire, api, track } from "lwc";
 import getFiles from "@salesforce/apex/FileListController.getFiles";
+import getFileCount from "@salesforce/apex/FileListController.getFileCount";
 import deleteFile from "@salesforce/apex/FileListController.deleteFile";
 import getRecordName from "@salesforce/apex/FileListController.getRecordName";
 import searchContentVersions from "@salesforce/apex/FileListController.searchContentVersions";
@@ -8,6 +9,7 @@ import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { refreshApex } from "@salesforce/apex";
 import { mapFile } from "c/util";
 import LightningConfirm from "lightning/confirm";
+import { RefreshEvent } from "lightning/refresh";
 
 //@todo make dynamic
 const ACTIONS = [
@@ -16,7 +18,7 @@ const ACTIONS = [
   { label: "Delete", name: "Delete" }
 ];
 
-const DELAY = 350; // Debounce delay in milliseconds
+const DELAY = 500; // Debounce delay in milliseconds
 
 export default class FileRelatedList extends NavigationMixin(LightningElement) {
   @api baseObjectName;
@@ -26,14 +28,20 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   @track relatedRecordName;
   @track relatedRecordUrl;
   @track selectedRecords = [];
+  abortController = new AbortController();
+  searchTermUpdated;
   isLoading = true;
   hasSelectedRecords = false;
   showFileUpload = true;
   fileCount = 0;
   cardTitle = "Files";
   wiredFiles;
-  @track dataTableFiles;
-
+  @track wiredFileCount;
+  selectedText;
+  selectedCount = 0;
+  currentPage = 0;
+  @track dataTableFiles = [];
+  hasAdditionalFiles = false;
   @wire(CurrentPageReference)
   getCurrentPageReference(currentPageReference) {
     this.currentPageReference = currentPageReference;
@@ -60,27 +68,35 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
           resolve();
         }
       }, 0);
-    })
-      .catch((error) => {
-        console.error(JSON.stringify(error));
-      })
-      .finally(() => {
-        this.isLoading = false;
-      });
+    }).catch((error) => {
+      console.error(JSON.stringify(error));
+    });
   }
-  @wire(getFiles, { recordId: "$baseRecordId", fileLimit: 25 })
+  @wire(getFiles, {
+    recordId: "$baseRecordId",
+    fileLimit: 25,
+    page: "$currentPage"
+  })
   getWiredFiles(result) {
     this.wiredFiles = result;
+    this.isLoading = true;
     if (result.data) {
-      this.dataTableFiles = this.wiredFiles.data.map((file) => {
-        return mapFile(file);
-      });
+      this.dataTableFiles = [
+        ...this.dataTableFiles,
+        ...this.wiredFiles.data.map((file) => {
+          return mapFile(file);
+        })
+      ];
+      this.originalFiles = this.dataTableFiles;
       this.fileCount = this.dataTableFiles.length;
       this.isLoading = false;
       this.error = undefined;
+      this.getSelectedText();
+      this.hasAdditionalFiles =
+        this.dataTableFiles.length < this.wiredFileCount.data;
+      this.originalHasAdditionalFiles = this.hasAdditionalFiles;
     } else if (result.error) {
       this.error = result.error;
-      this.wiredFiles = undefined;
       console.error("Error loading files:", result.error); // Log the error
     }
   }
@@ -130,6 +146,20 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     this.selectedRecords = event.detail.selectedRows;
     this.hasSelectedRecords = this.selectedRecords.length > 0;
     this.showFileUpload = this.selectedRecords.length === 0;
+    this.selectedCount = this.selectedRecords.length;
+    this.getSelectedText();
+  }
+
+  @wire(getFileCount, { recordId: "$baseRecordId" })
+  getWiredFileCount(result) {
+    this.wiredFileCount = result;
+    if (result.data) {
+      this.cardTitle = `Files (${result.data})`;
+      this.getSelectedText();
+    } else if (result.error) {
+      console.error(result.error);
+      this.error = result.error;
+    }
   }
 
   handleRowAction(event) {
@@ -152,9 +182,18 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   handleSearchKeyChange(event) {
     // Clear any pending debounce timeout
     clearTimeout(this.delayTimeout);
+    this.searchTermUpdated = Date.now();
+    const searchTermUpdated = this.searchTermUpdated;
     const searchValue = event.target.value;
     this.searchTerm = searchValue;
-
+    this.abortController.abort();
+    this.abortController = new AbortController();
+    if (this.searchTerm == "") {
+      this.dataTableFiles = this.originalFiles;
+      this.hasAdditionalFiles = this.originalHasAdditionalFiles;
+      this.isLoading = false;
+      return;
+    }
     // Set loading state
     this.isLoading = true;
 
@@ -166,9 +205,19 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       })
         .then((result) => {
           // Process results to add CreatedByName field
+          if (this.searchTermUpdated > searchTermUpdated) {
+            // Early cancel for stale request
+            return;
+          }
           this.dataTableFiles = result.map((record) => {
             return mapFile(record);
           });
+          console.log("search");
+          this.fileCount = this.dataTableFiles.length;
+          this.getSelectedText();
+          this.hasAdditionalFiles =
+            this.searchTerm == "" &&
+            this.dataTableFiles.length < this.wiredFileCount.data;
           this.isLoading = false;
         })
         .catch((error) => {
@@ -208,6 +257,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
         this.isLoading = false;
         this.showToast("Error deleting records", error?.body?.message, "error");
       });
+    this.getSelectedText();
   }
 
   downloadSelectedRecords() {
@@ -302,5 +352,14 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       },
       false
     );
+  }
+
+  getSelectedText() {
+    this.selectedText = `${this.selectedCount} of ${this.wiredFileCount.data} file(s) selected.`;
+  }
+
+  getAdditionalFiles() {
+    this.currentPage++;
+    this.isLoading = true;
   }
 }
