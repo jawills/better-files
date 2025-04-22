@@ -2,7 +2,7 @@
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
     <types>
         <members>*</members>
-        <name>StaticResource</name>
+        <name>PermissionSet</name>
     </types>
     <version>60.0</version>
 </Package>

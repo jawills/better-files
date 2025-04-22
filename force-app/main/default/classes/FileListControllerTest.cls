@@ -39,7 +39,11 @@ public with sharing class FileListControllerTest {
   @isTest
   static void testPartialFile() {
     Account acc = [SELECT Id FROM Account WHERE Name = 'Test 1Sync File'];
-    List<ContentVersion> fileVersions = FileListController.getFiles(acc.Id, 25);
+    List<ContentVersion> fileVersions = FileListController.getFiles(
+      acc.Id,
+      25,
+      0
+    );
     System.assertEquals(
       1,
       fileVersions.size(),
@@ -50,13 +54,17 @@ public with sharing class FileListControllerTest {
   @isTest
   static void testDeleteFile() {
     Account acc = [SELECT Id FROM Account WHERE Name = 'Test 1Sync File'];
-    List<ContentVersion> fileVersions = FileListController.getFiles(acc.Id, 25);
+    List<ContentVersion> fileVersions = FileListController.getFiles(
+      acc.Id,
+      25,
+      0
+    );
 
     for (ContentVersion cv : fileVersions) {
       FileListController.deleteFile(cv.ContentDocumentId);
     }
 
-    fileVersions = FileListController.getFiles(acc.Id, 25);
+    fileVersions = FileListController.getFiles(acc.Id, 25, 0);
     System.assertEquals(0, fileVersions.size(), 'File not deleted correctly');
   }
 

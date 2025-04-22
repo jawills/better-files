@@ -1,21 +1,22 @@
 {
   "packageDirectories": [
     {
-      "versionName": "v0.4.1",
-      "versionNumber": "0.4.1.NEXT",
+      "versionName": "v1.0.0",
+      "versionNumber": "1.0.0.NEXT",
       "ancestorVersion": "HIGHEST",
       "path": "force-app",
       "default": true,
-      "package": "1Sync File App",
-      "versionDescription": "Additional parameters for config."
+      "package": "Better Files By 1Sync",
+      "versionDescription": "Initial release"
     }
   ],
   "name": "1sync-file",
   "namespace": "file1sync",
   "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "60.0",
+  "sourceApiVersion": "63.0",
   "packageAliases": {
     "1Sync File App": "0HoQl00000000mPKAQ",
+    "Better Files By 1Sync": "0HoQl00000000mPKAQ",
     "1Sync File App@0.1.0-1": "04tQl000000EHdhIAG",
     "1Sync File App@0.1.0-3": "04tQl000000EHiXIAW",
     "1Sync File App@0.1.0-4": "04tQl000000EHk9IAG",
@@ -24,6 +25,7 @@
     "1Sync File App@0.3.0-1": "04tQl000000EL1NIAW",
     "1Sync File App@0.4.0-1": "04tQl000000EMlRIAW",
     "1Sync File App@0.4.0-2": "04tQl000000EMn3IAG",
-    "1Sync File App@0.4.1-1": "04tQl000000EN9dIAG"
+    "1Sync File App@0.4.1-1": "04tQl000000EN9dIAG",
+    "1Sync File App@1.0.0-1": "04tQl000000EPcrIAG"
   }
 }

@@ -184,6 +184,8 @@ export default class FileList extends NavigationMixin(LightningElement) {
       })
       .finally(() => {
         this.isUploading = false;
+        this.dispatchEvent(new RefreshEvent());
+        this.handleUploadFinished();
       });
     this.handleUploadFinished();
   }
