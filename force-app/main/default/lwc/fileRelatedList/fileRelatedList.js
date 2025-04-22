@@ -10,6 +10,8 @@ import { refreshApex } from "@salesforce/apex";
 import { mapFile } from "c/util";
 import LightningConfirm from "lightning/confirm";
 import { RefreshEvent } from "lightning/refresh";
+import fileRelatedListSkeleton from "./fileRelatedListSkeleton.html";
+import fileRelatedList from "./fileRelatedList.html";
 
 //@todo make dynamic
 const ACTIONS = [
@@ -18,7 +20,7 @@ const ACTIONS = [
   { label: "Delete", name: "Delete" }
 ];
 
-const DELAY = 500; // Debounce delay in milliseconds
+const DELAY = 350; // Debounce delay in milliseconds
 
 export default class FileRelatedList extends NavigationMixin(LightningElement) {
   @api baseObjectName;
@@ -28,9 +30,9 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   @track relatedRecordName;
   @track relatedRecordUrl;
   @track selectedRecords = [];
-  abortController = new AbortController();
   searchTermUpdated;
   isLoading = true;
+  showSkeleton = true;
   hasSelectedRecords = false;
   showFileUpload = true;
   fileCount = 0;
@@ -42,6 +44,11 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   currentPage = 0;
   @track dataTableFiles = [];
   hasAdditionalFiles = false;
+
+  render() {
+    // return fileRelatedListSkeleton;
+    return this.showSkeleton ? fileRelatedListSkeleton : fileRelatedList;
+  }
   @wire(CurrentPageReference)
   getCurrentPageReference(currentPageReference) {
     this.currentPageReference = currentPageReference;
@@ -95,6 +102,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       this.hasAdditionalFiles =
         this.dataTableFiles.length < this.wiredFileCount.data;
       this.originalHasAdditionalFiles = this.hasAdditionalFiles;
+      this.showSkeleton = false;
     } else if (result.error) {
       this.error = result.error;
       console.error("Error loading files:", result.error); // Log the error
@@ -186,8 +194,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     const searchTermUpdated = this.searchTermUpdated;
     const searchValue = event.target.value;
     this.searchTerm = searchValue;
-    this.abortController.abort();
-    this.abortController = new AbortController();
+
     if (this.searchTerm == "") {
       this.dataTableFiles = this.originalFiles;
       this.hasAdditionalFiles = this.originalHasAdditionalFiles;
