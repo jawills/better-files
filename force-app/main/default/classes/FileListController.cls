@@ -7,14 +7,14 @@ public with sharing class FileListController {
     Integer fileLimit,
     Integer page
   ) {
+    if (fileLimit == null) {
+      fileLimit = FILE_LIMIT_FALLBACK;
+    }
     Set<Id> cvIds = getContentVersionIdsByRelatedRecord(
       recordId,
       fileLimit,
       page
     );
-    if (fileLimit == null) {
-      fileLimit = FILE_LIMIT_FALLBACK;
-    }
     return new ContentVersionQuery()
       .byId(cvIds)
       .orderBy('ContentDocument.LastModifiedDate DESC')
@@ -72,8 +72,21 @@ public with sharing class FileListController {
   }
 
   @AuraEnabled
-  public static void deleteFile(String contentDocumentId) {
+  public static Id deleteFile(String contentDocumentId) {
     new DatabaseService().asUser().deleteRecord((Id) contentDocumentId);
+    return contentDocumentId;
+  }
+
+  @AuraEnabled
+  public static List<Id> deleteFiles(List<Id> contentDocumentIds) {
+    System.debug(contentDocumentIds);
+    DML.Result[] results = new DatabaseService()
+      .asUser()
+      .deleteRecords(contentDocumentIds);
+    for (DML.Result result : results) {
+      System.debug(result.id);
+    }
+    return contentDocumentIds;
   }
 
   @AuraEnabled(cacheable=true)

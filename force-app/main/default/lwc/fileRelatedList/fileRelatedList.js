@@ -2,6 +2,7 @@ import { LightningElement, wire, api, track } from "lwc";
 import getFiles from "@salesforce/apex/FileListController.getFiles";
 import getFileCount from "@salesforce/apex/FileListController.getFileCount";
 import deleteFile from "@salesforce/apex/FileListController.deleteFile";
+import deleteFiles from "@salesforce/apex/FileListController.deleteFiles";
 import getRecordName from "@salesforce/apex/FileListController.getRecordName";
 import searchContentVersions from "@salesforce/apex/FileListController.searchContentVersions";
 import { NavigationMixin, CurrentPageReference } from "lightning/navigation";
@@ -31,6 +32,8 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   @track relatedRecordUrl;
   @track selectedRecords = [];
   searchTermUpdated;
+  // Unique set of Content Document Ids to filter main set
+  contentDocumentIdSet = new Set();
   isLoading = true;
   showSkeleton = true;
   hasSelectedRecords = false;
@@ -88,12 +91,18 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     this.wiredFiles = result;
     this.isLoading = true;
     if (result.data) {
-      this.dataTableFiles = [
-        ...this.dataTableFiles,
-        ...this.wiredFiles.data.map((file) => {
-          return mapFile(file);
-        })
-      ];
+      const uniqueNewFiles = result.data
+        .map((file) => mapFile(file))
+        .filter((mappedFile) => {
+          const isUnique = !this.contentDocumentIdSet.has(
+            mappedFile.ContentDocumentId
+          );
+          if (isUnique) {
+            this.contentDocumentIdSet.add(mappedFile.ContentDocumentId);
+          }
+          return isUnique;
+        });
+      this.dataTableFiles = [...this.dataTableFiles, ...uniqueNewFiles];
       this.originalFiles = this.dataTableFiles;
       this.fileCount = this.dataTableFiles.length;
       this.isLoading = false;
@@ -145,6 +154,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   ];
 
   handleUploadFinished() {
+    refreshApex(this.wiredFileCount);
     return refreshApex(this.wiredFiles).then(() => {
       this.isLoading = false;
     });
@@ -219,7 +229,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
           this.dataTableFiles = result.map((record) => {
             return mapFile(record);
           });
-          console.log("search");
           this.fileCount = this.dataTableFiles.length;
           this.getSelectedText();
           this.hasAdditionalFiles =
@@ -248,16 +257,23 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       this.isLoading = false;
       return;
     }
-    const promises = records.map((record) =>
-      deleteFile({ contentDocumentId: record.ContentDocumentId })
-    );
-    Promise.all(promises)
-      .then(() => {
+    deleteFiles({
+      contentDocumentIds: records.map((record) => {
+        return record.ContentDocumentId;
+      })
+    })
+      .then((data) => {
         this.showToast("Success", "Files deleted", "success");
         this.selectedRecords = undefined;
-        return refreshApex(this.wiredFiles).then(() => {
-          this.isLoading = false;
+        this.dataTableFiles = this.dataTableFiles.filter((file) => {
+          return !data.includes(file.ContentDocumentId);
         });
+        data.forEach((contentDocumentId) => {
+          if (this.contentDocumentIdSet.has(contentDocumentId)) {
+            this.contentDocumentIdSet.delete(contentDocumentId);
+          }
+        });
+        return this.handleUploadFinished();
       })
       .catch((error) => {
         console.error(error);
