@@ -6,7 +6,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "ts-build": "tsc"
+    "ts-build": "tsc",
+    "version-create": "sf package version create --package \"Better Files By 1Sync\"  --code-coverage --installation-key-bypass --wait 10"
+
   },
   "author": "jawills",
   "devDependencies": {
