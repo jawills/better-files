@@ -144,7 +144,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       fieldName: "LastModifiedDate",
       type: "date"
     },
-    { label: "Content Size", fieldName: "ContentSize" },
     { label: "File Extension", fieldName: "FileExtension" },
     {
       fieldName: "actions",
