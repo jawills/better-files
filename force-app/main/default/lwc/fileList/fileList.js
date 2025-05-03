@@ -18,6 +18,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
   @api accept;
   @api multiple;
   @api fileLimit;
+  @api filePreview;
   cardTitle = "Files";
   isLoading = true;
   showSkeleton = true;
@@ -78,7 +79,10 @@ export default class FileList extends NavigationMixin(LightningElement) {
     this.wiredFiles = result;
     if (result.data) {
       this.dataTableFiles = this.wiredFiles.data.map((file) => {
-        return mapFile(file);
+        const mappedFile = mapFile(file);
+        // Turn off file preview if setting is false
+        mappedFile.hasPreview = mappedFile.hasPreview && this.filePreview;
+        return mappedFile;
       });
       this.showDropZone = this.dataTableFiles.length === 0;
       this.isLoading = false;

@@ -10,8 +10,11 @@
           >
             <img src={file.imageUrl} /></div
         ></template>
-        <template if:false={file.hasPreview}
-          ><lightning-icon icon-name={file.icon}></lightning-icon
+        <template if:false={file.hasPreview}>
+          <div
+            class="slds-show_inline-block slds-size_1-of-12 slds-float_left thumbnailImg medium"
+          >
+            <lightning-icon icon-name={file.icon}></lightning-icon></div
         ></template>
         <div
           class="slds-show_inline-block slds-float_left slds-size_11-of-12 slds-var-p-left_x-small slds-truncate slds-var-m-right_x-small"

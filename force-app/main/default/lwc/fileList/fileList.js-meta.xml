@@ -16,6 +16,9 @@
             <property name="multiple" type="Boolean"
                 default="true"
                 label="Allow multiple file uploads at once." />
+            <property name="filePreview" type="Boolean"
+                default="true"
+                label="Show preview of files" />
             <property name="fileLimit" type="Integer"
                 default="6"
                 label="How many files are displayed on the record page." />
