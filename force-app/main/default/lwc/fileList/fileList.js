@@ -19,6 +19,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
   @api multiple;
   @api fileLimit;
   @api filePreview;
+  @api filesPerRow;
   cardTitle = "Files";
   isLoading = true;
   showSkeleton = true;
@@ -46,8 +47,11 @@ export default class FileList extends NavigationMixin(LightningElement) {
         const boundingRect = element.getBoundingClientRect().width;
         console.log(boundingRect);
         this.isSmall = boundingRect < 600;
+        const filesPerRow = Math.abs(Math.floor(12 / (this.filesPerRow ?? 4)));
         if (this.isSmall) {
           this.cardSizeCss = "slds-col slds-small-size_1-of-1";
+        } else {
+          this.cardSizeCss = `slds-col slds-small-size_1-of-1 slds-medium-size_1-of-${filesPerRow} slds-large-size_1-of-${filesPerRow}`;
         }
       }
     }, 0);
