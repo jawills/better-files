@@ -12,6 +12,11 @@ import dropzoneStyle from "@salesforce/resourceUrl/dropzone";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { RefreshEvent } from "lightning/refresh";
 import { notifyRecordUpdateAvailable } from "lightning/uiRecordApi";
+import {
+  IsConsoleNavigation,
+  getFocusedTabInfo,
+  openSubtab
+} from "lightning/platformWorkspaceApi";
 export default class FileList extends NavigationMixin(LightningElement) {
   @api recordId;
   @api objectApiName;
@@ -33,6 +38,8 @@ export default class FileList extends NavigationMixin(LightningElement) {
   render() {
     return this.showSkeleton ? fileListSkeleton : fileList;
   }
+
+  @wire(IsConsoleNavigation) isConsoleNavigation;
 
   renderedCallback() {
     Promise.all([loadStyle(this, dropzoneStyle)]);
@@ -58,20 +65,44 @@ export default class FileList extends NavigationMixin(LightningElement) {
   }
 
   viewAllRecords() {
-    this[NavigationMixin.Navigate](
-      {
-        type: "standard__component",
-        attributes: {
-          componentName: "file1sync__fileRelatedList",
-          recordId: this.recordId
+    // Standard Navigation to Related list component
+    if (!this.isConsoleNavigation) {
+      this[NavigationMixin.Navigate](
+        {
+          type: "standard__component",
+          attributes: {
+            componentName: "file1sync__fileRelatedList",
+            recordId: this.recordId
+          },
+          state: {
+            c__recordId: this.recordId,
+            c__objectName: this.objectApiName
+          }
         },
-        state: {
-          c__recordId: this.recordId,
-          c__objectName: this.objectApiName
-        }
-      },
-      false
-    );
+        false
+      );
+    } else {
+      getFocusedTabInfo().then((tabInfo) => {
+        const { tabId } = tabInfo;
+        openSubtab(tabId, {
+          focus: true,
+          label: `Files`,
+          icon: "standard:file",
+          iconAlt: "Files",
+          pageReference: {
+            type: "standard__component",
+            attributes: {
+              componentName: "file1sync__fileRelatedList",
+              recordId: this.recordId
+            },
+            state: {
+              c__recordId: this.recordId,
+              c__objectName: this.objectApiName
+            }
+          }
+        });
+      });
+    }
   }
 
   @wire(getFiles, {
