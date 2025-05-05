@@ -1,9 +1,11 @@
 <template>
   <li
-    class="slds-col slds-size_12-of-12 slds-var-p-horizontal_medium slds-var-p-vertical_xx-small"
+    class="slds-col slds-size_12-of-12 slds-var-p-horizontal_small slds-var-p-vertical_xx-small"
   >
     <a href={file.fileUrl} onclick={handleClick}>
-      <div class="slds-size_12-of-12 slds-grid slds-grid_align-end">
+      <div
+        class="slds-size_12-of-12 slds-grid slds-grid_align-end slds-grid_vertical-align-center"
+      >
         <template if:true={file.hasPreview}>
           <div
             class="slds-show_inline-block slds-size_1-of-12 slds-float_left thumbnailImg medium"
@@ -12,10 +14,11 @@
         ></template>
         <template if:false={file.hasPreview}>
           <div
-            class="slds-show_inline-block slds-size_1-of-12 slds-float_left slds-truncate_container_50 medium"
+            class="slds-show_inline-block slds-size_1-of-12 slds-float_left medium"
           >
             <lightning-icon
               class="slds-icon_container"
+              size="small"
               icon-name={file.icon}
             ></lightning-icon></div
         ></template>

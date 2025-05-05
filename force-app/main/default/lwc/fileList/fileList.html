@@ -52,7 +52,7 @@
       </lightning-file-upload>
     </div>
     <div if:false={showDropZone}>
-      <ul class="slds-grid slds-gutters slds-wrap">
+      <ul class={listContainerCss}>
         <template for:each={dataTableFiles} for:item="file">
           <c-file-card
             class={cardSizeCss}

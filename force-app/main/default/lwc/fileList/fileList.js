@@ -30,6 +30,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
   showSkeleton = true;
   showDropZone = false;
   isSmall = false;
+  listContainerCss = "slds-grid slds-wrap slds-var-p-horizontal_small";
   cardSizeCss =
     "slds-col slds-small-size_1-of-1 slds-medium-size_1-of-3 slds-large-size_1-of-4";
   wiredFiles;
@@ -57,6 +58,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
         const filesPerRow = Math.abs(Math.floor(12 / (this.filesPerRow ?? 4)));
         if (this.isSmall) {
           this.cardSizeCss = "slds-col slds-small-size_1-of-1";
+          this.listContainerCss = "slds-grid slds-wrap";
         } else {
           this.cardSizeCss = `slds-col slds-small-size_1-of-1 slds-medium-size_1-of-${filesPerRow} slds-large-size_1-of-${filesPerRow}`;
         }
