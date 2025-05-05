@@ -55,7 +55,8 @@ export default class FileList extends NavigationMixin(LightningElement) {
         const boundingRect = element.getBoundingClientRect().width;
         console.log(boundingRect);
         this.isSmall = boundingRect < 600;
-        const filesPerRow = Math.abs(Math.floor(12 / (this.filesPerRow ?? 4)));
+        const filesPerRow =
+          (this.filesPerRow ?? 3) < 12 ? (this.filesPerRow ?? 3) : 3;
         if (this.isSmall) {
           this.cardSizeCss = "slds-col slds-small-size_1-of-1";
           this.listContainerCss = "slds-grid slds-wrap";
