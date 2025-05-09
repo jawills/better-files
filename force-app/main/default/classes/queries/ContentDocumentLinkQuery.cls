@@ -29,4 +29,12 @@ public with sharing class ContentDocumentLinkQuery extends QueryObject {
       '%' + title + '%'
     );
   }
+
+  public ContentDocumentLinkQuery excludeSNote() {
+    return (ContentDocumentLinkQuery) byField(
+      'ContentDocumentLink.ContentDocument.FileExtension',
+      '!=',
+      'snote'
+    );
+  }
 }

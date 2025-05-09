@@ -7,6 +7,8 @@ public with sharing class ContentVersionQuery extends QueryObject {
         'ContentDocument.Title',
         'ContentDocument.CreatedDate',
         'ContentDocument.LastModifiedDate',
+        'ContentDocument.LastModifiedById',
+        'ContentDocument.LastModifiedBy.Name',
         'ContentDocument.ContentSize',
         'ContentDocument.FileExtension'
       },

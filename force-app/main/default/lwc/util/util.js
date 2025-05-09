@@ -112,6 +112,8 @@ export function mapFile(file) {
     LastModifiedDate: file.ContentDocument.LastModifiedDate,
     FileExtension: file.ContentDocument.FileExtension,
     VersionData: file.VersionData,
+    LastModifiedBy: file.ContentDocument.LastModifiedBy.Name,
+    LastModifiedByLink: `/${file.ContentDocument.LastModifiedById}`,
     hasPreview: hasPreview(file.ContentDocument.FileExtension),
     downloadUrl: `/sfc/servlet.shepherd/document/download/${file.ContentDocumentId}`,
     imageUrl: `/sfc/servlet.shepherd/version/renditionDownload?rendition=thumb120by90&versionId=${file.Id}`,

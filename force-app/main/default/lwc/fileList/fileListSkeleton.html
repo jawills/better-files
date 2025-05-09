@@ -1,17 +1,17 @@
 <template>
   <article class="slds-card slds-var-p-around_x-small">
-    <div class="slds-grid slds-gutters slds-grid_vertical-align-center">
+    <div class="slds-grid slds-gutters_large slds-grid_vertical-align-center">
       <div class="slds-col slds-size_1-of-12 slds-var-m-left_x-small">
         <c-stencil circle="true" height="50" width="50"></c-stencil>
       </div>
-      <div class="slds-col slds-size_8-of-12">
-        <c-stencil height="20" width="200"></c-stencil>
+      <div class="slds-col slds-size_2-of-3">
+        <c-stencil height="20" width="100"></c-stencil>
       </div>
       <div
         if:false={isSmall}
-        class="slds-col slds-size_1-of-12 slds-var-p-left_medium"
+        class="slds-col slds-size_1-of-12 slds-var-p-horizontal_small"
       >
-        <c-stencil width="200" height="40"></c-stencil>
+        <c-stencil width="150" height="40"></c-stencil>
       </div>
     </div>
     <lightning-card>

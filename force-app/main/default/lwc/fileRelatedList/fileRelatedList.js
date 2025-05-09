@@ -142,7 +142,13 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       fieldName: "LastModifiedDate",
       type: "date"
     },
-    { label: "File Extension", fieldName: "FileExtension" },
+    {
+      label: "Last Modified By",
+      fieldName: "LastModifiedByLink",
+      type: "url",
+      typeAttributes: { label: { fieldName: "LastModifiedBy" } }
+    },
+    { label: "File Size", fieldName: "ContentSize" },
     {
       fieldName: "actions",
       type: "action",
@@ -311,9 +317,13 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     deleteFile({ contentDocumentId: row.ContentDocumentId })
       .then(() => {
         this.showToast("Success", "File deleted", "success");
-        return refreshApex(this.wiredFiles).then(() => {
-          this.isLoading = false;
+        this.dataTableFiles = this.dataTableFiles.filter((file) => {
+          return row.ContentDocumentId === file.ContentDocumentId;
         });
+        if (this.contentDocumentIdSet.has(row.ContentDocumentId)) {
+          this.contentDocumentIdSet.delete(row.ContentDocumentId);
+        }
+        return this.handleUploadFinished();
       })
       .catch((error) => {
         console.error(error);

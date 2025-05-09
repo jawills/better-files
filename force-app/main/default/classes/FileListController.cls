@@ -31,6 +31,7 @@ public with sharing class FileListController {
       fileLimit = FILE_LIMIT_FALLBACK;
     }
     List<ContentDocumentLink> cdls = new ContentDocumentLinkQuery()
+      .excludeSNote()
       .byLinkedEntityId(recordId)
       .withLimit(fileLimit)
       .orderBy('SystemModstamp DESC')
@@ -55,6 +56,7 @@ public with sharing class FileListController {
     ContentDocumentLinkQuery cdlQuery = (ContentDocumentLinkQuery) new ContentDocumentLinkQuery()
       .byLinkedEntityId(recordId)
       .byContentDocumentTitle(title)
+      .excludeSNote()
       .withLimit(fileLimit)
       .orderBy('SystemModstamp DESC');
     List<ContentDocumentLink> cdls = cdlQuery.getList();
@@ -68,7 +70,10 @@ public with sharing class FileListController {
 
   @AuraEnabled(cacheable=true)
   public static Integer getFileCount(Id recordId) {
-    return new ContentDocumentLinkQuery().byLinkedEntityId(recordId).getCount();
+    return new ContentDocumentLinkQuery()
+      .excludeSNote()
+      .byLinkedEntityId(recordId)
+      .getCount();
   }
 
   @AuraEnabled
@@ -79,13 +84,7 @@ public with sharing class FileListController {
 
   @AuraEnabled
   public static List<Id> deleteFiles(List<Id> contentDocumentIds) {
-    System.debug(contentDocumentIds);
-    DML.Result[] results = new DatabaseService()
-      .asUser()
-      .deleteRecords(contentDocumentIds);
-    for (DML.Result result : results) {
-      System.debug(result.id);
-    }
+    new DatabaseService().asUser().deleteRecords(contentDocumentIds);
     return contentDocumentIds;
   }
 
