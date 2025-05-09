@@ -12,6 +12,7 @@ import { mapFile } from "c/util";
 import LightningConfirm from "lightning/confirm";
 import fileRelatedListSkeleton from "./fileRelatedListSkeleton.html";
 import fileRelatedList from "./fileRelatedList.html";
+import { RefreshEvent } from "lightning/refresh";
 
 //@todo make dynamic
 const ACTIONS = [
@@ -158,9 +159,10 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
 
   handleUploadFinished() {
     refreshApex(this.wiredFileCount);
-    return refreshApex(this.wiredFiles).then(() => {
+    refreshApex(this.wiredFiles).then(() => {
       this.isLoading = false;
     });
+    this.dispatchEvent(new RefreshEvent());
   }
 
   getSelectedRecords(event) {
@@ -318,7 +320,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       .then(() => {
         this.showToast("Success", "File deleted", "success");
         this.dataTableFiles = this.dataTableFiles.filter((file) => {
-          return row.ContentDocumentId === file.ContentDocumentId;
+          return row.ContentDocumentId !== file.ContentDocumentId;
         });
         if (this.contentDocumentIdSet.has(row.ContentDocumentId)) {
           this.contentDocumentIdSet.delete(row.ContentDocumentId);

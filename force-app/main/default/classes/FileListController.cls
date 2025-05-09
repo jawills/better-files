@@ -19,6 +19,7 @@ public with sharing class FileListController {
       .byId(cvIds)
       .orderBy('ContentDocument.LastModifiedDate DESC')
       .withLimit(fileLimit)
+      .asUser()
       .getList();
   }
 
@@ -36,6 +37,7 @@ public with sharing class FileListController {
       .withLimit(fileLimit)
       .orderBy('SystemModstamp DESC')
       .withOffset(page * PAGE_SIZE)
+      .asUser()
       .getList();
     // Can't use collection api b/c nested relationship
     Set<Id> cvIds = new Set<Id>();
@@ -58,6 +60,7 @@ public with sharing class FileListController {
       .byContentDocumentTitle(title)
       .excludeSNote()
       .withLimit(fileLimit)
+      .asUser()
       .orderBy('SystemModstamp DESC');
     List<ContentDocumentLink> cdls = cdlQuery.getList();
     // Can't use collection api b/c nested relationship
@@ -73,6 +76,7 @@ public with sharing class FileListController {
     return new ContentDocumentLinkQuery()
       .excludeSNote()
       .byLinkedEntityId(recordId)
+      .asUser()
       .getCount();
   }
 
@@ -143,6 +147,7 @@ public with sharing class FileListController {
     ContentDocumentLink cdl = new ContentDocumentLink();
     cdl.ContentDocumentId = (Id) new ContentVersionQuery()
       .byId(contentVersionId)
+      .asUser()
       .getFirstFieldOrNull(ContentVersion.ContentDocumentId);
     cdl.LinkedEntityId = recordId;
     // ShareType is either 'V', 'C', or 'I'
@@ -165,6 +170,7 @@ public with sharing class FileListController {
       .likeTitle(searchTerm)
       .byId(cvIds)
       .orderBy('ContentDocument.LastModifiedDate DESC')
+      .asUser()
       .withLimit(25)
       .getList();
   }

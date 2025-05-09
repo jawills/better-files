@@ -144,6 +144,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
     refreshApex(this.wiredFileCount).then(() => {
       this.isLoading = false;
     });
+    this.dispatchEvent(new RefreshEvent());
   }
 
   handleMenuUpload() {
@@ -206,8 +207,6 @@ export default class FileList extends NavigationMixin(LightningElement) {
         this.template.querySelector("input").value = "";
         // notifyRecordUpdateAvailable(recordIds).then(() => {
         // });
-        this.dispatchEvent(new RefreshEvent());
-        this.handleUploadFinished();
       })
       .catch((error) => {
         console.error("Error uploading files", error);
@@ -219,8 +218,6 @@ export default class FileList extends NavigationMixin(LightningElement) {
       })
       .finally(() => {
         this.isUploading = false;
-        this.dispatchEvent(new RefreshEvent());
-        this.handleUploadFinished();
       });
     this.handleUploadFinished();
   }
