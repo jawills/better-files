@@ -1,8 +1,8 @@
 {
   "packageDirectories": [
     {
-      "versionName": "v1.2.4",
-      "versionNumber": "1.2.4.NEXT",
+      "versionName": "v1.3",
+      "versionNumber": "1.3.0.NEXT",
       "ancestorVersion": "HIGHEST",
       "path": "force-app",
       "default": true,
