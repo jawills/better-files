@@ -94,5 +94,6 @@ export default class Stencil extends LightningElement {
     if (this.weightVariant === "dark") {
       return "background-color: #ccc";
     }
+    return "background-color: #f3f2f2";
   }
 }

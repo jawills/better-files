@@ -50,6 +50,9 @@ IlluminatedCloud/
 *.iml
 *.csv
 
+## Ignore Analyzer
+*.log.gz
+analyzer/
 
 #Ignore Build Files
 .tmp

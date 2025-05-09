@@ -1,4 +1,4 @@
-import { LightningElement, wire, api, track } from "lwc";
+import { LightningElement, wire, track } from "lwc";
 import getFiles from "@salesforce/apex/FileListController.getFiles";
 import getFileCount from "@salesforce/apex/FileListController.getFileCount";
 import deleteFile from "@salesforce/apex/FileListController.deleteFile";
@@ -10,7 +10,6 @@ import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { refreshApex } from "@salesforce/apex";
 import { mapFile } from "c/util";
 import LightningConfirm from "lightning/confirm";
-import { RefreshEvent } from "lightning/refresh";
 import fileRelatedListSkeleton from "./fileRelatedListSkeleton.html";
 import fileRelatedList from "./fileRelatedList.html";
 
@@ -24,8 +23,8 @@ const ACTIONS = [
 const DELAY = 350; // Debounce delay in milliseconds
 
 export default class FileRelatedList extends NavigationMixin(LightningElement) {
-  @api baseObjectName;
-  @api baseObjectUrl;
+  @track baseObjectUrl;
+  @track baseObjectName;
   @track baseRecordId;
   @track searchTerm = "";
   @track relatedRecordName;
@@ -56,28 +55,27 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   getCurrentPageReference(currentPageReference) {
     this.currentPageReference = currentPageReference;
     new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (this.currentPageReference) {
-          this.baseRecordId = this.currentPageReference.state.c__recordId
-            ? this.currentPageReference.state.c__recordId
-            : null;
-          this.baseObjectName = this.currentPageReference.state.c__objectName
-            ? this.currentPageReference.state.c__objectName
-            : null;
-          this.getBaseObjectUrl();
-          getRecordName({
-            recordId: this.baseRecordId,
-            objectAPIName: this.baseObjectName
+      if (this.currentPageReference) {
+        this.baseRecordId = this.currentPageReference.state.c__recordId
+          ? this.currentPageReference.state.c__recordId
+          : null;
+        this.baseObjectName = this.currentPageReference.state.c__objectName
+          ? this.currentPageReference.state.c__objectName
+          : null;
+        this.getBaseObjectUrl();
+        getRecordName({
+          recordId: this.baseRecordId,
+          objectAPIName: this.baseObjectName
+        })
+          .then((data) => {
+            this.relatedRecordName = data;
           })
-            .then((data) => {
-              this.relatedRecordName = data;
-            })
-            .catch((err) => {
-              console.error(err);
-            });
-          resolve();
-        }
-      }, 0);
+          .catch((err) => {
+            console.error(err);
+            reject(err);
+          });
+        resolve();
+      }
     }).catch((error) => {
       console.error(JSON.stringify(error));
     });
@@ -196,7 +194,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     }
   }
 
-  handleSearchKeyChange(event) {
+  async handleSearchKeyChange(event) {
     // Clear any pending debounce timeout
     clearTimeout(this.delayTimeout);
     this.searchTermUpdated = Date.now();
@@ -214,6 +212,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     this.isLoading = true;
 
     // Debounce the search to avoid too many server calls
+    // Ignore Sev3 "setTimeout" as this is correct usage
     this.delayTimeout = setTimeout(() => {
       searchContentVersions({
         searchTerm: this.searchTerm,

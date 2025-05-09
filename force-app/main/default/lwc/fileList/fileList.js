@@ -11,7 +11,6 @@ import { loadStyle } from "lightning/platformResourceLoader";
 import dropzoneStyle from "@salesforce/resourceUrl/dropzone";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { RefreshEvent } from "lightning/refresh";
-import { notifyRecordUpdateAvailable } from "lightning/uiRecordApi";
 import {
   IsConsoleNavigation,
   getFocusedTabInfo,
@@ -44,27 +43,21 @@ export default class FileList extends NavigationMixin(LightningElement) {
 
   renderedCallback() {
     Promise.all([loadStyle(this, dropzoneStyle)]);
-  }
-
-  connectedCallback() {
-    // Allow the DOM to render first
-    setTimeout(() => {
-      const element = this.template.querySelector("lightning-card");
-      if (element) {
-        // Get various width measurements
-        const boundingRect = element.getBoundingClientRect().width;
-        console.log(boundingRect);
-        this.isSmall = boundingRect < 600;
-        const filesPerRow =
-          (this.filesPerRow ?? 3) < 12 ? (this.filesPerRow ?? 3) : 3;
-        if (this.isSmall) {
-          this.cardSizeCss = "slds-col slds-small-size_1-of-1";
-          this.listContainerCss = "slds-grid slds-wrap";
-        } else {
-          this.cardSizeCss = `slds-col slds-small-size_1-of-1 slds-medium-size_1-of-${filesPerRow} slds-large-size_1-of-${filesPerRow}`;
-        }
+    const element = this.template.querySelector("lightning-card");
+    if (element) {
+      // Get various width measurements
+      const boundingRect = element.getBoundingClientRect().width;
+      console.log(boundingRect);
+      this.isSmall = boundingRect < 600;
+      const filesPerRow =
+        (this.filesPerRow ?? 3) < 12 ? (this.filesPerRow ?? 3) : 3;
+      if (this.isSmall) {
+        this.cardSizeCss = "slds-col slds-small-size_1-of-1";
+        this.listContainerCss = "slds-grid slds-wrap";
+      } else {
+        this.cardSizeCss = `slds-col slds-small-size_1-of-1 slds-medium-size_1-of-${filesPerRow} slds-large-size_1-of-${filesPerRow}`;
       }
-    }, 0);
+    }
   }
 
   viewAllRecords() {
@@ -205,7 +198,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
         });
         return Promise.all(uploadPromises);
       })
-      .then((results) => {
+      .then(() => {
         // console.log(record?Ids);
         console.log("seconds");
         this.showToast("Success", `File uploaded successfully`, "success");
