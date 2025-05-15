@@ -78,26 +78,31 @@ export default class FileList extends NavigationMixin(LightningElement) {
         false
       );
     } else {
-      getFocusedTabInfo().then((tabInfo) => {
-        const { tabId } = tabInfo;
-        openSubtab(tabId, {
-          focus: true,
-          label: `Files`,
-          icon: "standard:file",
-          iconAlt: "Files",
-          pageReference: {
-            type: "standard__component",
-            attributes: {
-              componentName: "file1sync__fileRelatedList",
-              recordId: this.recordId
-            },
-            state: {
-              c__recordId: this.recordId,
-              c__objectName: this.objectApiName
+      getFocusedTabInfo()
+        .then((tabInfo) => {
+          console.log(tabInfo);
+          const { tabId, parentTabId } = tabInfo;
+          const selectedTab = parentTabId !== null ? parentTabId : tabId;
+          openSubtab(selectedTab, {
+            focus: true,
+            label: `Files`,
+            icon: "standard:file",
+            iconAlt: "Files",
+            pageReference: {
+              type: "standard__component",
+              attributes: {
+                componentName: "file1sync__fileRelatedList"
+              },
+              state: {
+                c__recordId: this.recordId,
+                c__objectName: this.objectApiName
+              }
             }
-          }
+          });
+        })
+        .catch((err) => {
+          console.error(err);
         });
-      });
     }
   }
 

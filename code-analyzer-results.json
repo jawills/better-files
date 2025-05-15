@@ -13,8 +13,8 @@
     "eslint": "0.23.0",
     "retire-js": "0.21.0",
     "regex": "0.21.0",
-    "cpd": "0.24.0",
-    "pmd": "0.24.0"
+    "pmd": "0.24.0",
+    "cpd": "0.24.0"
   },
   "violations": [
     {
@@ -31,9 +31,9 @@
       "locations": [
         {
           "file": "force-app/main/default/lwc/fileRelatedList/fileRelatedList.js",
-          "startLine": 222,
+          "startLine": 224,
           "startColumn": 25,
-          "endLine": 248,
+          "endLine": 250,
           "endColumn": 14
         }
       ],
@@ -90,37 +90,6 @@
       "resources": []
     },
     {
-      "rule": "DetectCopyPasteForApex",
-      "engine": "cpd",
-      "severity": 5,
-      "tags": [
-        "Recommended",
-        "Design",
-        "Apex"
-      ],
-      "primaryLocationIndex": 0,
-      "locations": [
-        {
-          "file": "force-app/main/libra/classes/database/DatabaseUnitOfWorkTest.cls",
-          "startLine": 124,
-          "startColumn": 77,
-          "endLine": 129,
-          "endColumn": 72
-        },
-        {
-          "file": "force-app/main/libra/classes/database/DatabaseUnitOfWorkTest.cls",
-          "startLine": 143,
-          "startColumn": 44,
-          "endLine": 148,
-          "endColumn": 72
-        }
-      ],
-      "message": "Duplicate code detected for language 'apex'. Found 2 code locations containing the same block of code consisting of 100 tokens across 6 lines.",
-      "resources": [
-        "https://docs.pmd-code.org/latest/pmd_userdocs_cpd.html#refactoring-duplicates"
-      ]
-    },
-    {
       "rule": "ApexDoc",
       "engine": "pmd",
       "severity": 4,
@@ -135,7 +104,7 @@
           "file": "force-app/main/default/classes/FileListController.cls",
           "startLine": 1,
           "startColumn": 21,
-          "endLine": 171,
+          "endLine": 177,
           "endColumn": 2
         }
       ],
@@ -159,7 +128,7 @@
           "file": "force-app/main/default/classes/FileListController.cls",
           "startLine": 5,
           "startColumn": 17,
-          "endLine": 23,
+          "endLine": 24,
           "endColumn": 4
         }
       ],
@@ -181,9 +150,9 @@
       "locations": [
         {
           "file": "force-app/main/default/classes/FileListController.cls",
-          "startLine": 72,
+          "startLine": 75,
           "startColumn": 17,
-          "endLine": 77,
+          "endLine": 81,
           "endColumn": 4
         }
       ],
@@ -205,9 +174,9 @@
       "locations": [
         {
           "file": "force-app/main/default/classes/FileListController.cls",
-          "startLine": 80,
+          "startLine": 84,
           "startColumn": 17,
-          "endLine": 83,
+          "endLine": 87,
           "endColumn": 4
         }
       ],
@@ -229,9 +198,9 @@
       "locations": [
         {
           "file": "force-app/main/default/classes/FileListController.cls",
-          "startLine": 86,
+          "startLine": 90,
           "startColumn": 17,
-          "endLine": 89,
+          "endLine": 93,
           "endColumn": 4
         }
       ],
@@ -253,9 +222,9 @@
       "locations": [
         {
           "file": "force-app/main/default/classes/FileListController.cls",
-          "startLine": 93,
+          "startLine": 97,
           "startColumn": 17,
-          "endLine": 108,
+          "endLine": 112,
           "endColumn": 4
         }
       ],
@@ -277,9 +246,9 @@
       "locations": [
         {
           "file": "force-app/main/default/classes/FileListController.cls",
-          "startLine": 105,
+          "startLine": 109,
           "startColumn": 7,
-          "endLine": 105,
+          "endLine": 109,
           "endColumn": 22
         }
       ],
@@ -301,9 +270,9 @@
       "locations": [
         {
           "file": "force-app/main/default/classes/FileListController.cls",
-          "startLine": 105,
+          "startLine": 109,
           "startColumn": 7,
-          "endLine": 105,
+          "endLine": 109,
           "endColumn": 22
         }
       ],
@@ -325,9 +294,9 @@
       "locations": [
         {
           "file": "force-app/main/default/classes/FileListController.cls",
-          "startLine": 111,
+          "startLine": 115,
           "startColumn": 17,
-          "endLine": 122,
+          "endLine": 126,
           "endColumn": 4
         }
       ],
@@ -349,9 +318,9 @@
       "locations": [
         {
           "file": "force-app/main/default/classes/FileListController.cls",
-          "startLine": 159,
+          "startLine": 164,
           "startColumn": 17,
-          "endLine": 170,
+          "endLine": 176,
           "endColumn": 4
         }
       ],
@@ -30022,6 +29991,37 @@
       "message": "Missing ApexDoc comment",
       "resources": [
         "https://docs.pmd-code.org/pmd-doc-7.12.0/pmd_rules_apex_documentation.html#apexdoc"
+      ]
+    },
+    {
+      "rule": "DetectCopyPasteForApex",
+      "engine": "cpd",
+      "severity": 5,
+      "tags": [
+        "Recommended",
+        "Design",
+        "Apex"
+      ],
+      "primaryLocationIndex": 0,
+      "locations": [
+        {
+          "file": "force-app/main/libra/classes/database/DatabaseUnitOfWorkTest.cls",
+          "startLine": 124,
+          "startColumn": 77,
+          "endLine": 129,
+          "endColumn": 72
+        },
+        {
+          "file": "force-app/main/libra/classes/database/DatabaseUnitOfWorkTest.cls",
+          "startLine": 143,
+          "startColumn": 44,
+          "endLine": 148,
+          "endColumn": 72
+        }
+      ],
+      "message": "Duplicate code detected for language 'apex'. Found 2 code locations containing the same block of code consisting of 100 tokens across 6 lines.",
+      "resources": [
+        "https://docs.pmd-code.org/latest/pmd_userdocs_cpd.html#refactoring-duplicates"
       ]
     }
   ]
