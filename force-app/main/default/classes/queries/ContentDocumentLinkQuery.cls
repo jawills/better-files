@@ -22,6 +22,14 @@ public with sharing class ContentDocumentLinkQuery extends QueryObject {
     );
   }
 
+  public ContentDocumentLinkQuery byLinkedEntityIds(Set<Id> linkedEntityIds) {
+    return (ContentDocumentLinkQuery) byField(
+      ContentDocumentLink.LinkedEntityId,
+      'IN',
+      linkedEntityIds
+    );
+  }
+
   public ContentDocumentLinkQuery byContentDocumentTitle(String title) {
     return (ContentDocumentLinkQuery) byField(
       'ContentDocumentLink.ContentDocument.Title',

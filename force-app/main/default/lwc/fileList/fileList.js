@@ -22,6 +22,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
   @api accept;
   @api multiple;
   @api fileLimit;
+  @api includeEmails;
   @api filePreview;
   @api filesPerRow;
   cardTitle = "Files";
@@ -72,7 +73,8 @@ export default class FileList extends NavigationMixin(LightningElement) {
           },
           state: {
             c__recordId: this.recordId,
-            c__objectName: this.objectApiName
+            c__objectName: this.objectApiName,
+            c__includeEmails: this.includeEmails
           }
         },
         false
@@ -95,7 +97,8 @@ export default class FileList extends NavigationMixin(LightningElement) {
               },
               state: {
                 c__recordId: this.recordId,
-                c__objectName: this.objectApiName
+                c__objectName: this.objectApiName,
+                c__includeEmails: this.includeEmails
               }
             }
           });
@@ -109,9 +112,13 @@ export default class FileList extends NavigationMixin(LightningElement) {
   @wire(getFiles, {
     recordId: "$recordId",
     fileLimit: "$fileLimit",
-    page: 0
+    page: 0,
+    includeEmails: "$includeEmails"
   })
   getWiredFiles(result) {
+    // @NOTE will product infinite loading screen
+    // When Wired Properties are not filled
+
     this.wiredFiles = result;
     if (result.data) {
       this.dataTableFiles = this.wiredFiles.data.map((file) => {
@@ -131,7 +138,10 @@ export default class FileList extends NavigationMixin(LightningElement) {
     }
   }
 
-  @wire(getFileCount, { recordId: "$recordId" })
+  @wire(getFileCount, {
+    recordId: "$recordId",
+    includeEmails: "$includeEmails"
+  })
   getWiredFileCount(result) {
     this.wiredFileCount = result;
     if (result.data) {

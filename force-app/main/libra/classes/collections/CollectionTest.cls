@@ -57,6 +57,11 @@ private class CollectionTest {
         })
     };
 
+    private static List<Account> accList = new List<Account>{
+        new Account(id='001000000000000'),
+        new Account(id='001000000000001')
+    };
+
     /**
      * Creates new Opportunity with fields prefilled for testing Collections.
      * Opportunity is created through JSON.deserialize, because some fields are not writable through constructor.
@@ -656,7 +661,7 @@ private class CollectionTest {
     static void testGetList() {
         List<String> strings = Collection.of(opportunities).collect(Opportunity.Name).getListString();
         List<Id> ids = Collection.of(opportunities).collect(Opportunity.Id).getListId();
-        List<Integer> integers = Collection.of(opportunities).collect(Opportunity.FiscalYear).getListInteger();
+        List<Integer> integers = Collection.of(accList).collect(Account.NumberOfEmployees).getListInteger();
 
         Assert.isFalse(strings.isEmpty());
         Assert.isFalse(ids.isEmpty());
@@ -678,7 +683,7 @@ private class CollectionTest {
     static void testGetSet() {
         Set<String> strings = Collection.of(opportunities).collect(Opportunity.Name).getSetString();
         Set<Id> ids = Collection.of(opportunities).collect(Opportunity.Id).getSetId();
-        Set<Integer> integers = Collection.of(opportunities).collect(Opportunity.FiscalYear).getSetInteger();
+        Set<Integer> integers = Collection.of(accList).collect(Account.NumberOfEmployees).getSetInteger();
 
         Assert.isFalse(strings.isEmpty());
         Assert.isFalse(ids.isEmpty());

@@ -28,6 +28,10 @@
                 name="filesPerRow" type="Integer"
                 default="3"
                 label="How many files per row" />
+            <property name="includeEmails"
+                type="Boolean"
+                default="false"
+                label="Show Email Message Attachments" />
         </targetConfig>
     </targetConfigs>
     <isExposed>true</isExposed>

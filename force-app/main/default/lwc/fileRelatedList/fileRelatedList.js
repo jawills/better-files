@@ -26,6 +26,7 @@ const DELAY = 350; // Debounce delay in milliseconds
 export default class FileRelatedList extends NavigationMixin(LightningElement) {
   @track baseObjectUrl;
   @track baseObjectName;
+  @track includeEmails;
   @track baseRecordId;
   @track searchTerm = "";
   @track relatedRecordName;
@@ -63,6 +64,9 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
         this.baseObjectName = this.currentPageReference.state.c__objectName
           ? this.currentPageReference.state.c__objectName
           : null;
+        this.includeEmails = this.currentPageReference.state.c__includeEmails
+          ? this.currentPageReference.state.c__includeEmails
+          : false;
         this.getBaseObjectUrl();
         getRecordName({
           recordId: this.baseRecordId,
@@ -84,7 +88,8 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   @wire(getFiles, {
     recordId: "$baseRecordId",
     fileLimit: 25,
-    page: "$currentPage"
+    page: "$currentPage",
+    includeEmails: true
   })
   getWiredFiles(result) {
     this.wiredFiles = result;
@@ -173,7 +178,10 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     this.getSelectedText();
   }
 
-  @wire(getFileCount, { recordId: "$baseRecordId" })
+  @wire(getFileCount, {
+    recordId: "$baseRecordId",
+    includeEmails: "$includeEmails"
+  })
   getWiredFileCount(result) {
     this.wiredFileCount = result;
     if (result.data) {

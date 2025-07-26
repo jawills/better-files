@@ -5,13 +5,18 @@ public with sharing class FileListController {
   public static List<ContentVersion> getFiles(
     Id recordId,
     Integer fileLimit,
-    Integer page
+    Integer page,
+    Boolean includeEmails
   ) {
     if (fileLimit == null) {
       fileLimit = FILE_LIMIT_FALLBACK;
     }
-    Set<Id> cvIds = getContentVersionIdsByRelatedRecord(
-      recordId,
+    Set<Id> recordIds = new Set<Id>{ recordId };
+    if (includeEmails) {
+      recordIds.addAll(getEmailMessageIds(recordId));
+    }
+    Set<Id> cvIds = getContentVersionIdsByRelatedRecords(
+      recordIds,
       fileLimit,
       page
     );
@@ -23,8 +28,8 @@ public with sharing class FileListController {
       .getList();
   }
 
-  private static Set<Id> getContentVersionIdsByRelatedRecord(
-    Id recordId,
+  private static Set<Id> getContentVersionIdsByRelatedRecords(
+    Set<Id> recordIds,
     Integer fileLimit,
     Integer page
   ) {
@@ -33,7 +38,7 @@ public with sharing class FileListController {
     }
     List<ContentDocumentLink> cdls = new ContentDocumentLinkQuery()
       .excludeSNote()
-      .byLinkedEntityId(recordId)
+      .byLinkedEntityIds(recordIds)
       .withLimit(fileLimit)
       .orderBy('SystemModstamp DESC')
       .withOffset(page * PAGE_SIZE)
@@ -48,7 +53,7 @@ public with sharing class FileListController {
   }
 
   private static Set<Id> getContentVersionIdsByTitle(
-    Id recordId,
+    Set<Id> recordIds,
     String title,
     Integer fileLimit
   ) {
@@ -56,7 +61,7 @@ public with sharing class FileListController {
       fileLimit = FILE_LIMIT_FALLBACK;
     }
     ContentDocumentLinkQuery cdlQuery = (ContentDocumentLinkQuery) new ContentDocumentLinkQuery()
-      .byLinkedEntityId(recordId)
+      .byLinkedEntityIds(recordIds)
       .byContentDocumentTitle(title)
       .excludeSNote()
       .withLimit(fileLimit)
@@ -72,10 +77,15 @@ public with sharing class FileListController {
   }
 
   @AuraEnabled(cacheable=true)
-  public static Integer getFileCount(Id recordId) {
+  public static Integer getFileCount(Id recordId, Boolean includeEmails) {
+    //@TODO Add Email Count
+    Set<Id> recordIds = new Set<Id>{ recordId };
+    if (includeEmails) {
+      recordIds.addAll(getEmailMessageIds(recordId));
+    }
     return new ContentDocumentLinkQuery()
       .excludeSNote()
-      .byLinkedEntityId(recordId)
+      .byLinkedEntityIds(recordIds)
       .asUser()
       .getCount();
   }
@@ -90,6 +100,25 @@ public with sharing class FileListController {
   public static List<Id> deleteFiles(List<Id> contentDocumentIds) {
     new DatabaseService().asUser().deleteRecords(contentDocumentIds);
     return contentDocumentIds;
+  }
+
+  /**
+   * Get Email Message Ids related to parent record
+   */
+  private static Set<Id> getEmailMessageIds(Id recordId) {
+    Set<Id> emailMessageIds = new Set<Id>();
+    List<EmailMessageRelation> emailRelList = (List<EmailMessageRelation>) new EmailMessageRelationQuery()
+      .byRelationId(recordId)
+      .hasAttatchment()
+      .asUser()
+      .getList();
+
+    // Cannot use reducer method b/c need casted as id
+    for (EmailMessageRelation emailRel : emailRelList) {
+      emailMessageIds.add(emailRel.EmailMessageId);
+    }
+
+    return emailMessageIds;
   }
 
   @AuraEnabled(cacheable=true)
@@ -163,9 +192,14 @@ public with sharing class FileListController {
   @AuraEnabled(cacheable=true)
   public static List<ContentVersion> searchContentVersions(
     String searchTerm,
-    String recordId
+    String recordId,
+    Boolean includeEmails
   ) {
-    Set<Id> cvIds = getContentVersionIdsByTitle(recordId, searchTerm, 20);
+    Set<Id> recordIds = new Set<Id>{ recordId };
+    if (includeEmails) {
+      recordIds.addAll(getEmailMessageIds(recordId));
+    }
+    Set<Id> cvIds = getContentVersionIdsByTitle(recordIds, searchTerm, 20);
     return new ContentVersionQuery()
       .likeTitle(searchTerm)
       .byId(cvIds)

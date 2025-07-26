@@ -32,7 +32,7 @@ public with sharing class FileListControllerTest {
   @isTest
   static void testFileCount() {
     Account acc = [SELECT Id FROM Account WHERE Name = 'Test 1Sync File'];
-    Integer fileCount = FileListController.getFileCount(acc.Id);
+    Integer fileCount = FileListController.getFileCount(acc.Id, false);
     System.assertEquals(1, fileCount, 'Incorrect file count recieved');
   }
 
@@ -42,7 +42,8 @@ public with sharing class FileListControllerTest {
     List<ContentVersion> fileVersions = FileListController.getFiles(
       acc.Id,
       25,
-      0
+      0,
+      false
     );
     System.assertEquals(
       1,
@@ -57,14 +58,15 @@ public with sharing class FileListControllerTest {
     List<ContentVersion> fileVersions = FileListController.getFiles(
       acc.Id,
       25,
-      0
+      0,
+      false
     );
 
     for (ContentVersion cv : fileVersions) {
       FileListController.deleteFile(cv.ContentDocumentId);
     }
 
-    fileVersions = FileListController.getFiles(acc.Id, 25, 0);
+    fileVersions = FileListController.getFiles(acc.Id, 25, 0, false);
     System.assertEquals(0, fileVersions.size(), 'File not deleted correctly');
   }
 
@@ -98,7 +100,8 @@ public with sharing class FileListControllerTest {
     Account a = [SELECT Id, Name FROM Account WHERE Name = 'Test 1Sync File'];
     List<ContentVersion> cvs = FileListController.searchContentVersions(
       'test',
-      a.Id
+      a.Id,
+      false
     );
     System.assertEquals(1, cvs.size(), 'Incorrect file size');
   }
