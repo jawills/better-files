@@ -1,13 +1,13 @@
 {
   "packageDirectories": [
     {
-      "versionName": "v1.8",
-      "versionNumber": "1.8.0.NEXT",
+      "versionName": "v1.9",
+      "versionNumber": "1.9.0.NEXT",
       "ancestorVersion": "HIGHEST",
       "path": "force-app",
       "default": true,
       "package": "Better Files By 1Sync",
-      "versionDescription": "Added support for email message attachments"
+      "versionDescription": "Improved support for email message attachments"
     }
   ],
   "name": "1sync-file",
@@ -38,6 +38,7 @@
     "1Sync File App@1.5.0-1": "04tQl000000EzurIAC",
     "1Sync File App@1.6.0-1": "04tQl000000FZIPIA4",
     "1Sync File App@1.7.0-1": "04tQl000000G1MjIAK",
-    "1Sync File App@1.8.0-1": "04tQl000000G1OLIA0"
+    "1Sync File App@1.8.0-1": "04tQl000000G1OLIA0",
+    "1Sync File App@1.9.0-1": "04tQl000000MrfBIAS"
   }
 }

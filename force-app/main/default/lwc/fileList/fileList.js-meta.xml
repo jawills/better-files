@@ -30,7 +30,7 @@
                 label="How many files per row" />
             <property name="includeEmails"
                 type="Boolean"
-                default="false"
+                default="true"
                 label="Show Email Message Attachments" />
         </targetConfig>
     </targetConfigs>

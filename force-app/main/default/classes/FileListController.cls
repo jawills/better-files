@@ -107,15 +107,15 @@ public with sharing class FileListController {
    */
   private static Set<Id> getEmailMessageIds(Id recordId) {
     Set<Id> emailMessageIds = new Set<Id>();
-    List<EmailMessageRelation> emailRelList = (List<EmailMessageRelation>) new EmailMessageRelationQuery()
+    List<EmailMessage> emailRelList = (List<EmailMessage>) new EmailMessageQuery()
       .byRelationId(recordId)
       .hasAttatchment()
       .asUser()
       .getList();
 
     // Cannot use reducer method b/c need casted as id
-    for (EmailMessageRelation emailRel : emailRelList) {
-      emailMessageIds.add(emailRel.EmailMessageId);
+    for (EmailMessage emailRel : emailRelList) {
+      emailMessageIds.add(emailRel.Id);
     }
 
     return emailMessageIds;
