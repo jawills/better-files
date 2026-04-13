@@ -6,7 +6,8 @@ public with sharing class FileListController {
     Id recordId,
     Integer fileLimit,
     Integer page,
-    Boolean includeEmails
+    Boolean includeEmails,
+    Integer minContentSize
   ) {
     if (fileLimit == null) {
       fileLimit = FILE_LIMIT_FALLBACK;
@@ -18,7 +19,8 @@ public with sharing class FileListController {
     Set<Id> cvIds = getContentVersionIdsByRelatedRecords(
       recordIds,
       fileLimit,
-      page
+      page,
+      minContentSize
     );
     return new ContentVersionQuery()
       .byId(cvIds)
@@ -31,7 +33,8 @@ public with sharing class FileListController {
   private static Set<Id> getContentVersionIdsByRelatedRecords(
     Set<Id> recordIds,
     Integer fileLimit,
-    Integer page
+    Integer page,
+    Integer minContentSize
   ) {
     if (fileLimit == null) {
       fileLimit = FILE_LIMIT_FALLBACK;
@@ -39,6 +42,7 @@ public with sharing class FileListController {
     List<ContentDocumentLink> cdls = new ContentDocumentLinkQuery()
       .excludeSNote()
       .byLinkedEntityIds(recordIds)
+      .byMinimumContentSize(minContentSize)
       .withLimit(fileLimit)
       .orderBy('SystemModstamp DESC')
       .withOffset(page * PAGE_SIZE)
@@ -55,7 +59,8 @@ public with sharing class FileListController {
   private static Set<Id> getContentVersionIdsByTitle(
     Set<Id> recordIds,
     String title,
-    Integer fileLimit
+    Integer fileLimit,
+    Integer minContentSize
   ) {
     if (fileLimit == null) {
       fileLimit = FILE_LIMIT_FALLBACK;
@@ -64,6 +69,7 @@ public with sharing class FileListController {
       .byLinkedEntityIds(recordIds)
       .byContentDocumentTitle(title)
       .excludeSNote()
+      .byMinimumContentSize(minContentSize)
       .withLimit(fileLimit)
       .asUser()
       .orderBy('SystemModstamp DESC');
@@ -77,7 +83,11 @@ public with sharing class FileListController {
   }
 
   @AuraEnabled(cacheable=true)
-  public static Integer getFileCount(Id recordId, Boolean includeEmails) {
+  public static Integer getFileCount(
+    Id recordId,
+    Boolean includeEmails,
+    Integer minContentSize
+  ) {
     Set<Id> recordIds = new Set<Id>{ recordId };
     if (includeEmails) {
       recordIds.addAll(getEmailMessageIds(recordId));
@@ -85,6 +95,7 @@ public with sharing class FileListController {
     List<ContentDocumentLink> cdls = new ContentDocumentLinkQuery()
       .excludeSNote()
       .byLinkedEntityIds(recordIds)
+      .byMinimumContentSize(minContentSize)
       .asUser()
       .getList();
 
@@ -199,13 +210,19 @@ public with sharing class FileListController {
   public static List<ContentVersion> searchContentVersions(
     String searchTerm,
     String recordId,
-    Boolean includeEmails
+    Boolean includeEmails,
+    Integer minContentSize
   ) {
     Set<Id> recordIds = new Set<Id>{ recordId };
     if (includeEmails) {
       recordIds.addAll(getEmailMessageIds(recordId));
     }
-    Set<Id> cvIds = getContentVersionIdsByTitle(recordIds, searchTerm, 20);
+    Set<Id> cvIds = getContentVersionIdsByTitle(
+      recordIds,
+      searchTerm,
+      20,
+      minContentSize
+    );
     return new ContentVersionQuery()
       .likeTitle(searchTerm)
       .byId(cvIds)

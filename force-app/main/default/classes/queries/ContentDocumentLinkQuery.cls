@@ -45,4 +45,15 @@ public with sharing class ContentDocumentLinkQuery extends QueryObject {
       'snote'
     );
   }
+
+  public ContentDocumentLinkQuery byMinimumContentSize(Integer minBytes) {
+    if (minBytes != null && minBytes > 0) {
+      return (ContentDocumentLinkQuery) byField(
+        'ContentDocument.ContentSize',
+        '>=',
+        minBytes
+      );
+    }
+    return this;
+  }
 }

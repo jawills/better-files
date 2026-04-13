@@ -25,6 +25,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
   @api includeEmails;
   @api filePreview;
   @api filesPerRow;
+  @api minimumFileSizeKb;
   cardTitle = "Files";
   isLoading = true;
   showSkeleton = true;
@@ -74,7 +75,10 @@ export default class FileList extends NavigationMixin(LightningElement) {
           state: {
             c__recordId: this.recordId,
             c__objectName: this.objectApiName,
-            c__includeEmails: this.includeEmails
+            c__includeEmails: this.includeEmails,
+            c__minimumFileSizeKb: this.normalizeMinimumFileSizeKbForState(
+              this.minimumFileSizeKb
+            )
           }
         },
         false
@@ -98,7 +102,10 @@ export default class FileList extends NavigationMixin(LightningElement) {
               state: {
                 c__recordId: this.recordId,
                 c__objectName: this.objectApiName,
-                c__includeEmails: this.includeEmails
+                c__includeEmails: this.includeEmails,
+                c__minimumFileSizeKb: this.normalizeMinimumFileSizeKbForState(
+                  this.minimumFileSizeKb
+                )
               }
             }
           });
@@ -109,11 +116,28 @@ export default class FileList extends NavigationMixin(LightningElement) {
     }
   }
 
+  normalizeMinimumFileSizeKbForState(kb) {
+    if (kb == null || kb === "" || kb === 0) {
+      return null;
+    }
+    const n = Number(kb);
+    if (Number.isNaN(n) || n <= 0) {
+      return null;
+    }
+    return n;
+  }
+
+  get minContentSizeBytesForWire() {
+    const n = this.normalizeMinimumFileSizeKbForState(this.minimumFileSizeKb);
+    return n == null ? null : Math.floor(n * 1024);
+  }
+
   @wire(getFiles, {
     recordId: "$recordId",
     fileLimit: "$fileLimit",
     page: 0,
-    includeEmails: "$includeEmails"
+    includeEmails: "$includeEmails",
+    minContentSize: "$minContentSizeBytesForWire"
   })
   getWiredFiles(result) {
     // @NOTE will product infinite loading screen
@@ -140,7 +164,8 @@ export default class FileList extends NavigationMixin(LightningElement) {
 
   @wire(getFileCount, {
     recordId: "$recordId",
-    includeEmails: "$includeEmails"
+    includeEmails: "$includeEmails",
+    minContentSize: "$minContentSizeBytesForWire"
   })
   getWiredFileCount(result) {
     this.wiredFileCount = result;

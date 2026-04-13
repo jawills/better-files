@@ -32,6 +32,10 @@
                 type="Boolean"
                 default="true"
                 label="Show Email Message Attachments" />
+            <property name="minimumFileSizeKb"
+                type="Integer"
+                default="0"
+                label="Minimum file size (KB)" />
         </targetConfig>
     </targetConfigs>
     <isExposed>true</isExposed>

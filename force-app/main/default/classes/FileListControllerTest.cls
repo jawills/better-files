@@ -28,12 +28,34 @@ public with sharing class FileListControllerTest {
       ShareType = 'V' // V = Viewer, C = Collaborator, I = Inferred
     );
     insert contentDocumentLink;
+
+    String largeBody = '';
+    for (Integer i = 0; i < 3000; i++) {
+      largeBody += 'X';
+    }
+    ContentVersion largeCv = new ContentVersion(
+      Title = 'Test Big',
+      PathOnClient = 'Big.bin',
+      VersionData = Blob.valueOf(largeBody),
+      IsMajorVersion = true
+    );
+    insert largeCv;
+    ContentVersion insertedLarge = [
+      SELECT ContentDocumentId
+      FROM ContentVersion
+      WHERE Id = :largeCv.Id
+    ];
+    insert new ContentDocumentLink(
+      ContentDocumentId = insertedLarge.ContentDocumentId,
+      LinkedEntityId = acc.Id,
+      ShareType = 'V'
+    );
   }
   @isTest
   static void testFileCount() {
     Account acc = [SELECT Id FROM Account WHERE Name = 'Test 1Sync File'];
-    Integer fileCount = FileListController.getFileCount(acc.Id, false);
-    System.assertEquals(1, fileCount, 'Incorrect file count recieved');
+    Integer fileCount = FileListController.getFileCount(acc.Id, false, null);
+    System.assertEquals(2, fileCount, 'Incorrect file count recieved');
   }
 
   @isTest
@@ -43,10 +65,11 @@ public with sharing class FileListControllerTest {
       acc.Id,
       25,
       0,
-      false
+      false,
+      null
     );
     System.assertEquals(
-      1,
+      2,
       fileVersions.size(),
       'Incorrect file count recieved'
     );
@@ -59,14 +82,15 @@ public with sharing class FileListControllerTest {
       acc.Id,
       25,
       0,
-      false
+      false,
+      null
     );
 
     for (ContentVersion cv : fileVersions) {
       FileListController.deleteFile(cv.ContentDocumentId);
     }
 
-    fileVersions = FileListController.getFiles(acc.Id, 25, 0, false);
+    fileVersions = FileListController.getFiles(acc.Id, 25, 0, false, null);
     System.assertEquals(0, fileVersions.size(), 'File not deleted correctly');
   }
 
@@ -99,11 +123,54 @@ public with sharing class FileListControllerTest {
   static void testFileSearch() {
     Account a = [SELECT Id, Name FROM Account WHERE Name = 'Test 1Sync File'];
     List<ContentVersion> cvs = FileListController.searchContentVersions(
-      'test',
+      'Big',
       a.Id,
-      false
+      false,
+      null
     );
     System.assertEquals(1, cvs.size(), 'Incorrect file size');
+  }
+
+  @isTest
+  static void testMinimumContentSizeFilter() {
+    Account acc = [SELECT Id FROM Account WHERE Name = 'Test 1Sync File'];
+    List<ContentVersion> allFiles = FileListController.getFiles(
+      acc.Id,
+      25,
+      0,
+      false,
+      null
+    );
+    System.assertEquals(2, allFiles.size(), 'Setup should have two files');
+
+    List<ContentVersion> largeOnly = FileListController.getFiles(
+      acc.Id,
+      25,
+      0,
+      false,
+      100
+    );
+    System.assertEquals(1, largeOnly.size(), 'Small file should be excluded');
+    System.assertEquals(
+      'Test Big',
+      largeOnly[0].ContentDocument.Title,
+      'Larger file should remain'
+    );
+
+    Integer filteredCount = FileListController.getFileCount(acc.Id, false, 100);
+    System.assertEquals(1, filteredCount, 'Count should match filtered list');
+
+    List<ContentVersion> searchLarge = FileListController.searchContentVersions(
+      'test',
+      acc.Id,
+      false,
+      100
+    );
+    System.assertEquals(
+      1,
+      searchLarge.size(),
+      'Search should respect minimum size'
+    );
   }
 
   @isTest
@@ -195,7 +262,8 @@ public with sharing class FileListControllerTest {
       testCase.Id,
       25,
       0,
-      true // includeEmails = true
+      true, // includeEmails = true
+      null
     );
     // The EmailMessage is found (HasAttachment = true), but no ContentDocumentLink exists,
     // so no files are returned
@@ -207,7 +275,7 @@ public with sharing class FileListControllerTest {
 
     // Test that getFileCount with includeEmails=true
     // EmailMessage is found but no ContentDocumentLink exists, so count is 0
-    Integer fileCount = FileListController.getFileCount(testCase.Id, true);
+    Integer fileCount = FileListController.getFileCount(testCase.Id, true, null);
     System.assertEquals(
       0,
       fileCount,
@@ -219,7 +287,8 @@ public with sharing class FileListControllerTest {
       testCase.Id,
       25,
       0,
-      false // includeEmails = false
+      false, // includeEmails = false
+      null
     );
     System.assertEquals(
       0,
@@ -230,7 +299,8 @@ public with sharing class FileListControllerTest {
     // Test that getFileCount with includeEmails=false does NOT include the email attachment
     Integer fileCountWithoutEmails = FileListController.getFileCount(
       testCase.Id,
-      false
+      false,
+      null
     );
     System.assertEquals(
       0,
@@ -298,9 +368,10 @@ public with sharing class FileListControllerTest {
       parentCase.Id,
       25,
       0,
-      true
+      true,
+      null
     );
-    Integer fileCount = FileListController.getFileCount(parentCase.Id, true);
+    Integer fileCount = FileListController.getFileCount(parentCase.Id, true, null);
     Test.stopTest();
 
     System.assertEquals(

@@ -26,7 +26,7 @@ const DELAY = 350; // Debounce delay in milliseconds
 export default class FileRelatedList extends NavigationMixin(LightningElement) {
   @track baseObjectUrl;
   @track baseObjectName;
-  @track includeEmails;
+  @track includeEmails = false;
   @track baseRecordId;
   @track searchTerm = "";
   @track relatedRecordName;
@@ -48,28 +48,51 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   currentPage = 0;
   @track dataTableFiles = [];
   hasAdditionalFiles = false;
+  @track minimumFileSizeBytes = null;
 
   render() {
     // return fileRelatedListSkeleton;
     return this.showSkeleton ? fileRelatedListSkeleton : fileRelatedList;
   }
+  kbFromStateToMinContentSizeBytes(kb) {
+    if (kb == null || kb === "" || kb === false) {
+      return null;
+    }
+    const n = Number(kb);
+    if (Number.isNaN(n) || n <= 0) {
+      return null;
+    }
+    return Math.floor(n * 1024);
+  }
+
   @wire(CurrentPageReference)
   getCurrentPageReference(currentPageReference) {
     this.currentPageReference = currentPageReference;
     new Promise((resolve, reject) => {
       if (this.currentPageReference) {
-        this.baseRecordId = this.currentPageReference.state.c__recordId
-          ? this.currentPageReference.state.c__recordId
-          : null;
-        this.baseObjectName = this.currentPageReference.state.c__objectName
-          ? this.currentPageReference.state.c__objectName
-          : null;
-        this.includeEmails = this.currentPageReference.state.c__includeEmails
-          ? this.currentPageReference.state.c__includeEmails
+        const state = this.currentPageReference.state || {};
+        const nextRecordId = state.c__recordId ? state.c__recordId : null;
+        const nextMinBytes = this.kbFromStateToMinContentSizeBytes(
+          state.c__minimumFileSizeKb
+        );
+        const recordOrMinChanged =
+          nextRecordId !== this.baseRecordId ||
+          nextMinBytes !== this.minimumFileSizeBytes;
+        if (recordOrMinChanged) {
+          this.currentPage = 0;
+          this.contentDocumentIdSet = new Set();
+          this.dataTableFiles = [];
+          this.isLoading = true;
+        }
+        this.baseRecordId = nextRecordId;
+        this.minimumFileSizeBytes = nextMinBytes;
+        this.baseObjectName = state.c__objectName ? state.c__objectName : null;
+        this.includeEmails = state.c__includeEmails
+          ? state.c__includeEmails
           : false;
         this.getBaseObjectUrl();
         getRecordName({
-          recordId: this.baseRecordId,
+          recordId: nextRecordId,
           objectAPIName: this.baseObjectName
         })
           .then((data) => {
@@ -89,7 +112,8 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     recordId: "$baseRecordId",
     fileLimit: 25,
     page: "$currentPage",
-    includeEmails: true
+    includeEmails: "$includeEmails",
+    minContentSize: "$minimumFileSizeBytes"
   })
   getWiredFiles(result) {
     this.wiredFiles = result;
@@ -180,7 +204,8 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
 
   @wire(getFileCount, {
     recordId: "$baseRecordId",
-    includeEmails: "$includeEmails"
+    includeEmails: "$includeEmails",
+    minContentSize: "$minimumFileSizeBytes"
   })
   getWiredFileCount(result) {
     this.wiredFileCount = result;
@@ -232,7 +257,9 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     this.delayTimeout = setTimeout(() => {
       searchContentVersions({
         searchTerm: this.searchTerm,
-        recordId: this.baseRecordId
+        recordId: this.baseRecordId,
+        includeEmails: this.includeEmails,
+        minContentSize: this.minimumFileSizeBytes
       })
         .then((result) => {
           // Process results to add CreatedByName field
