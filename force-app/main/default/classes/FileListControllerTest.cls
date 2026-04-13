@@ -238,4 +238,81 @@ public with sharing class FileListControllerTest {
       'File count should not include email attachment when includeEmails is false'
     );
   }
+
+  @isTest
+  static void reproducesDuplicateCountWhenEmailIncluded() {
+    Case parentCase = new Case(
+      Subject = 'Duplicate Email Attachment Count Repro',
+      Status = 'New'
+    );
+    insert parentCase;
+
+    EmailMessage emailMsg = new EmailMessage(
+      RelatedToId = parentCase.Id,
+      Subject = 'Email with same linked file',
+      TextBody = 'Used for duplicate count reproduction',
+      FromAddress = 'sender@example.com',
+      ToAddress = 'recipient@example.com',
+      Status = '3',
+      MessageDate = System.now(),
+      Incoming = false
+    );
+    insert emailMsg;
+
+    ContentVersion contentVersionInsert = new ContentVersion(
+      Title = 'SharedAttachment',
+      PathOnClient = 'SharedAttachment.pdf',
+      VersionData = Blob.valueOf('duplicate count repro'),
+      IsMajorVersion = true
+    );
+    insert contentVersionInsert;
+
+    ContentVersion insertedVersion = [
+      SELECT Id, ContentDocumentId
+      FROM ContentVersion
+      WHERE Id = :contentVersionInsert.Id
+    ];
+
+    insert new ContentDocumentLink(
+      ContentDocumentId = insertedVersion.ContentDocumentId,
+      LinkedEntityId = parentCase.Id,
+      ShareType = 'V'
+    );
+
+    insert new ContentDocumentLink(
+      ContentDocumentId = insertedVersion.ContentDocumentId,
+      LinkedEntityId = emailMsg.Id,
+      ShareType = 'V'
+    );
+
+    // Ensure EmailMessageQuery.hasAttatchment() includes this email in getEmailMessageIds().
+    insert new Attachment(
+      ParentId = emailMsg.Id,
+      Name = 'EmailMarkerAttachment.txt',
+      Body = Blob.valueOf('marker'),
+      ContentType = 'text/plain'
+    );
+
+    Test.startTest();
+    List<ContentVersion> files = FileListController.getFiles(
+      parentCase.Id,
+      25,
+      0,
+      true
+    );
+    Integer fileCount = FileListController.getFileCount(parentCase.Id, true);
+    Test.stopTest();
+
+    System.assertEquals(
+      1,
+      files.size(),
+      'getFiles should dedupe identical ContentDocument links to one file'
+    );
+    System.assertEquals(
+      1,
+      fileCount,
+      'getFileCount should dedupe identical ContentDocument links to one unique file count'
+    );
+    // Expected business behavior: deduped count should be 1 to match getFiles.
+  }
 }

@@ -78,16 +78,22 @@ public with sharing class FileListController {
 
   @AuraEnabled(cacheable=true)
   public static Integer getFileCount(Id recordId, Boolean includeEmails) {
-    //@TODO Add Email Count
     Set<Id> recordIds = new Set<Id>{ recordId };
     if (includeEmails) {
       recordIds.addAll(getEmailMessageIds(recordId));
     }
-    return new ContentDocumentLinkQuery()
+    List<ContentDocumentLink> cdls = new ContentDocumentLinkQuery()
       .excludeSNote()
       .byLinkedEntityIds(recordIds)
       .asUser()
-      .getCount();
+      .getList();
+
+    // Count unique files, not link rows, to keep parity with getFiles().
+    Set<Id> cvIds = new Set<Id>();
+    for (ContentDocumentLink cdl : cdls) {
+      cvIds.add(cdl.ContentDocument.LatestPublishedVersionId);
+    }
+    return cvIds.size();
   }
 
   @AuraEnabled
