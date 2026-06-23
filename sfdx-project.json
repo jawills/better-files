@@ -1,19 +1,19 @@
 {
   "packageDirectories": [
     {
-      "versionName": "v1.10",
-      "versionNumber": "1.10.0.NEXT",
+      "versionName": "v1.11",
+      "versionNumber": "1.11.0.NEXT",
       "ancestorVersion": "HIGHEST",
       "path": "force-app",
       "default": true,
       "package": "Better Files By 1Sync",
-      "versionDescription": "Added minimum file size filter"
+      "versionDescription": "Improved file extension detection"
     }
   ],
   "name": "1sync-file",
   "namespace": "file1sync",
   "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "63.0",
+  "sourceApiVersion": "66.0",
   "packageAliases": {
     "1Sync File App": "0HoQl00000000mPKAQ",
     "Better Files By 1Sync": "0HoQl00000000mPKAQ",
@@ -40,6 +40,7 @@
     "1Sync File App@1.7.0-1": "04tQl000000G1MjIAK",
     "1Sync File App@1.8.0-1": "04tQl000000G1OLIA0",
     "1Sync File App@1.9.0-1": "04tQl000000MrfBIAS",
-    "1Sync File App@1.10.0-1": "04tQl000000PW7xIAG"
+    "1Sync File App@1.10.0-1": "04tQl000000PW7xIAG",
+    "1Sync File App@1.11.0-1": "04tQl000000ROz7IAG"
   }
 }

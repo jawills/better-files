@@ -26,7 +26,11 @@ export function formatBytes(bytes, decimals = 0) {
  * @returns {string} The doctype icon name. Returns 'doctype:unknown' if no match is found.
  */
 export function getFileIcon(fileExtension) {
-  const lowerExtension = fileExtension.toLowerCase();
+  if (!fileExtension) {
+    return "doctype:unknown";
+  }
+
+  const lowerExtension = fileExtension.toLowerCase().replace(/^\./, "");
 
   const extensionToIcon = {
     xlsx: "doctype:excel",
