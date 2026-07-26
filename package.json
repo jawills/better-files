@@ -5,19 +5,30 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run test:unit",
+    "test:unit": "sfdx-lwc-jest",
+    "test:unit:watch": "sfdx-lwc-jest --watch",
+    "test:unit:coverage": "sfdx-lwc-jest --coverage",
     "ts-build": "tsc",
     "version-create": "sf package version create --package \"Better Files By 1Sync\"  --code-coverage --installation-key-bypass --wait 10",
     "scan": "sf code-analyzer run --rule-selector Recommended --rule-selector AppExchange --output-file analyzer/code-analyzer-results.json --output-file analyzer/code-analyzer-report.html --target force-app/main/default"
   },
   "author": "jawills",
   "devDependencies": {
+    "@salesforce/sfdx-lwc-jest": "^5.1.0",
     "prettier": "3.4.1",
     "prettier-plugin-apex": "2.2.2",
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@salesforce/lightning-types": "^0.3.0",
-    "lwc": "^8.13.3"
+    "@salesforce/lightning-types": "^0.3.0"
+  },
+  "overrides": {
+    "@lwc/engine-dom": "6.7.2",
+    "@lwc/template-compiler": "6.7.2",
+    "@lwc/compiler": "6.7.2",
+    "@lwc/engine-core": "6.7.2",
+    "@lwc/synthetic-shadow": "6.7.2",
+    "@lwc/wire-service": "6.7.2"
   }
 }

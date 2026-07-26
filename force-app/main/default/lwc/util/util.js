@@ -106,22 +106,30 @@ export function getFormattedFileCount(fileCount) {
   return fileCount <= 6 ? fileCount : "6+";
 }
 
+export function getConsoleParentTabId({ tabId, parentTabId } = {}) {
+  return parentTabId || tabId;
+}
+
 export function mapFile(file) {
+  const contentDocument = file.ContentDocument || {};
+  const lastModifiedById = contentDocument.LastModifiedById;
   return {
     Id: file.Id,
-    ContentDocumentId: file.ContentDocument.Id,
-    Title: file.ContentDocument.Title,
-    CreatedDate: file.ContentDocument.CreatedDate,
-    ContentSize: formatBytes(file.ContentDocument.ContentSize),
-    LastModifiedDate: file.ContentDocument.LastModifiedDate,
-    FileExtension: file.ContentDocument.FileExtension,
+    ContentDocumentId: contentDocument.Id,
+    Title: contentDocument.Title,
+    CreatedDate: contentDocument.CreatedDate,
+    ContentSize: formatBytes(contentDocument.ContentSize),
+    LastModifiedDate: contentDocument.LastModifiedDate,
+    FileExtension: contentDocument.FileExtension,
     VersionData: file.VersionData,
-    LastModifiedBy: file.ContentDocument.LastModifiedBy.Name,
-    LastModifiedByLink: `/${file.ContentDocument.LastModifiedById}`,
-    hasPreview: hasPreview(file.ContentDocument.FileExtension),
+    LastModifiedBy: contentDocument.LastModifiedBy?.Name || "",
+    LastModifiedByLink: lastModifiedById ? `/${lastModifiedById}` : null,
+    hasPreview: hasPreview(contentDocument.FileExtension),
     downloadUrl: `/sfc/servlet.shepherd/document/download/${file.ContentDocumentId}`,
     imageUrl: `/sfc/servlet.shepherd/version/renditionDownload?rendition=thumb120by90&versionId=${file.Id}`,
-    fileUrl: `/lightning/r/${file.ContentDocument.Id}/view`,
-    icon: getFileIcon(file.ContentDocument.FileExtension)
+    fileUrl: contentDocument.Id
+      ? `/lightning/r/${contentDocument.Id}/view`
+      : null,
+    icon: getFileIcon(contentDocument.FileExtension)
   };
 }

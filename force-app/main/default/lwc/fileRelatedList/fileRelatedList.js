@@ -136,12 +136,12 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       this.isLoading = false;
       this.error = undefined;
       this.getSelectedText();
-      this.hasAdditionalFiles =
-        this.dataTableFiles.length < this.wiredFileCount.data;
-      this.originalHasAdditionalFiles = this.hasAdditionalFiles;
+      this.updateHasAdditionalFiles();
       this.showSkeleton = false;
     } else if (result.error) {
       this.error = result.error;
+      this.isLoading = false;
+      this.showSkeleton = false;
       console.error("Error loading files:", result.error); // Log the error
     }
   }
@@ -209,12 +209,15 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   })
   getWiredFileCount(result) {
     this.wiredFileCount = result;
-    if (result.data) {
+    if (result.data != null) {
       this.cardTitle = `Files (${result.data})`;
       this.getSelectedText();
+      this.updateHasAdditionalFiles();
     } else if (result.error) {
       console.error(result.error);
       this.error = result.error;
+      this.isLoading = false;
+      this.showSkeleton = false;
     }
   }
 
@@ -274,6 +277,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
           this.getSelectedText();
           this.hasAdditionalFiles =
             this.searchTerm == "" &&
+            this.wiredFileCount?.data != null &&
             this.dataTableFiles.length < this.wiredFileCount.data;
           this.isLoading = false;
         })
@@ -423,7 +427,18 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   }
 
   getSelectedText() {
-    this.selectedText = `${this.selectedCount} of ${this.wiredFileCount.data} file(s) selected.`;
+    const total = this.wiredFileCount?.data;
+    this.selectedText =
+      total != null
+        ? `${this.selectedCount} of ${total} file(s) selected.`
+        : `${this.selectedCount} file(s) selected.`;
+  }
+
+  updateHasAdditionalFiles() {
+    const total = this.wiredFileCount?.data;
+    this.hasAdditionalFiles =
+      total != null && this.dataTableFiles.length < total;
+    this.originalHasAdditionalFiles = this.hasAdditionalFiles;
   }
 
   getAdditionalFiles() {

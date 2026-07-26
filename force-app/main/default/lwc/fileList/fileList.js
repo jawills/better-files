@@ -1,6 +1,6 @@
 import { LightningElement, wire, api, track } from "lwc";
 import { NavigationMixin } from "lightning/navigation";
-import { mapFile } from "c/util";
+import { mapFile, getConsoleParentTabId } from "c/util";
 import getFiles from "@salesforce/apex/FileListController.getFiles";
 import getFileCount from "@salesforce/apex/FileListController.getFileCount";
 import uploadFile from "@salesforce/apex/FileListController.uploadFile";
@@ -87,9 +87,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
       getFocusedTabInfo()
         .then((tabInfo) => {
           console.log(tabInfo);
-          const { tabId, parentTabId } = tabInfo;
-          const selectedTab = parentTabId !== null ? parentTabId : tabId;
-          openSubtab(selectedTab, {
+          openSubtab(getConsoleParentTabId(tabInfo), {
             focus: true,
             label: `Files`,
             icon: "standard:file",
@@ -158,6 +156,9 @@ export default class FileList extends NavigationMixin(LightningElement) {
     } else if (result.error) {
       this.error = result.error;
       this.wiredFiles = undefined;
+      this.dataTableFiles = [];
+      this.isLoading = false;
+      this.showSkeleton = false;
       console.error("Error loading files:", result.error); // Log the error
     }
   }
@@ -174,6 +175,9 @@ export default class FileList extends NavigationMixin(LightningElement) {
     } else if (result.error) {
       console.error(result.error);
       this.error = result.error;
+      this.dataTableFiles = this.dataTableFiles || [];
+      this.isLoading = false;
+      this.showSkeleton = false;
     }
   }
 
