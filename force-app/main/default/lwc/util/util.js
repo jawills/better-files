@@ -110,12 +110,77 @@ export function getConsoleParentTabId({ tabId, parentTabId } = {}) {
   return parentTabId || tabId;
 }
 
-export function mapFile(file) {
+const IMAGE_EXTENSIONS = new Set([
+  "png",
+  "jpg",
+  "jpeg",
+  "gif",
+  "bmp",
+  "svg",
+  "webp",
+  "tif",
+  "tiff",
+  "heic"
+]);
+
+const DOCUMENT_EXTENSIONS = new Set([
+  "pdf",
+  "doc",
+  "docx",
+  "xls",
+  "xlsx",
+  "csv",
+  "ppt",
+  "pptx",
+  "txt",
+  "rtf",
+  "odt",
+  "ods",
+  "odp"
+]);
+
+export function normalizeFileExtension(fileExtension) {
+  return (fileExtension || "").toLowerCase().replace(/^\./, "");
+}
+
+export function getFileTypeCategory(fileExtension) {
+  const ext = normalizeFileExtension(fileExtension);
+  if (IMAGE_EXTENSIONS.has(ext)) {
+    return "image";
+  }
+  if (DOCUMENT_EXTENSIONS.has(ext)) {
+    return "document";
+  }
+  return "other";
+}
+
+export function matchesFileTypeFilter(fileExtension, fileTypeFilter) {
+  if (!fileTypeFilter || fileTypeFilter === "all") {
+    return true;
+  }
+  return getFileTypeCategory(fileExtension) === fileTypeFilter;
+}
+
+export function getFileTypeFilterOptions() {
+  return [
+    { label: "All files", value: "all" },
+    { label: "Images", value: "image" },
+    { label: "Documents", value: "document" }
+  ];
+}
+
+/**
+ * Maps an Apex FileRow ({ version, ... }) or a legacy ContentVersion.
+ */
+export function mapFile(fileOrRow) {
+  const file = fileOrRow?.version ?? fileOrRow ?? {};
   const contentDocument = file.ContentDocument || {};
   const lastModifiedById = contentDocument.LastModifiedById;
+  const ownerId = contentDocument.OwnerId;
+  const contentDocumentId = contentDocument.Id || file.ContentDocumentId;
   return {
     Id: file.Id,
-    ContentDocumentId: contentDocument.Id,
+    ContentDocumentId: contentDocumentId,
     Title: contentDocument.Title,
     CreatedDate: contentDocument.CreatedDate,
     ContentSize: formatBytes(contentDocument.ContentSize),
@@ -124,12 +189,20 @@ export function mapFile(file) {
     VersionData: file.VersionData,
     LastModifiedBy: contentDocument.LastModifiedBy?.Name || "",
     LastModifiedByLink: lastModifiedById ? `/${lastModifiedById}` : null,
+    Owner: contentDocument.Owner?.Name || "",
+    OwnerLink: ownerId ? `/${ownerId}` : null,
     hasPreview: hasPreview(contentDocument.FileExtension),
-    downloadUrl: `/sfc/servlet.shepherd/document/download/${file.ContentDocumentId}`,
-    imageUrl: `/sfc/servlet.shepherd/version/renditionDownload?rendition=thumb120by90&versionId=${file.Id}`,
+    downloadUrl: contentDocumentId
+      ? `/sfc/servlet.shepherd/document/download/${contentDocumentId}`
+      : null,
+    imageUrl: file.Id
+      ? `/sfc/servlet.shepherd/version/renditionDownload?rendition=thumb120by90&versionId=${file.Id}`
+      : null,
     fileUrl: contentDocument.Id
       ? `/lightning/r/${contentDocument.Id}/view`
       : null,
-    icon: getFileIcon(contentDocument.FileExtension)
+    icon: getFileIcon(contentDocument.FileExtension),
+    linkedEntityId: fileOrRow?.linkedEntityId || null,
+    linkedEntityType: fileOrRow?.linkedEntityType || null
   };
 }

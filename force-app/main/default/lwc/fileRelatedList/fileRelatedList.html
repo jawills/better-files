@@ -37,41 +37,50 @@
       </div>
 
       <div class="slds-page-header__col-actions">
-        <div class="slds-page-header__controls">
-          <div
-            class="slds-page-header__control slds-grid slds-gutters slds-grid_vertical-align-center slds-media slds-media_center"
+        <div class="toolbar">
+          <div class="toolbar__selection slds-text-body_small">
+            {selectedText}
+          </div>
+          <lightning-combobox
+            class="toolbar__filter"
+            label="File type"
+            variant="label-hidden"
+            value={fileTypeFilter}
+            options={fileTypeOptions}
+            onchange={handleFileTypeChange}
           >
-            <div class="slds-col slds-text-body_small">{selectedText}</div>
-            <lightning-input
-              class="slds-col"
-              style="margin-top: auto; margin-bottom: auto"
-              type="search"
-              placeholder="Search files..."
-              onchange={handleSearchKeyChange}
-              value={searchTerm}
-            >
-            </lightning-input>
-            <lightning-button-group
-              lwc:if={hasSelectedRecords}
-              class="slds-col slds-var-p-top_medium"
-              style="margin-top: auto; margin-bottom: auto"
-            >
-              <lightning-button
-                label="Download"
-                onclick={downloadSelectedRecords}
-              ></lightning-button>
-              <lightning-button
-                label="Delete"
-                variant="destructive"
-                onclick={deleteSelectedRecords}
-              ></lightning-button>
-            </lightning-button-group>
+          </lightning-combobox>
+          <lightning-input
+            class="toolbar__search"
+            type="search"
+            label="Search files"
+            variant="label-hidden"
+            placeholder="Search files..."
+            onchange={handleSearchKeyChange}
+            value={searchTerm}
+          >
+          </lightning-input>
+          <lightning-button-group
+            lwc:if={hasSelectedRecords}
+            class="toolbar__button-group"
+          >
+            <lightning-button
+              label="Download"
+              onclick={downloadSelectedRecords}
+            ></lightning-button>
+            <lightning-button
+              label="Delete"
+              variant="destructive"
+              onclick={deleteSelectedRecords}
+            ></lightning-button>
+          </lightning-button-group>
+          <div class="toolbar__upload-wrap">
             <lightning-file-upload
               if:true={showFileUpload}
+              class="toolbar__upload"
               name="fileUploader"
               record-id={baseRecordId}
               onuploadfinished={handleUploadFinished}
-              class="slds-col"
               multiple="true"
             >
             </lightning-file-upload>
@@ -85,21 +94,26 @@
         <ul
           class="slds-page-header__detail-row slds-p-around_none page-header-detail"
         >
-          <c-file-data-table
-            key-field="id"
-            data={dataTableFiles}
-            columns={columns}
-            min-col-width="25"
-            onrowaction={handleRowAction}
-            onrowselection={getSelectedRecords}
-          >
-          </c-file-data-table>
+          <template for:each={tableMountKey} for:item="mount">
+            <c-file-data-table
+              key={mount.id}
+              key-field="Id"
+              data={dataTableFiles}
+              columns={columns}
+              min-col-width="25"
+              resize-column-disabled
+              onrowaction={handleRowAction}
+              onrowselection={getSelectedRecords}
+            >
+            </c-file-data-table>
+          </template>
         </ul>
       </div>
     </div>
   </div>
   <div class="slds-grid slds-grid_align-center" if:true={hasAdditionalFiles}>
     <lightning-button
+      data-id="get-more"
       label="Get More Records"
       class="slds-var-p-vertical_x-small"
       onclick={getAdditionalFiles}

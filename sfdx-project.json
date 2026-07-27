@@ -2,12 +2,12 @@
   "packageDirectories": [
     {
       "versionName": "v1.11",
-      "versionNumber": "1.11.0.NEXT",
+      "versionNumber": "1.12.0.NEXT",
       "ancestorVersion": "HIGHEST",
       "path": "force-app",
       "default": true,
       "package": "Better Files By 1Sync",
-      "versionDescription": "Improved file extension detection"
+      "versionDescription": ""
     }
   ],
   "name": "1sync-file",
@@ -41,6 +41,7 @@
     "1Sync File App@1.8.0-1": "04tQl000000G1OLIA0",
     "1Sync File App@1.9.0-1": "04tQl000000MrfBIAS",
     "1Sync File App@1.10.0-1": "04tQl000000PW7xIAG",
-    "1Sync File App@1.11.0-1": "04tQl000000ROz7IAG"
+    "1Sync File App@1.11.0-1": "04tQl000000ROz7IAG",
+    "1Sync File App@1.12.0-1": "04tQl000000RwhRIAS"
   }
 }

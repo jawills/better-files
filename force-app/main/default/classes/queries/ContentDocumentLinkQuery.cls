@@ -56,4 +56,50 @@ public with sharing class ContentDocumentLinkQuery extends QueryObject {
     }
     return this;
   }
+
+  public ContentDocumentLinkQuery byFileTypeFilter(String fileTypeFilter) {
+    if (String.isBlank(fileTypeFilter) || fileTypeFilter == 'all') {
+      return this;
+    }
+    if (fileTypeFilter == 'image') {
+      return (ContentDocumentLinkQuery) byField(
+        'ContentDocument.FileExtension',
+        'IN',
+        new List<String>{
+          'png',
+          'jpg',
+          'jpeg',
+          'gif',
+          'bmp',
+          'svg',
+          'webp',
+          'tif',
+          'tiff',
+          'heic'
+        }
+      );
+    }
+    if (fileTypeFilter == 'document') {
+      return (ContentDocumentLinkQuery) byField(
+        'ContentDocument.FileExtension',
+        'IN',
+        new List<String>{
+          'pdf',
+          'doc',
+          'docx',
+          'xls',
+          'xlsx',
+          'csv',
+          'ppt',
+          'pptx',
+          'txt',
+          'rtf',
+          'odt',
+          'ods',
+          'odp'
+        }
+      );
+    }
+    return this;
+  }
 }

@@ -36,6 +36,26 @@
                 type="Integer"
                 default="0"
                 label="Minimum file size (KB)" />
+            <property name="showSource"
+                type="Boolean"
+                default="true"
+                label="(Deprecated) Show Source on View All"
+                description="Deprecated. View All columns are configured in Custom Metadata: File Related List Config." />
+            <property name="showLastModifiedDate"
+                type="Boolean"
+                default="true"
+                label="(Deprecated) Show Last Modified Date on View All"
+                description="Deprecated. View All columns are configured in Custom Metadata: File Related List Config." />
+            <property name="showLastModifiedBy"
+                type="Boolean"
+                default="true"
+                label="(Deprecated) Show Last Modified By on View All"
+                description="Deprecated. View All columns are configured in Custom Metadata: File Related List Config." />
+            <property name="showFileSize"
+                type="Boolean"
+                default="true"
+                label="(Deprecated) Show File Size on View All"
+                description="Deprecated. View All columns are configured in Custom Metadata: File Related List Config." />
         </targetConfig>
     </targetConfigs>
     <isExposed>true</isExposed>

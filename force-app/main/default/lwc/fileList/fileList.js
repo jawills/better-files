@@ -10,7 +10,6 @@ import { refreshApex } from "@salesforce/apex";
 import { loadStyle } from "lightning/platformResourceLoader";
 import dropzoneStyle from "@salesforce/resourceUrl/dropzone";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
-import { RefreshEvent } from "lightning/refresh";
 import {
   IsConsoleNavigation,
   getFocusedTabInfo,
@@ -26,6 +25,14 @@ export default class FileList extends NavigationMixin(LightningElement) {
   @api filePreview;
   @api filesPerRow;
   @api minimumFileSizeKb;
+  /** @deprecated View All columns are configured via File_Related_List_Config__mdt. */
+  @api showSource;
+  /** @deprecated View All columns are configured via File_Related_List_Config__mdt. */
+  @api showLastModifiedDate;
+  /** @deprecated View All columns are configured via File_Related_List_Config__mdt. */
+  @api showLastModifiedBy;
+  /** @deprecated View All columns are configured via File_Related_List_Config__mdt. */
+  @api showFileSize;
   cardTitle = "Files";
   isLoading = true;
   showSkeleton = true;
@@ -62,6 +69,17 @@ export default class FileList extends NavigationMixin(LightningElement) {
     }
   }
 
+  buildViewAllState() {
+    return {
+      c__recordId: this.recordId,
+      c__objectName: this.objectApiName,
+      c__includeEmails: this.wiredIncludeEmails,
+      c__minimumFileSizeKb: this.normalizeMinimumFileSizeKbForState(
+        this.minimumFileSizeKb
+      )
+    };
+  }
+
   viewAllRecords() {
     // Standard Navigation to Related list component
     if (!this.isConsoleNavigation) {
@@ -72,14 +90,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
             componentName: "file1sync__fileRelatedList",
             recordId: this.recordId
           },
-          state: {
-            c__recordId: this.recordId,
-            c__objectName: this.objectApiName,
-            c__includeEmails: this.includeEmails,
-            c__minimumFileSizeKb: this.normalizeMinimumFileSizeKbForState(
-              this.minimumFileSizeKb
-            )
-          }
+          state: this.buildViewAllState()
         },
         false
       );
@@ -97,14 +108,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
               attributes: {
                 componentName: "file1sync__fileRelatedList"
               },
-              state: {
-                c__recordId: this.recordId,
-                c__objectName: this.objectApiName,
-                c__includeEmails: this.includeEmails,
-                c__minimumFileSizeKb: this.normalizeMinimumFileSizeKbForState(
-                  this.minimumFileSizeKb
-                )
-              }
+              state: this.buildViewAllState()
             }
           });
         })
@@ -130,23 +134,44 @@ export default class FileList extends NavigationMixin(LightningElement) {
     return n == null ? null : Math.floor(n * 1024);
   }
 
+  /**
+   * Flexipage design attributes are undefined until the page is re-saved in App
+   * Builder. Undefined @wire params block the adapter entirely, so default
+   * every design attribute here to match fileList.js-meta.xml.
+   */
+  get wiredFileLimit() {
+    const limit = Number(this.fileLimit);
+    return Number.isFinite(limit) && limit > 0 ? limit : 6;
+  }
+
+  get wiredIncludeEmails() {
+    return this.includeEmails !== false;
+  }
+
+  get wiredFileTypeFilter() {
+    return "all";
+  }
+
   @wire(getFiles, {
     recordId: "$recordId",
-    fileLimit: "$fileLimit",
+    fileLimit: "$wiredFileLimit",
     page: 0,
-    includeEmails: "$includeEmails",
-    minContentSize: "$minContentSizeBytesForWire"
+    includeEmails: "$wiredIncludeEmails",
+    minContentSize: "$minContentSizeBytesForWire",
+    fileTypeFilter: "$wiredFileTypeFilter"
   })
   getWiredFiles(result) {
-    // @NOTE will product infinite loading screen
-    // When Wired Properties are not filled
+    if (!this.recordId) {
+      return;
+    }
 
     this.wiredFiles = result;
     if (result.data) {
       this.dataTableFiles = this.wiredFiles.data.map((file) => {
         const mappedFile = mapFile(file);
         // Turn off file preview if setting is false
-        mappedFile.hasPreview = mappedFile.hasPreview && this.filePreview;
+        mappedFile.hasPreview =
+          mappedFile.hasPreview && this.filePreview !== false;
         return mappedFile;
       });
       this.showDropZone = this.dataTableFiles.length === 0;
@@ -165,10 +190,15 @@ export default class FileList extends NavigationMixin(LightningElement) {
 
   @wire(getFileCount, {
     recordId: "$recordId",
-    includeEmails: "$includeEmails",
-    minContentSize: "$minContentSizeBytesForWire"
+    includeEmails: "$wiredIncludeEmails",
+    minContentSize: "$minContentSizeBytesForWire",
+    fileTypeFilter: "$wiredFileTypeFilter"
   })
   getWiredFileCount(result) {
+    if (!this.recordId) {
+      return;
+    }
+
     this.wiredFileCount = result;
     if (result.data) {
       this.cardTitle = `Files (${result.data})`;
@@ -181,14 +211,23 @@ export default class FileList extends NavigationMixin(LightningElement) {
     }
   }
 
+  async refreshFileData() {
+    this.isLoading = true;
+    const refreshes = [];
+    if (this.wiredFiles) {
+      refreshes.push(refreshApex(this.wiredFiles));
+    }
+    if (this.wiredFileCount) {
+      refreshes.push(refreshApex(this.wiredFileCount));
+    }
+    if (refreshes.length) {
+      await Promise.all(refreshes);
+    }
+    this.isLoading = false;
+  }
+
   handleUploadFinished() {
-    refreshApex(this.wiredFiles).then(() => {
-      this.isLoading = false;
-    });
-    refreshApex(this.wiredFileCount).then(() => {
-      this.isLoading = false;
-    });
-    this.dispatchEvent(new RefreshEvent());
+    this.refreshFileData();
   }
 
   handleMenuUpload() {
@@ -244,13 +283,10 @@ export default class FileList extends NavigationMixin(LightningElement) {
         return Promise.all(uploadPromises);
       })
       .then(() => {
-        // console.log(record?Ids);
         console.log("seconds");
         this.showToast("Success", `File uploaded successfully`, "success");
-        // Reset the file input
         this.template.querySelector("input").value = "";
-        // notifyRecordUpdateAvailable(recordIds).then(() => {
-        // });
+        return this.refreshFileData();
       })
       .catch((error) => {
         console.error("Error uploading files", error);
@@ -263,7 +299,6 @@ export default class FileList extends NavigationMixin(LightningElement) {
       .finally(() => {
         this.isUploading = false;
       });
-    this.handleUploadFinished();
   }
 
   // Helper method to extract error messages

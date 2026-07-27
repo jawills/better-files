@@ -54,44 +54,51 @@ public with sharing class FileListControllerTest {
   @isTest
   static void testFileCount() {
     Account acc = [SELECT Id FROM Account WHERE Name = 'Test 1Sync File'];
-    Integer fileCount = FileListController.getFileCount(acc.Id, false, null);
+    Integer fileCount = FileListController.getFileCount(acc.Id, false, null, null);
     System.assertEquals(2, fileCount, 'Incorrect file count recieved');
   }
 
   @isTest
   static void testPartialFile() {
     Account acc = [SELECT Id FROM Account WHERE Name = 'Test 1Sync File'];
-    List<ContentVersion> fileVersions = FileListController.getFiles(
+    List<FileListController.FileRow> fileRows = FileListController.getFiles(
       acc.Id,
       25,
       0,
       false,
+      null,
       null
     );
-    System.assertEquals(
-      2,
-      fileVersions.size(),
-      'Incorrect file count recieved'
-    );
+    System.assertEquals(2, fileRows.size(), 'Incorrect file count recieved');
+    for (FileListController.FileRow row : fileRows) {
+      System.assertEquals(acc.Id, row.linkedEntityId);
+      System.assertNotEquals(null, row.version);
+      System.assertNotEquals(
+        null,
+        row.version.ContentDocument.OwnerId,
+        'Owner should be populated on ContentDocument'
+      );
+    }
   }
 
   @isTest
   static void testDeleteFile() {
     Account acc = [SELECT Id FROM Account WHERE Name = 'Test 1Sync File'];
-    List<ContentVersion> fileVersions = FileListController.getFiles(
+    List<FileListController.FileRow> fileRows = FileListController.getFiles(
       acc.Id,
       25,
       0,
       false,
+      null,
       null
     );
 
-    for (ContentVersion cv : fileVersions) {
-      FileListController.deleteFile(cv.ContentDocumentId);
+    for (FileListController.FileRow row : fileRows) {
+      FileListController.deleteFile(row.version.ContentDocument.Id);
     }
 
-    fileVersions = FileListController.getFiles(acc.Id, 25, 0, false, null);
-    System.assertEquals(0, fileVersions.size(), 'File not deleted correctly');
+    fileRows = FileListController.getFiles(acc.Id, 25, 0, false, null, null);
+    System.assertEquals(0, fileRows.size(), 'File not deleted correctly');
   }
 
   @isTest
@@ -122,54 +129,109 @@ public with sharing class FileListControllerTest {
   @isTest
   static void testFileSearch() {
     Account a = [SELECT Id, Name FROM Account WHERE Name = 'Test 1Sync File'];
-    List<ContentVersion> cvs = FileListController.searchContentVersions(
+    List<FileListController.FileRow> rows = FileListController.searchContentVersions(
       'Big',
       a.Id,
       false,
+      null,
       null
     );
-    System.assertEquals(1, cvs.size(), 'Incorrect file size');
+    System.assertEquals(1, rows.size(), 'Incorrect file size');
   }
 
   @isTest
   static void testMinimumContentSizeFilter() {
     Account acc = [SELECT Id FROM Account WHERE Name = 'Test 1Sync File'];
-    List<ContentVersion> allFiles = FileListController.getFiles(
+    List<FileListController.FileRow> allFiles = FileListController.getFiles(
       acc.Id,
       25,
       0,
       false,
+      null,
       null
     );
     System.assertEquals(2, allFiles.size(), 'Setup should have two files');
 
-    List<ContentVersion> largeOnly = FileListController.getFiles(
+    List<FileListController.FileRow> largeOnly = FileListController.getFiles(
       acc.Id,
       25,
       0,
       false,
-      100
+      100,
+      null
     );
     System.assertEquals(1, largeOnly.size(), 'Small file should be excluded');
     System.assertEquals(
       'Test Big',
-      largeOnly[0].ContentDocument.Title,
+      largeOnly[0].version.ContentDocument.Title,
       'Larger file should remain'
     );
 
-    Integer filteredCount = FileListController.getFileCount(acc.Id, false, 100);
+    Integer filteredCount = FileListController.getFileCount(acc.Id, false, 100, null);
     System.assertEquals(1, filteredCount, 'Count should match filtered list');
 
-    List<ContentVersion> searchLarge = FileListController.searchContentVersions(
+    List<FileListController.FileRow> searchLarge = FileListController.searchContentVersions(
       'test',
       acc.Id,
       false,
-      100
+      100,
+      null
     );
     System.assertEquals(
       1,
       searchLarge.size(),
       'Search should respect minimum size'
+    );
+  }
+
+  @isTest
+  static void testFileTypeFilter() {
+    Account acc = [SELECT Id FROM Account WHERE Name = 'Test 1Sync File'];
+
+    List<FileListController.FileRow> images = FileListController.getFiles(
+      acc.Id,
+      25,
+      0,
+      false,
+      null,
+      'image'
+    );
+    System.assertEquals(1, images.size(), 'Only the jpg file should match image filter');
+    System.assertEquals(
+      'jpg',
+      images[0].version.ContentDocument.FileExtension,
+      'Image filter should return the jpg file'
+    );
+
+    List<FileListController.FileRow> documents = FileListController.getFiles(
+      acc.Id,
+      25,
+      0,
+      false,
+      null,
+      'document'
+    );
+    System.assertEquals(0, documents.size(), 'No document extensions in setup');
+
+    Integer imageCount = FileListController.getFileCount(
+      acc.Id,
+      false,
+      null,
+      'image'
+    );
+    System.assertEquals(1, imageCount, 'Image count should match filtered list');
+
+    List<FileListController.FileRow> searchImages = FileListController.searchContentVersions(
+      'test',
+      acc.Id,
+      false,
+      null,
+      'image'
+    );
+    System.assertEquals(
+      1,
+      searchImages.size(),
+      'Search should respect image file type filter'
     );
   }
 
@@ -258,11 +320,12 @@ public with sharing class FileListControllerTest {
     
     // Test that getFiles with includeEmails=true - EmailMessage will be found but no files returned
     // because Attachment records are not ContentDocumentLink records
-    List<ContentVersion> files = FileListController.getFiles(
+    List<FileListController.FileRow> files = FileListController.getFiles(
       testCase.Id,
       25,
       0,
       true, // includeEmails = true
+      null,
       null
     );
     // The EmailMessage is found (HasAttachment = true), but no ContentDocumentLink exists,
@@ -275,7 +338,7 @@ public with sharing class FileListControllerTest {
 
     // Test that getFileCount with includeEmails=true
     // EmailMessage is found but no ContentDocumentLink exists, so count is 0
-    Integer fileCount = FileListController.getFileCount(testCase.Id, true, null);
+    Integer fileCount = FileListController.getFileCount(testCase.Id, true, null, null);
     System.assertEquals(
       0,
       fileCount,
@@ -283,11 +346,12 @@ public with sharing class FileListControllerTest {
     );
 
     // Test that getFiles with includeEmails=false does NOT return the email attachment
-    List<ContentVersion> filesWithoutEmails = FileListController.getFiles(
+    List<FileListController.FileRow> filesWithoutEmails = FileListController.getFiles(
       testCase.Id,
       25,
       0,
       false, // includeEmails = false
+      null,
       null
     );
     System.assertEquals(
@@ -300,6 +364,7 @@ public with sharing class FileListControllerTest {
     Integer fileCountWithoutEmails = FileListController.getFileCount(
       testCase.Id,
       false,
+      null,
       null
     );
     System.assertEquals(
@@ -364,14 +429,15 @@ public with sharing class FileListControllerTest {
     );
 
     Test.startTest();
-    List<ContentVersion> files = FileListController.getFiles(
+    List<FileListController.FileRow> files = FileListController.getFiles(
       parentCase.Id,
       25,
       0,
       true,
+      null,
       null
     );
-    Integer fileCount = FileListController.getFileCount(parentCase.Id, true, null);
+    Integer fileCount = FileListController.getFileCount(parentCase.Id, true, null, null);
     Test.stopTest();
 
     System.assertEquals(
@@ -384,6 +450,27 @@ public with sharing class FileListControllerTest {
       fileCount,
       'getFileCount should dedupe identical ContentDocument links to one unique file count'
     );
-    // Expected business behavior: deduped count should be 1 to match getFiles.
+    System.assertEquals(
+      emailMsg.Id,
+      files[0].linkedEntityId,
+      'When linked to both parent and email, prefer EmailMessage link'
+    );
+  }
+
+  @isTest
+  static void testRelatedListConfigDefaults() {
+    FileListController.RelatedListConfig config = FileListController.getRelatedListConfig();
+    System.assertEquals(true, config.showOwner, 'Owner column on by default');
+    System.assertEquals(
+      true,
+      config.showLastModifiedDate,
+      'Last Modified Date on by default'
+    );
+    System.assertEquals(
+      true,
+      config.showLastModifiedBy,
+      'Last Modified By on by default'
+    );
+    System.assertEquals(true, config.showFileSize, 'File Size on by default');
   }
 }

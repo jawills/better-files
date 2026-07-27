@@ -1,13 +1,66 @@
 public with sharing class FileListController {
   public static final Integer FILE_LIMIT_FALLBACK = 6;
   public static final Integer PAGE_SIZE = 25;
+
+  public class FileRow {
+    @AuraEnabled
+    public ContentVersion version { get; set; }
+    @AuraEnabled
+    public Id linkedEntityId { get; set; }
+    @AuraEnabled
+    public String linkedEntityType { get; set; }
+  }
+
+  public class RelatedListConfig {
+    @AuraEnabled
+    public Boolean showOwner { get; set; }
+    @AuraEnabled
+    public Boolean showLastModifiedDate { get; set; }
+    @AuraEnabled
+    public Boolean showLastModifiedBy { get; set; }
+    @AuraEnabled
+    public Boolean showFileSize { get; set; }
+  }
+
+  private static final String RELATED_LIST_CONFIG_DEVELOPER_NAME = 'Default';
+
   @AuraEnabled(cacheable=true)
-  public static List<ContentVersion> getFiles(
+  public static RelatedListConfig getRelatedListConfig() {
+    RelatedListConfig config = new RelatedListConfig();
+    config.showOwner = true;
+    config.showLastModifiedDate = true;
+    config.showLastModifiedBy = true;
+    config.showFileSize = true;
+
+    List<File_Related_List_Config__mdt> rows = [
+      SELECT
+        Show_Owner__c,
+        Show_Last_Modified_Date__c,
+        Show_Last_Modified_By__c,
+        Show_File_Size__c
+      FROM File_Related_List_Config__mdt
+      WHERE DeveloperName = :RELATED_LIST_CONFIG_DEVELOPER_NAME
+      WITH USER_MODE
+      LIMIT 1
+    ];
+    if (!rows.isEmpty()) {
+      File_Related_List_Config__mdt row = rows[0];
+      config.showOwner = row.Show_Owner__c;
+      config.showLastModifiedDate = row.Show_Last_Modified_Date__c;
+      config.showLastModifiedBy = row.Show_Last_Modified_By__c;
+      config.showFileSize = row.Show_File_Size__c;
+    }
+    return config;
+  }
+
+  @AuraEnabled(cacheable=true)
+  public static List<FileRow> getFiles(
     Id recordId,
     Integer fileLimit,
     Integer page,
     Boolean includeEmails,
-    Integer minContentSize
+    Integer minContentSize,
+    String fileTypeFilter
   ) {
     if (fileLimit == null) {
       fileLimit = FILE_LIMIT_FALLBACK;
@@ -16,86 +69,172 @@ public with sharing class FileListController {
     if (includeEmails) {
       recordIds.addAll(getEmailMessageIds(recordId));
     }
-    Set<Id> cvIds = getContentVersionIdsByRelatedRecords(
+    return getFileRowsByRelatedRecords(
       recordIds,
       fileLimit,
       page,
-      minContentSize
+      minContentSize,
+      fileTypeFilter
     );
-    return new ContentVersionQuery()
-      .byId(cvIds)
-      .orderBy('ContentDocument.LastModifiedDate DESC')
-      .withLimit(fileLimit)
-      .asUser()
-      .getList();
   }
 
-  private static Set<Id> getContentVersionIdsByRelatedRecords(
+  private static List<FileRow> getFileRowsByRelatedRecords(
     Set<Id> recordIds,
     Integer fileLimit,
     Integer page,
-    Integer minContentSize
+    Integer minContentSize,
+    String fileTypeFilter
   ) {
     if (fileLimit == null) {
       fileLimit = FILE_LIMIT_FALLBACK;
     }
-    List<ContentDocumentLink> cdls = new ContentDocumentLinkQuery()
-      .excludeSNote()
-      .byLinkedEntityIds(recordIds)
-      .byMinimumContentSize(minContentSize)
+    List<ContentDocumentLink> cdls = baseContentDocumentLinkQuery(
+        recordIds,
+        minContentSize,
+        fileTypeFilter
+      )
       .withLimit(fileLimit)
       .orderBy('SystemModstamp DESC')
       .withOffset(page * PAGE_SIZE)
       .asUser()
       .getList();
-    // Can't use collection api b/c nested relationship
-    Set<Id> cvIds = new Set<Id>();
-    for (ContentDocumentLink cdl : cdls) {
-      cvIds.add(cdl.ContentDocument.LatestPublishedVersionId);
-    }
-    return cvIds;
+    return toFileRows(cdls, fileLimit);
   }
 
-  private static Set<Id> getContentVersionIdsByTitle(
+  private static List<FileRow> getFileRowsByTitle(
     Set<Id> recordIds,
     String title,
     Integer fileLimit,
-    Integer minContentSize
+    Integer minContentSize,
+    String fileTypeFilter
   ) {
     if (fileLimit == null) {
       fileLimit = FILE_LIMIT_FALLBACK;
     }
-    ContentDocumentLinkQuery cdlQuery = (ContentDocumentLinkQuery) new ContentDocumentLinkQuery()
-      .byLinkedEntityIds(recordIds)
+    ContentDocumentLinkQuery cdlQuery = (ContentDocumentLinkQuery) baseContentDocumentLinkQuery(
+        recordIds,
+        minContentSize,
+        fileTypeFilter
+      )
       .byContentDocumentTitle(title)
-      .excludeSNote()
-      .byMinimumContentSize(minContentSize)
       .withLimit(fileLimit)
       .asUser()
       .orderBy('SystemModstamp DESC');
     List<ContentDocumentLink> cdls = cdlQuery.getList();
-    // Can't use collection api b/c nested relationship
-    Set<Id> cvIds = new Set<Id>();
+    return toFileRows(cdls, fileLimit);
+  }
+
+  private static ContentDocumentLinkQuery baseContentDocumentLinkQuery(
+    Set<Id> recordIds,
+    Integer minContentSize,
+    String fileTypeFilter
+  ) {
+    return new ContentDocumentLinkQuery()
+      .excludeSNote()
+      .byLinkedEntityIds(recordIds)
+      .byMinimumContentSize(minContentSize)
+      .byFileTypeFilter(fileTypeFilter);
+  }
+
+  /**
+   * Dedupe by latest published version, preferring EmailMessage links when both exist.
+   */
+  private static List<FileRow> toFileRows(
+    List<ContentDocumentLink> cdls,
+    Integer fileLimit
+  ) {
+    Map<Id, ContentDocumentLink> preferredByVersionId = new Map<Id, ContentDocumentLink>();
+    List<Id> versionOrder = new List<Id>();
+
     for (ContentDocumentLink cdl : cdls) {
-      cvIds.add(cdl.ContentDocument.LatestPublishedVersionId);
+      Id versionId = cdl.ContentDocument.LatestPublishedVersionId;
+      if (versionId == null) {
+        continue;
+      }
+      ContentDocumentLink existing = preferredByVersionId.get(versionId);
+      if (existing == null) {
+        preferredByVersionId.put(versionId, cdl);
+        versionOrder.add(versionId);
+      } else if (
+        isEmailMessage(cdl.LinkedEntityId) &&
+        !isEmailMessage(existing.LinkedEntityId)
+      ) {
+        preferredByVersionId.put(versionId, cdl);
+      }
     }
-    return cvIds;
+
+    Map<Id, ContentVersion> versionsById = new Map<Id, ContentVersion>();
+    if (!preferredByVersionId.isEmpty()) {
+      for (
+        ContentVersion cv : (List<ContentVersion>) new ContentVersionQuery()
+          .byId(preferredByVersionId.keySet())
+          .orderBy('ContentDocument.LastModifiedDate DESC')
+          .withLimit(fileLimit)
+          .asUser()
+          .getList()
+      ) {
+        versionsById.put(cv.Id, cv);
+      }
+    }
+
+    List<FileRow> rows = new List<FileRow>();
+    for (Id versionId : versionOrder) {
+      if (rows.size() >= fileLimit) {
+        break;
+      }
+      ContentVersion version = versionsById.get(versionId);
+      if (version == null) {
+        continue;
+      }
+      ContentDocumentLink cdl = preferredByVersionId.get(versionId);
+      rows.add(buildFileRow(version, cdl));
+    }
+    return rows;
+  }
+
+  private static FileRow buildFileRow(
+    ContentVersion version,
+    ContentDocumentLink cdl
+  ) {
+    FileRow row = new FileRow();
+    row.version = version;
+    row.linkedEntityId = cdl.LinkedEntityId;
+    row.linkedEntityType = resolveLinkedEntityType(cdl);
+    return row;
+  }
+
+  private static String resolveLinkedEntityType(ContentDocumentLink cdl) {
+    if (cdl.LinkedEntityId == null) {
+      return null;
+    }
+    try {
+      return cdl.LinkedEntityId.getSObjectType().getDescribe().getName();
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  private static Boolean isEmailMessage(Id linkedEntityId) {
+    return linkedEntityId != null &&
+      linkedEntityId.getSObjectType() == EmailMessage.SObjectType;
   }
 
   @AuraEnabled(cacheable=true)
   public static Integer getFileCount(
     Id recordId,
     Boolean includeEmails,
-    Integer minContentSize
+    Integer minContentSize,
+    String fileTypeFilter
   ) {
     Set<Id> recordIds = new Set<Id>{ recordId };
     if (includeEmails) {
       recordIds.addAll(getEmailMessageIds(recordId));
     }
-    List<ContentDocumentLink> cdls = new ContentDocumentLinkQuery()
-      .excludeSNote()
-      .byLinkedEntityIds(recordIds)
-      .byMinimumContentSize(minContentSize)
+    List<ContentDocumentLink> cdls = baseContentDocumentLinkQuery(
+        recordIds,
+        minContentSize,
+        fileTypeFilter
+      )
       .asUser()
       .getList();
 
@@ -105,6 +244,37 @@ public with sharing class FileListController {
       cvIds.add(cdl.ContentDocument.LatestPublishedVersionId);
     }
     return cvIds.size();
+  }
+
+  /** Non-cacheable so View All always loads fresh data after record-page uploads. */
+  @AuraEnabled
+  public static List<FileRow> getRelatedListFiles(
+    Id recordId,
+    Integer fileLimit,
+    Integer page,
+    Boolean includeEmails,
+    Integer minContentSize,
+    String fileTypeFilter
+  ) {
+    return getFiles(
+      recordId,
+      fileLimit,
+      page,
+      includeEmails,
+      minContentSize,
+      fileTypeFilter
+    );
+  }
+
+  /** Non-cacheable so View All always loads fresh data after record-page uploads. */
+  @AuraEnabled
+  public static Integer getRelatedListFileCount(
+    Id recordId,
+    Boolean includeEmails,
+    Integer minContentSize,
+    String fileTypeFilter
+  ) {
+    return getFileCount(recordId, includeEmails, minContentSize, fileTypeFilter);
   }
 
   @AuraEnabled
@@ -207,28 +377,23 @@ public with sharing class FileListController {
   }
 
   @AuraEnabled(cacheable=true)
-  public static List<ContentVersion> searchContentVersions(
+  public static List<FileRow> searchContentVersions(
     String searchTerm,
     String recordId,
     Boolean includeEmails,
-    Integer minContentSize
+    Integer minContentSize,
+    String fileTypeFilter
   ) {
     Set<Id> recordIds = new Set<Id>{ recordId };
     if (includeEmails) {
       recordIds.addAll(getEmailMessageIds(recordId));
     }
-    Set<Id> cvIds = getContentVersionIdsByTitle(
+    return getFileRowsByTitle(
       recordIds,
       searchTerm,
-      20,
-      minContentSize
+      25,
+      minContentSize,
+      fileTypeFilter
     );
-    return new ContentVersionQuery()
-      .likeTitle(searchTerm)
-      .byId(cvIds)
-      .orderBy('ContentDocument.LastModifiedDate DESC')
-      .asUser()
-      .withLimit(25)
-      .getList();
   }
 }

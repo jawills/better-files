@@ -9,21 +9,29 @@ import {
 } from "lightning/platformWorkspaceApi";
 
 const mockFile = {
-  Id: "068xx0000000001",
-  ContentDocumentId: "069xx0000000001",
-  VersionData: null,
-  ContentDocument: {
-    Id: "069xx0000000001",
-    Title: "Spec Sheet",
-    CreatedDate: "2024-01-01T00:00:00.000Z",
-    ContentSize: 2048,
-    LastModifiedDate: "2024-01-02T00:00:00.000Z",
-    FileExtension: "pdf",
-    LastModifiedById: "005xx0000000001",
-    LastModifiedBy: {
-      Name: "Jane Doe"
+  version: {
+    Id: "068xx0000000001",
+    ContentDocumentId: "069xx0000000001",
+    VersionData: null,
+    ContentDocument: {
+      Id: "069xx0000000001",
+      Title: "Spec Sheet",
+      CreatedDate: "2024-01-01T00:00:00.000Z",
+      ContentSize: 2048,
+      LastModifiedDate: "2024-01-02T00:00:00.000Z",
+      FileExtension: "pdf",
+      LastModifiedById: "005xx0000000001",
+      LastModifiedBy: {
+        Name: "Jane Doe"
+      },
+      OwnerId: "005xx0000000002",
+      Owner: {
+        Name: "Alex Owner"
+      }
     }
-  }
+  },
+  linkedEntityId: "001xx0000000001",
+  linkedEntityType: "Account"
 };
 
 jest.mock(
@@ -83,6 +91,24 @@ describe("c-file-list console and wire resilience", () => {
       document.body.removeChild(document.body.firstChild);
     }
     jest.clearAllMocks();
+  });
+
+  it("clears the skeleton when design attributes are undefined", async () => {
+    const element = createElement("c-file-list", {
+      is: FileList
+    });
+    element.recordId = "001xx0000000001";
+    element.objectApiName = "Account";
+    document.body.appendChild(element);
+
+    getFiles.emit([mockFile]);
+    getFileCount.emit(1);
+    await flushPromises();
+
+    expect(
+      element.shadowRoot.querySelector("a.slds-card__header-link")
+    ).not.toBeNull();
+    expect(element.shadowRoot.querySelector("c-stencil")).toBeNull();
   });
 
   it("clears the skeleton when getFiles errors", async () => {

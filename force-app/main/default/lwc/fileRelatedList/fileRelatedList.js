@@ -1,27 +1,26 @@
 import { LightningElement, wire, track } from "lwc";
-import getFiles from "@salesforce/apex/FileListController.getFiles";
-import getFileCount from "@salesforce/apex/FileListController.getFileCount";
+import getRelatedListFiles from "@salesforce/apex/FileListController.getRelatedListFiles";
+import getRelatedListFileCount from "@salesforce/apex/FileListController.getRelatedListFileCount";
 import deleteFile from "@salesforce/apex/FileListController.deleteFile";
 import deleteFiles from "@salesforce/apex/FileListController.deleteFiles";
 import getRecordName from "@salesforce/apex/FileListController.getRecordName";
+import getRelatedListConfig from "@salesforce/apex/FileListController.getRelatedListConfig";
 import searchContentVersions from "@salesforce/apex/FileListController.searchContentVersions";
 import { NavigationMixin, CurrentPageReference } from "lightning/navigation";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
-import { refreshApex } from "@salesforce/apex";
-import { mapFile } from "c/util";
+import { mapFile, getFileTypeFilterOptions } from "c/util";
 import LightningConfirm from "lightning/confirm";
 import fileRelatedListSkeleton from "./fileRelatedListSkeleton.html";
 import fileRelatedList from "./fileRelatedList.html";
-import { RefreshEvent } from "lightning/refresh";
 
-//@todo make dynamic
 const ACTIONS = [
   { label: "Preview", name: "Preview" },
   { label: "Download", name: "Download" },
   { label: "Delete", name: "Delete" }
 ];
 
-const DELAY = 350; // Debounce delay in milliseconds
+const DELAY = 350;
+const PAGE_SIZE = 25;
 
 export default class FileRelatedList extends NavigationMixin(LightningElement) {
   @track baseObjectUrl;
@@ -29,11 +28,11 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   @track includeEmails = false;
   @track baseRecordId;
   @track searchTerm = "";
+  @track fileTypeFilter = "all";
   @track relatedRecordName;
   @track relatedRecordUrl;
   @track selectedRecords = [];
   searchTermUpdated;
-  // Unique set of Content Document Ids to filter main set
   contentDocumentIdSet = new Set();
   isLoading = true;
   showSkeleton = true;
@@ -41,19 +40,150 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   showFileUpload = true;
   fileCount = 0;
   cardTitle = "Files";
-  wiredFiles;
-  @track wiredFileCount;
+  totalFileCount = null;
   selectedText;
   selectedCount = 0;
   currentPage = 0;
   @track dataTableFiles = [];
   hasAdditionalFiles = false;
+  lastPageResultCount = 0;
+  loadRequestId = 0;
   @track minimumFileSizeBytes = null;
+  showOwner = true;
+  showLastModifiedDate = true;
+  showLastModifiedBy = true;
+  showFileSize = true;
+  columns = [];
+  tableLayoutKey = 0;
+  layoutRemeasured = false;
+
+  get tableMountKey() {
+    return [{ id: this.tableLayoutKey }];
+  }
+
+  connectedCallback() {
+    this.buildColumns();
+  }
+
+  renderedCallback() {
+    if (this.showSkeleton || this.layoutRemeasured) {
+      return;
+    }
+    this.layoutRemeasured = true;
+    // Remount after flexipage layout settles so the datatable measures full width.
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
+    requestAnimationFrame(() => {
+      this.tableLayoutKey += 1;
+    });
+  }
+
+  @wire(getRelatedListConfig)
+  wiredRelatedListConfig(result) {
+    if (result.data) {
+      this.showOwner = result.data.showOwner !== false;
+      this.showLastModifiedDate = result.data.showLastModifiedDate !== false;
+      this.showLastModifiedBy = result.data.showLastModifiedBy !== false;
+      this.showFileSize = result.data.showFileSize !== false;
+      this.buildColumns();
+    } else if (result.error) {
+      console.error("Error loading related list config:", result.error);
+      this.buildColumns();
+    }
+  }
+
+  get fileTypeOptions() {
+    return getFileTypeFilterOptions();
+  }
+
+  resetFileListState() {
+    this.currentPage = 0;
+    this.contentDocumentIdSet = new Set();
+    this.dataTableFiles = [];
+    this.originalFiles = [];
+    this.selectedRecords = [];
+    this.hasSelectedRecords = false;
+    this.showFileUpload = true;
+    this.selectedCount = 0;
+    this.hasAdditionalFiles = false;
+    this.lastPageResultCount = 0;
+    this.totalFileCount = null;
+    this.isLoading = true;
+  }
+
+  handleFileTypeChange(event) {
+    const nextFilter = event.detail.value;
+    if (nextFilter === this.fileTypeFilter) {
+      return;
+    }
+    this.fileTypeFilter = nextFilter;
+    this.searchTerm = "";
+    this.resetFileListState();
+    void this.loadAllFileData();
+  }
 
   render() {
-    // return fileRelatedListSkeleton;
     return this.showSkeleton ? fileRelatedListSkeleton : fileRelatedList;
   }
+
+  buildColumns() {
+    const cols = [
+      {
+        label: "Title",
+        fieldName: "fileUrl",
+        type: "imagePreview",
+        typeAttributes: {
+          Title: {
+            fieldName: "Title"
+          },
+          ContentDocumentId: {
+            fieldName: "ContentDocumentId"
+          },
+          ContentVersionId: {
+            fieldName: "Id"
+          },
+          IconName: {
+            fieldName: "icon"
+          }
+        },
+        wrapText: true
+      }
+    ];
+    if (this.showOwner) {
+      cols.push({
+        label: "Owner",
+        fieldName: "OwnerLink",
+        type: "url",
+        typeAttributes: { label: { fieldName: "Owner" } }
+      });
+    }
+    if (this.showLastModifiedDate) {
+      cols.push({
+        label: "Last Modified Date",
+        fieldName: "LastModifiedDate",
+        type: "date"
+      });
+    }
+    if (this.showLastModifiedBy) {
+      cols.push({
+        label: "Last Modified By",
+        fieldName: "LastModifiedByLink",
+        type: "url",
+        typeAttributes: { label: { fieldName: "LastModifiedBy" } }
+      });
+    }
+    if (this.showFileSize) {
+      cols.push({
+        label: "File Size",
+        fieldName: "ContentSize"
+      });
+    }
+    cols.push({
+      type: "action",
+      typeAttributes: { rowActions: ACTIONS }
+    });
+    this.columns = cols;
+  }
+
   kbFromStateToMinContentSizeBytes(kb) {
     if (kb == null || kb === "" || kb === false) {
       return null;
@@ -65,133 +195,203 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     return Math.floor(n * 1024);
   }
 
+  getFilesQueryParams() {
+    return {
+      recordId: this.baseRecordId,
+      fileLimit: PAGE_SIZE,
+      page: this.currentPage,
+      includeEmails: this.includeEmails,
+      minContentSize: this.minimumFileSizeBytes,
+      fileTypeFilter: this.fileTypeFilter
+    };
+  }
+
+  getCountQueryParams() {
+    return {
+      recordId: this.baseRecordId,
+      includeEmails: this.includeEmails,
+      minContentSize: this.minimumFileSizeBytes,
+      fileTypeFilter: this.fileTypeFilter
+    };
+  }
+
+  applyFilesPage(data) {
+    const mappedNewFiles = data.map((file) => mapFile(file));
+    if (this.currentPage === 0) {
+      this.contentDocumentIdSet = new Set();
+    }
+    const uniqueNewFiles = mappedNewFiles.filter((mappedFile) => {
+      const isUnique = !this.contentDocumentIdSet.has(
+        mappedFile.ContentDocumentId
+      );
+      if (isUnique) {
+        this.contentDocumentIdSet.add(mappedFile.ContentDocumentId);
+      }
+      return isUnique;
+    });
+    this.lastPageResultCount = uniqueNewFiles.length;
+
+    if (this.currentPage > 0 && this.lastPageResultCount === 0) {
+      this.hasAdditionalFiles = false;
+      this.originalHasAdditionalFiles = false;
+      return;
+    }
+
+    this.dataTableFiles =
+      this.currentPage === 0
+        ? uniqueNewFiles
+        : [...this.dataTableFiles, ...uniqueNewFiles];
+    this.originalFiles = this.dataTableFiles;
+    this.fileCount = this.dataTableFiles.length;
+    this.error = undefined;
+    this.getSelectedText();
+    this.updateHasAdditionalFiles();
+    this.showSkeleton = false;
+  }
+
+  async loadFilePage(requestId) {
+    const data = await getRelatedListFiles(this.getFilesQueryParams());
+    if (requestId !== this.loadRequestId) {
+      return;
+    }
+    this.applyFilesPage(data);
+  }
+
+  async loadFileCount(requestId) {
+    const count = await getRelatedListFileCount(this.getCountQueryParams());
+    if (requestId !== this.loadRequestId) {
+      return;
+    }
+    this.totalFileCount = count;
+    this.cardTitle = `Files (${count})`;
+    this.getSelectedText();
+    this.updateHasAdditionalFiles();
+  }
+
+  async loadAllFileData() {
+    if (!this.baseRecordId) {
+      return;
+    }
+
+    const requestId = ++this.loadRequestId;
+    this.currentPage = 0;
+    this.contentDocumentIdSet = new Set();
+    this.hasAdditionalFiles = false;
+    this.lastPageResultCount = 0;
+    this.isLoading = true;
+
+    try {
+      const [files, count] = await Promise.all([
+        getRelatedListFiles({
+          ...this.getFilesQueryParams(),
+          page: 0
+        }),
+        getRelatedListFileCount(this.getCountQueryParams())
+      ]);
+
+      if (requestId !== this.loadRequestId) {
+        return;
+      }
+
+      this.totalFileCount = count;
+      this.cardTitle = `Files (${count})`;
+      this.applyFilesPage(files);
+    } catch (error) {
+      if (requestId !== this.loadRequestId) {
+        return;
+      }
+      this.error = error;
+      console.error("Error loading files:", error);
+      this.showSkeleton = false;
+    } finally {
+      if (requestId === this.loadRequestId) {
+        this.isLoading = false;
+        this.updateHasAdditionalFiles();
+      }
+    }
+  }
+
+  async loadNextPage() {
+    if (!this.baseRecordId || !this.hasAdditionalFiles || this.isLoading) {
+      return;
+    }
+
+    const requestId = ++this.loadRequestId;
+    this.currentPage++;
+    this.isLoading = true;
+
+    try {
+      await this.loadFilePage(requestId);
+    } catch (error) {
+      if (requestId !== this.loadRequestId) {
+        return;
+      }
+      this.error = error;
+      console.error("Error loading more files:", error);
+    } finally {
+      if (requestId === this.loadRequestId) {
+        this.isLoading = false;
+        this.updateHasAdditionalFiles();
+      }
+    }
+  }
+
+  refreshFileData() {
+    return this.loadAllFileData();
+  }
+
   @wire(CurrentPageReference)
   getCurrentPageReference(currentPageReference) {
     this.currentPageReference = currentPageReference;
-    new Promise((resolve, reject) => {
-      if (this.currentPageReference) {
-        const state = this.currentPageReference.state || {};
-        const nextRecordId = state.c__recordId ? state.c__recordId : null;
-        const nextMinBytes = this.kbFromStateToMinContentSizeBytes(
-          state.c__minimumFileSizeKb
-        );
-        const recordOrMinChanged =
-          nextRecordId !== this.baseRecordId ||
-          nextMinBytes !== this.minimumFileSizeBytes;
-        if (recordOrMinChanged) {
-          this.currentPage = 0;
-          this.contentDocumentIdSet = new Set();
-          this.dataTableFiles = [];
-          this.isLoading = true;
-        }
-        this.baseRecordId = nextRecordId;
-        this.minimumFileSizeBytes = nextMinBytes;
-        this.baseObjectName = state.c__objectName ? state.c__objectName : null;
-        this.includeEmails = state.c__includeEmails
-          ? state.c__includeEmails
-          : false;
-        this.getBaseObjectUrl();
-        getRecordName({
-          recordId: nextRecordId,
-          objectAPIName: this.baseObjectName
-        })
-          .then((data) => {
-            this.relatedRecordName = data;
-          })
-          .catch((err) => {
-            console.error(err);
-            reject(err);
-          });
-        resolve();
-      }
-    }).catch((error) => {
-      console.error(JSON.stringify(error));
-    });
-  }
-  @wire(getFiles, {
-    recordId: "$baseRecordId",
-    fileLimit: 25,
-    page: "$currentPage",
-    includeEmails: "$includeEmails",
-    minContentSize: "$minimumFileSizeBytes"
-  })
-  getWiredFiles(result) {
-    this.wiredFiles = result;
-    this.isLoading = true;
-    if (result.data) {
-      const uniqueNewFiles = result.data
-        .map((file) => mapFile(file))
-        .filter((mappedFile) => {
-          const isUnique = !this.contentDocumentIdSet.has(
-            mappedFile.ContentDocumentId
-          );
-          if (isUnique) {
-            this.contentDocumentIdSet.add(mappedFile.ContentDocumentId);
-          }
-          return isUnique;
-        });
-      this.dataTableFiles = [...this.dataTableFiles, ...uniqueNewFiles];
-      this.originalFiles = this.dataTableFiles;
-      this.fileCount = this.dataTableFiles.length;
-      this.isLoading = false;
-      this.error = undefined;
-      this.getSelectedText();
-      this.updateHasAdditionalFiles();
-      this.showSkeleton = false;
-    } else if (result.error) {
-      this.error = result.error;
-      this.isLoading = false;
-      this.showSkeleton = false;
-      console.error("Error loading files:", result.error); // Log the error
+    if (!this.currentPageReference) {
+      return;
     }
-  }
 
-  columns = [
-    {
-      label: "Title",
-      fieldName: "fileUrl",
-      type: "imagePreview",
-      typeAttributes: {
-        Title: {
-          fieldName: "Title"
-        },
-        ContentDocumentId: {
-          fieldName: "ContentDocumentId"
-        },
-        ContentVersionId: {
-          fieldName: "Id"
-        },
-        IconName: {
-          fieldName: "icon"
-        }
-      },
-      wrapText: true
-    },
-    {
-      label: "Last Modified Date",
-      fieldName: "LastModifiedDate",
-      type: "date"
-    },
-    {
-      label: "Last Modified By",
-      fieldName: "LastModifiedByLink",
-      type: "url",
-      typeAttributes: { label: { fieldName: "LastModifiedBy" } }
-    },
-    { label: "File Size", fieldName: "ContentSize" },
-    {
-      fieldName: "actions",
-      type: "action",
-      typeAttributes: { rowActions: ACTIONS }
+    const state = this.currentPageReference.state || {};
+    const nextRecordId = state.c__recordId ? state.c__recordId : null;
+    const nextMinBytes = this.kbFromStateToMinContentSizeBytes(
+      state.c__minimumFileSizeKb
+    );
+    const nextIncludeEmails = state.c__includeEmails
+      ? state.c__includeEmails
+      : false;
+    const nextFileTypeFilter = state.c__fileTypeFilter || "all";
+    const contextChanged =
+      nextRecordId !== this.baseRecordId ||
+      nextMinBytes !== this.minimumFileSizeBytes ||
+      nextIncludeEmails !== this.includeEmails ||
+      nextFileTypeFilter !== this.fileTypeFilter;
+
+    if (contextChanged) {
+      this.resetFileListState();
     }
-  ];
+
+    this.baseRecordId = nextRecordId;
+    this.minimumFileSizeBytes = nextMinBytes;
+    this.baseObjectName = state.c__objectName ? state.c__objectName : null;
+    this.includeEmails = nextIncludeEmails;
+    this.fileTypeFilter = nextFileTypeFilter;
+    this.buildColumns();
+    this.getBaseObjectUrl();
+
+    if (nextRecordId) {
+      void this.loadAllFileData();
+    }
+
+    getRecordName({
+      recordId: nextRecordId,
+      objectAPIName: this.baseObjectName
+    })
+      .then((data) => {
+        this.relatedRecordName = data;
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }
 
   handleUploadFinished() {
-    refreshApex(this.wiredFileCount);
-    refreshApex(this.wiredFiles).then(() => {
-      this.isLoading = false;
-    });
-    this.dispatchEvent(new RefreshEvent());
+    void this.refreshFileData();
   }
 
   getSelectedRecords(event) {
@@ -200,25 +400,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     this.showFileUpload = this.selectedRecords.length === 0;
     this.selectedCount = this.selectedRecords.length;
     this.getSelectedText();
-  }
-
-  @wire(getFileCount, {
-    recordId: "$baseRecordId",
-    includeEmails: "$includeEmails",
-    minContentSize: "$minimumFileSizeBytes"
-  })
-  getWiredFileCount(result) {
-    this.wiredFileCount = result;
-    if (result.data != null) {
-      this.cardTitle = `Files (${result.data})`;
-      this.getSelectedText();
-      this.updateHasAdditionalFiles();
-    } else if (result.error) {
-      console.error(result.error);
-      this.error = result.error;
-      this.isLoading = false;
-      this.showSkeleton = false;
-    }
   }
 
   handleRowAction(event) {
@@ -239,7 +420,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   }
 
   async handleSearchKeyChange(event) {
-    // Clear any pending debounce timeout
     clearTimeout(this.delayTimeout);
     this.searchTermUpdated = Date.now();
     const searchTermUpdated = this.searchTermUpdated;
@@ -252,38 +432,32 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       this.isLoading = false;
       return;
     }
-    // Set loading state
+
     this.isLoading = true;
 
-    // Debounce the search to avoid too many server calls
-    // Ignore Sev3 "setTimeout" as this is correct usage
     this.delayTimeout = setTimeout(() => {
       searchContentVersions({
         searchTerm: this.searchTerm,
         recordId: this.baseRecordId,
         includeEmails: this.includeEmails,
-        minContentSize: this.minimumFileSizeBytes
+        minContentSize: this.minimumFileSizeBytes,
+        fileTypeFilter: this.fileTypeFilter
       })
         .then((result) => {
-          // Process results to add CreatedByName field
           if (this.searchTermUpdated > searchTermUpdated) {
-            // Early cancel for stale request
             return;
           }
-          this.dataTableFiles = result.map((record) => {
-            return mapFile(record);
-          });
+          this.dataTableFiles = result.map((record) => mapFile(record));
           this.fileCount = this.dataTableFiles.length;
           this.getSelectedText();
           this.hasAdditionalFiles =
             this.searchTerm == "" &&
-            this.wiredFileCount?.data != null &&
-            this.dataTableFiles.length < this.wiredFileCount.data;
+            this.totalFileCount != null &&
+            this.dataTableFiles.length < this.totalFileCount;
           this.isLoading = false;
         })
         .catch((error) => {
           console.error("Error searching content versions:", error);
-          console.error(error.message);
           this.isLoading = false;
         });
     }, DELAY);
@@ -298,7 +472,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       label: "Delete Files?"
     });
     if (result === false) {
-      // Cancel file upload so early return
       this.isLoading = false;
       return;
     }
@@ -313,12 +486,13 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
         this.dataTableFiles = this.dataTableFiles.filter((file) => {
           return !data.includes(file.ContentDocumentId);
         });
+        this.originalFiles = this.dataTableFiles;
         data.forEach((contentDocumentId) => {
           if (this.contentDocumentIdSet.has(contentDocumentId)) {
             this.contentDocumentIdSet.delete(contentDocumentId);
           }
         });
-        return this.handleUploadFinished();
+        return this.refreshFileData();
       })
       .catch((error) => {
         console.error(error);
@@ -361,15 +535,15 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
         this.dataTableFiles = this.dataTableFiles.filter((file) => {
           return row.ContentDocumentId !== file.ContentDocumentId;
         });
+        this.originalFiles = this.dataTableFiles;
         if (this.contentDocumentIdSet.has(row.ContentDocumentId)) {
           this.contentDocumentIdSet.delete(row.ContentDocumentId);
         }
-        return this.handleUploadFinished();
+        return this.refreshFileData();
       })
       .catch((error) => {
         console.error(error);
         this.isLoading = false;
-
         this.showToast("Error deleting record", error?.body?.message, "error");
       });
   }
@@ -427,22 +601,24 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   }
 
   getSelectedText() {
-    const total = this.wiredFileCount?.data;
     this.selectedText =
-      total != null
-        ? `${this.selectedCount} of ${total} file(s) selected.`
+      this.totalFileCount != null
+        ? `${this.selectedCount} of ${this.totalFileCount} file(s) selected.`
         : `${this.selectedCount} file(s) selected.`;
   }
 
   updateHasAdditionalFiles() {
-    const total = this.wiredFileCount?.data;
+    const exhaustedPagination =
+      this.currentPage > 0 && this.lastPageResultCount === 0;
     this.hasAdditionalFiles =
-      total != null && this.dataTableFiles.length < total;
+      !exhaustedPagination &&
+      this.totalFileCount != null &&
+      this.dataTableFiles.length > 0 &&
+      this.dataTableFiles.length < this.totalFileCount;
     this.originalHasAdditionalFiles = this.hasAdditionalFiles;
   }
 
   getAdditionalFiles() {
-    this.currentPage++;
-    this.isLoading = true;
+    void this.loadNextPage();
   }
 }
