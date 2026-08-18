@@ -276,6 +276,81 @@ describe("c-file-related-list", () => {
     expect(element.shadowRoot.querySelector("h2").textContent).toBe("Files (2)");
   });
 
+  it("loads files when state uses the package namespace prefix", async () => {
+    const element = createComponent();
+    mockListData([mockFile], 1);
+    CurrentPageReference.emit({
+      type: "standard__component",
+      attributes: {
+        componentName: "file1sync__fileRelatedList"
+      },
+      state: {
+        file1sync__recordId: "001xx0000000001",
+        file1sync__objectName: "Account",
+        file1sync__includeEmails: "true"
+      }
+    });
+    emitDefaultConfig();
+    await flushPromises();
+    await flushPromises();
+
+    expect(getRelatedListFiles).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recordId: "001xx0000000001",
+        includeEmails: true
+      })
+    );
+    expect(element.shadowRoot.querySelector("c-file-data-table")).not.toBeNull();
+    expect(element.shadowRoot.querySelector("h2").textContent).toBe("Files (1)");
+  });
+
+  it("coerces string includeEmails from URL state to a boolean for Apex", async () => {
+    const element = createComponent();
+    mockListData([mockFile], 1);
+    CurrentPageReference.emit({
+      type: "standard__component",
+      attributes: {
+        componentName: "file1sync__fileRelatedList"
+      },
+      state: {
+        c__recordId: "001xx0000000001",
+        c__objectName: "Account",
+        c__includeEmails: "true"
+      }
+    });
+    emitDefaultConfig();
+    await flushPromises();
+    await flushPromises();
+
+    expect(getRelatedListFiles).toHaveBeenCalledWith(
+      expect.objectContaining({
+        includeEmails: true
+      })
+    );
+    expect(element.shadowRoot.querySelector("c-file-data-table")).not.toBeNull();
+    expect(element.shadowRoot.querySelector("[data-id='empty-table']")).toBeNull();
+  });
+
+  it("shows the Apex error when file load fails", async () => {
+    const element = createComponent();
+    getRelatedListFiles.mockRejectedValue({
+      body: {
+        message:
+          "Value provided is invalid for action parameter 'includeEmails' of type 'Boolean'"
+      }
+    });
+    getRelatedListFileCount.mockResolvedValue(0);
+    emitPageReference();
+    emitDefaultConfig();
+    await flushPromises();
+    await flushPromises();
+
+    const errorEl = element.shadowRoot.querySelector("[data-id='load-error']");
+    expect(errorEl).not.toBeNull();
+    expect(errorEl.textContent).toContain("includeEmails");
+    expect(element.shadowRoot.querySelector("h2").textContent).toBe("Files");
+  });
+
   it("renders the file table inside the page header detail row", async () => {
     const element = createComponent();
     await loadRelatedList(element);

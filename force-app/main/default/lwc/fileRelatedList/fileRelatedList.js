@@ -56,9 +56,52 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   columns = [];
   tableLayoutKey = 0;
   layoutRemeasured = false;
+  error;
 
   get tableMountKey() {
     return [{ id: this.tableLayoutKey }];
+  }
+
+  get loadErrorMessage() {
+    const err = this.error;
+    if (!err) {
+      return null;
+    }
+    return err.body?.message || err.message || "Unable to load files.";
+  }
+
+  get showEmptyTableMessage() {
+    return (
+      !this.isLoading &&
+      !this.loadErrorMessage &&
+      Array.isArray(this.dataTableFiles) &&
+      this.dataTableFiles.length === 0
+    );
+  }
+
+  getStateValue(state, key) {
+    const namespaced = state[`file1sync__${key}`];
+    if (namespaced != null && namespaced !== "") {
+      return namespaced;
+    }
+    const custom = state[`c__${key}`];
+    if (custom != null && custom !== "") {
+      return custom;
+    }
+    return undefined;
+  }
+
+  parseBoolFlag(value, defaultValue = true) {
+    if (value === undefined || value === null || value === "") {
+      return defaultValue;
+    }
+    if (value === true || value === "true") {
+      return true;
+    }
+    if (value === false || value === "false") {
+      return false;
+    }
+    return defaultValue;
   }
 
   connectedCallback() {
@@ -108,6 +151,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     this.lastPageResultCount = 0;
     this.totalFileCount = null;
     this.isLoading = true;
+    this.error = undefined;
   }
 
   handleFileTypeChange(event) {
@@ -348,14 +392,16 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     }
 
     const state = this.currentPageReference.state || {};
-    const nextRecordId = state.c__recordId ? state.c__recordId : null;
+    const nextRecordId = this.getStateValue(state, "recordId") || null;
     const nextMinBytes = this.kbFromStateToMinContentSizeBytes(
-      state.c__minimumFileSizeKb
+      this.getStateValue(state, "minimumFileSizeKb")
     );
-    const nextIncludeEmails = state.c__includeEmails
-      ? state.c__includeEmails
-      : false;
-    const nextFileTypeFilter = state.c__fileTypeFilter || "all";
+    const nextIncludeEmails = this.parseBoolFlag(
+      this.getStateValue(state, "includeEmails"),
+      true
+    );
+    const nextFileTypeFilter =
+      this.getStateValue(state, "fileTypeFilter") || "all";
     const contextChanged =
       nextRecordId !== this.baseRecordId ||
       nextMinBytes !== this.minimumFileSizeBytes ||
@@ -368,7 +414,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
 
     this.baseRecordId = nextRecordId;
     this.minimumFileSizeBytes = nextMinBytes;
-    this.baseObjectName = state.c__objectName ? state.c__objectName : null;
+    this.baseObjectName = this.getStateValue(state, "objectName") || null;
     this.includeEmails = nextIncludeEmails;
     this.fileTypeFilter = nextFileTypeFilter;
     this.buildColumns();

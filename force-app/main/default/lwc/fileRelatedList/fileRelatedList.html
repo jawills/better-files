@@ -107,6 +107,20 @@
             >
             </c-file-data-table>
           </template>
+          <div
+            if:true={loadErrorMessage}
+            class="slds-text-color_error slds-p-around_small"
+            data-id="load-error"
+          >
+            {loadErrorMessage}
+          </div>
+          <div
+            if:true={showEmptyTableMessage}
+            class="slds-text-align_center slds-p-around_medium"
+            data-id="empty-table"
+          >
+            No files to display.
+          </div>
         </ul>
       </div>
     </div>

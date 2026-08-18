@@ -15,6 +15,7 @@ import {
   getFocusedTabInfo,
   openSubtab
 } from "lightning/platformWorkspaceApi";
+
 export default class FileList extends NavigationMixin(LightningElement) {
   @api recordId;
   @api objectApiName;
@@ -70,17 +71,27 @@ export default class FileList extends NavigationMixin(LightningElement) {
   }
 
   buildViewAllState() {
+    const recordId = this.recordId ? String(this.recordId) : "";
+    const objectName = this.objectApiName ? String(this.objectApiName) : "";
+    const includeEmails = String(this.wiredIncludeEmails);
+    const minKb = this.normalizeMinimumFileSizeKbForState(
+      this.minimumFileSizeKb
+    );
+    const minimumFileSizeKb = minKb == null ? "" : String(minKb);
     return {
-      c__recordId: this.recordId,
-      c__objectName: this.objectApiName,
-      c__includeEmails: this.wiredIncludeEmails,
-      c__minimumFileSizeKb: this.normalizeMinimumFileSizeKbForState(
-        this.minimumFileSizeKb
-      )
+      c__recordId: recordId,
+      c__objectName: objectName,
+      c__includeEmails: includeEmails,
+      c__minimumFileSizeKb: minimumFileSizeKb,
+      file1sync__recordId: recordId,
+      file1sync__objectName: objectName,
+      file1sync__includeEmails: includeEmails,
+      file1sync__minimumFileSizeKb: minimumFileSizeKb
     };
   }
 
   viewAllRecords() {
+    const viewAllState = this.buildViewAllState();
     // Standard Navigation to Related list component
     if (!this.isConsoleNavigation) {
       this[NavigationMixin.Navigate](
@@ -90,7 +101,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
             componentName: "file1sync__fileRelatedList",
             recordId: this.recordId
           },
-          state: this.buildViewAllState()
+          state: viewAllState
         },
         false
       );
@@ -108,7 +119,7 @@ export default class FileList extends NavigationMixin(LightningElement) {
               attributes: {
                 componentName: "file1sync__fileRelatedList"
               },
-              state: this.buildViewAllState()
+              state: viewAllState
             }
           });
         })

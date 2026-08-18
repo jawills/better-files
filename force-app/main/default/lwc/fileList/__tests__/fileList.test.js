@@ -159,7 +159,8 @@ describe("c-file-list console and wire resilience", () => {
           type: "standard__component",
           state: expect.objectContaining({
             c__recordId: "001xx0000000001",
-            c__objectName: "Account"
+            c__objectName: "Account",
+            c__includeEmails: "false"
           })
         })
       })
