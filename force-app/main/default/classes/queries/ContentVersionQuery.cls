@@ -3,7 +3,7 @@ public with sharing class ContentVersionQuery extends QueryObject {
     super(
       new List<String>{
         'Id',
-        'VersionData',
+        'ContentDocumentId',
         'ContentDocument.Title',
         'ContentDocument.CreatedDate',
         'ContentDocument.LastModifiedDate',

@@ -73,6 +73,11 @@ public with sharing class FileListControllerTest {
     for (FileListController.FileRow row : fileRows) {
       System.assertEquals(acc.Id, row.linkedEntityId);
       System.assertNotEquals(null, row.version);
+      System.assertEquals(
+        false,
+        row.version.getPopulatedFieldsAsMap().containsKey('VersionData'),
+        'Listing files must not query VersionData or large files blow the heap limit'
+      );
       System.assertNotEquals(
         null,
         row.version.ContentDocument.OwnerId,
