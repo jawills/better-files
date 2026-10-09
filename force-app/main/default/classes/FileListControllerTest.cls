@@ -460,6 +460,240 @@ public with sharing class FileListControllerTest {
       files[0].linkedEntityId,
       'When linked to both parent and email, prefer EmailMessage link'
     );
+
+    insert new ContentVersion(
+      Title = 'Z Last File',
+      PathOnClient = 'Last.pdf',
+      VersionData = Blob.valueOf('another file'),
+      FirstPublishLocationId = parentCase.Id
+    );
+    List<FileListController.FileRow> firstPage = FileListController.getRelatedListFiles(
+      parentCase.Id,
+      1,
+      0,
+      true,
+      null,
+      null,
+      null,
+      'Title',
+      'asc'
+    );
+    List<FileListController.FileRow> secondPage = FileListController.getRelatedListFiles(
+      parentCase.Id,
+      1,
+      1,
+      true,
+      null,
+      null,
+      null,
+      'Title',
+      'asc'
+    );
+    System.assertEquals(
+      'SharedAttachment',
+      firstPage[0].version.ContentDocument.Title
+    );
+    System.assertEquals(emailMsg.Id, firstPage[0].linkedEntityId);
+    System.assertEquals(
+      'Z Last File',
+      secondPage[0].version.ContentDocument.Title,
+      'Duplicate links must not consume pagination slots'
+    );
+    System.assertEquals(
+      2,
+      FileListController.getRelatedListFileCount(
+        parentCase.Id,
+        true,
+        null,
+        null,
+        null
+      )
+    );
+  }
+
+  @isTest
+  static void testRelatedListSortAcrossPages() {
+    Account account = new Account(Name = 'Sorted Files');
+    insert account;
+    List<ContentVersion> versions = new List<ContentVersion>();
+    String body = '';
+    for (Integer i = 26; i >= 0; i--) {
+      body += 'X';
+      versions.add(
+        new ContentVersion(
+          Title = 'Sort ' + ('0' + i).right(2),
+          PathOnClient = 'Sort.txt',
+          VersionData = Blob.valueOf(body),
+          FirstPublishLocationId = account.Id
+        )
+      );
+    }
+    insert versions;
+
+    Test.startTest();
+    List<FileListController.FileRow> firstPage = FileListController.getRelatedListFiles(
+      account.Id,
+      25,
+      0,
+      false,
+      null,
+      null,
+      null,
+      'Title',
+      'asc'
+    );
+    List<FileListController.FileRow> secondPage = FileListController.getRelatedListFiles(
+      account.Id,
+      25,
+      1,
+      false,
+      null,
+      null,
+      null,
+      'Title',
+      'asc'
+    );
+    List<FileListController.FileRow> descending = FileListController.getRelatedListFiles(
+      account.Id,
+      25,
+      0,
+      false,
+      null,
+      null,
+      null,
+      'Title',
+      'desc'
+    );
+    List<FileListController.FileRow> bySize = FileListController.getRelatedListFiles(
+      account.Id,
+      25,
+      0,
+      false,
+      null,
+      null,
+      null,
+      'ContentSize',
+      'asc'
+    );
+    List<FileListController.FileRow> filtered = FileListController.getRelatedListFiles(
+      account.Id,
+      25,
+      0,
+      false,
+      5,
+      'document',
+      'Sort 2',
+      'Title',
+      'desc'
+    );
+    Integer count = FileListController.getRelatedListFileCount(
+      account.Id,
+      false,
+      5,
+      'document',
+      'Sort 2'
+    );
+    Test.stopTest();
+
+    System.assertEquals(25, firstPage.size());
+    System.assertEquals(2, secondPage.size());
+    System.assertEquals('Sort 00', firstPage[0].version.ContentDocument.Title);
+    System.assertEquals('Sort 24', firstPage[24].version.ContentDocument.Title);
+    System.assertEquals('Sort 25', secondPage[0].version.ContentDocument.Title);
+    System.assertEquals('Sort 26', secondPage[1].version.ContentDocument.Title);
+    System.assertEquals('Sort 26', descending[0].version.ContentDocument.Title);
+    System.assertEquals('Sort 26', bySize[0].version.ContentDocument.Title);
+    System.assertEquals(1, bySize[0].version.ContentDocument.ContentSize);
+    System.assertEquals(
+      2,
+      bySize[1].version.ContentDocument.ContentSize,
+      'File sizes must sort numerically, not as formatted strings'
+    );
+    System.assertEquals(
+      3,
+      count,
+      'Search, type, and size filters must match the count'
+    );
+    System.assertEquals(count, filtered.size());
+    System.assertEquals('Sort 22', filtered[0].version.ContentDocument.Title);
+  }
+
+  @isTest
+  static void testRelatedListSortTiesAndInvalidInput() {
+    Account account = [SELECT Id FROM Account WHERE Name = 'Test 1Sync File'];
+    List<ContentVersion> expected = [
+      SELECT Id
+      FROM ContentVersion
+      ORDER BY Id ASC
+    ];
+    Test.startTest();
+    // Both files have the same owner and modifier. The Id tie-breaker must
+    // produce stable, non-overlapping pages in either direction.
+    for (String field : new List<String>{ 'Owner', 'LastModifiedBy' }) {
+      for (String direction : new List<String>{ 'asc', 'desc' }) {
+        List<FileListController.FileRow> first = FileListController.getRelatedListFiles(
+          account.Id,
+          1,
+          0,
+          false,
+          null,
+          null,
+          null,
+          field,
+          direction
+        );
+        List<FileListController.FileRow> second = FileListController.getRelatedListFiles(
+          account.Id,
+          1,
+          1,
+          false,
+          null,
+          null,
+          null,
+          field,
+          direction
+        );
+        System.assertEquals(expected[0].Id, first[0].version.Id);
+        System.assertEquals(expected[1].Id, second[0].version.Id);
+      }
+    }
+    List<FileListController.FileRow> defaultSort = FileListController.getRelatedListFiles(
+      account.Id,
+      25,
+      0,
+      false,
+      null,
+      null,
+      null,
+      'LastModifiedDate',
+      'desc'
+    );
+    List<FileListController.FileRow> invalidSort = FileListController.getRelatedListFiles(
+      account.Id,
+      25,
+      0,
+      false,
+      null,
+      null,
+      null,
+      'Title LIMIT 1',
+      'ASC LIMIT 1'
+    );
+    List<FileListController.FileRow> omittedSort = FileListController.getRelatedListFiles(
+      account.Id,
+      null,
+      null,
+      false,
+      null,
+      null,
+      null,
+      null,
+      null
+    );
+    Test.stopTest();
+    System.assertEquals(2, invalidSort.size());
+    System.assertEquals(defaultSort[0].version.Id, invalidSort[0].version.Id);
+    System.assertEquals(defaultSort[0].version.Id, omittedSort[0].version.Id);
   }
 
   @isTest

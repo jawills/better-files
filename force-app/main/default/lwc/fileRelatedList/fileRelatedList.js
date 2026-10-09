@@ -5,7 +5,6 @@ import deleteFile from "@salesforce/apex/FileListController.deleteFile";
 import deleteFiles from "@salesforce/apex/FileListController.deleteFiles";
 import getRecordName from "@salesforce/apex/FileListController.getRecordName";
 import getRelatedListConfig from "@salesforce/apex/FileListController.getRelatedListConfig";
-import searchContentVersions from "@salesforce/apex/FileListController.searchContentVersions";
 import { NavigationMixin, CurrentPageReference } from "lightning/navigation";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { mapFile, getFileTypeFilterOptions } from "c/util";
@@ -21,6 +20,13 @@ const ACTIONS = [
 
 const DELAY = 350;
 const PAGE_SIZE = 25;
+const SORT_FIELDS = {
+  fileUrl: "Title",
+  OwnerLink: "Owner",
+  LastModifiedDate: "LastModifiedDate",
+  LastModifiedByLink: "LastModifiedBy",
+  ContentSize: "ContentSize"
+};
 
 export default class FileRelatedList extends NavigationMixin(LightningElement) {
   @track baseObjectUrl;
@@ -32,7 +38,8 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   @track relatedRecordName;
   @track relatedRecordUrl;
   @track selectedRecords = [];
-  searchTermUpdated;
+  sortedBy = "LastModifiedDate";
+  sortDirection = "desc";
   contentDocumentIdSet = new Set();
   isLoading = true;
   showSkeleton = true;
@@ -108,6 +115,11 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     this.buildColumns();
   }
 
+  disconnectedCallback() {
+    clearTimeout(this.delayTimeout);
+    this.loadRequestId++;
+  }
+
   renderedCallback() {
     if (this.showSkeleton || this.layoutRemeasured) {
       return;
@@ -139,10 +151,11 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   }
 
   resetFileListState() {
+    clearTimeout(this.delayTimeout);
+    this.loadRequestId++;
     this.currentPage = 0;
     this.contentDocumentIdSet = new Set();
     this.dataTableFiles = [];
-    this.originalFiles = [];
     this.selectedRecords = [];
     this.hasSelectedRecords = false;
     this.showFileUpload = true;
@@ -152,6 +165,18 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     this.totalFileCount = null;
     this.isLoading = true;
     this.error = undefined;
+  }
+
+  handleSort(event) {
+    // Title is the only custom column; Salesforce can omit its fieldName.
+    const fieldName = event.detail.fieldName ?? "fileUrl";
+    if (!Object.hasOwn(SORT_FIELDS, fieldName)) {
+      return;
+    }
+    this.sortedBy = fieldName;
+    this.sortDirection = event.detail.sortDirection === "asc" ? "asc" : "desc";
+    this.resetFileListState();
+    void this.loadAllFileData();
   }
 
   handleFileTypeChange(event) {
@@ -174,6 +199,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       {
         label: "Title",
         fieldName: "fileUrl",
+        sortable: true,
         type: "imagePreview",
         typeAttributes: {
           Title: {
@@ -196,6 +222,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       cols.push({
         label: "Owner",
         fieldName: "OwnerLink",
+        sortable: true,
         type: "url",
         typeAttributes: { label: { fieldName: "Owner" } }
       });
@@ -204,6 +231,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       cols.push({
         label: "Last Modified Date",
         fieldName: "LastModifiedDate",
+        sortable: true,
         type: "date"
       });
     }
@@ -211,6 +239,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       cols.push({
         label: "Last Modified By",
         fieldName: "LastModifiedByLink",
+        sortable: true,
         type: "url",
         typeAttributes: { label: { fieldName: "LastModifiedBy" } }
       });
@@ -218,7 +247,8 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     if (this.showFileSize) {
       cols.push({
         label: "File Size",
-        fieldName: "ContentSize"
+        fieldName: "ContentSize",
+        sortable: true
       });
     }
     cols.push({
@@ -246,7 +276,10 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       page: this.currentPage,
       includeEmails: this.includeEmails,
       minContentSize: this.minimumFileSizeBytes,
-      fileTypeFilter: this.fileTypeFilter
+      fileTypeFilter: this.fileTypeFilter,
+      searchTerm: this.searchTerm,
+      sortBy: SORT_FIELDS[this.sortedBy],
+      sortDirection: this.sortDirection
     };
   }
 
@@ -255,7 +288,8 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       recordId: this.baseRecordId,
       includeEmails: this.includeEmails,
       minContentSize: this.minimumFileSizeBytes,
-      fileTypeFilter: this.fileTypeFilter
+      fileTypeFilter: this.fileTypeFilter,
+      searchTerm: this.searchTerm
     };
   }
 
@@ -277,7 +311,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
 
     if (this.currentPage > 0 && this.lastPageResultCount === 0) {
       this.hasAdditionalFiles = false;
-      this.originalHasAdditionalFiles = false;
       return;
     }
 
@@ -285,7 +318,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       this.currentPage === 0
         ? uniqueNewFiles
         : [...this.dataTableFiles, ...uniqueNewFiles];
-    this.originalFiles = this.dataTableFiles;
     this.fileCount = this.dataTableFiles.length;
     this.error = undefined;
     this.getSelectedText();
@@ -313,6 +345,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   }
 
   async loadAllFileData() {
+    clearTimeout(this.delayTimeout);
     if (!this.baseRecordId) {
       return;
     }
@@ -465,47 +498,16 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     }
   }
 
-  async handleSearchKeyChange(event) {
-    clearTimeout(this.delayTimeout);
-    this.searchTermUpdated = Date.now();
-    const searchTermUpdated = this.searchTermUpdated;
-    const searchValue = event.target.value;
-    this.searchTerm = searchValue;
-
-    if (this.searchTerm == "") {
-      this.dataTableFiles = this.originalFiles;
-      this.hasAdditionalFiles = this.originalHasAdditionalFiles;
-      this.isLoading = false;
+  handleSearchKeyChange(event) {
+    this.searchTerm = event.target.value;
+    this.resetFileListState();
+    if (this.searchTerm === "") {
+      void this.loadAllFileData();
       return;
     }
-
-    this.isLoading = true;
-
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
     this.delayTimeout = setTimeout(() => {
-      searchContentVersions({
-        searchTerm: this.searchTerm,
-        recordId: this.baseRecordId,
-        includeEmails: this.includeEmails,
-        minContentSize: this.minimumFileSizeBytes,
-        fileTypeFilter: this.fileTypeFilter
-      })
-        .then((result) => {
-          if (this.searchTermUpdated > searchTermUpdated) {
-            return;
-          }
-          this.dataTableFiles = result.map((record) => mapFile(record));
-          this.fileCount = this.dataTableFiles.length;
-          this.getSelectedText();
-          this.hasAdditionalFiles =
-            this.searchTerm == "" &&
-            this.totalFileCount != null &&
-            this.dataTableFiles.length < this.totalFileCount;
-          this.isLoading = false;
-        })
-        .catch((error) => {
-          console.error("Error searching content versions:", error);
-          this.isLoading = false;
-        });
+      void this.loadAllFileData();
     }, DELAY);
   }
 
@@ -532,7 +534,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
         this.dataTableFiles = this.dataTableFiles.filter((file) => {
           return !data.includes(file.ContentDocumentId);
         });
-        this.originalFiles = this.dataTableFiles;
         data.forEach((contentDocumentId) => {
           if (this.contentDocumentIdSet.has(contentDocumentId)) {
             this.contentDocumentIdSet.delete(contentDocumentId);
@@ -581,7 +582,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
         this.dataTableFiles = this.dataTableFiles.filter((file) => {
           return row.ContentDocumentId !== file.ContentDocumentId;
         });
-        this.originalFiles = this.dataTableFiles;
         if (this.contentDocumentIdSet.has(row.ContentDocumentId)) {
           this.contentDocumentIdSet.delete(row.ContentDocumentId);
         }
@@ -661,7 +661,6 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       this.totalFileCount != null &&
       this.dataTableFiles.length > 0 &&
       this.dataTableFiles.length < this.totalFileCount;
-    this.originalHasAdditionalFiles = this.hasAdditionalFiles;
   }
 
   getAdditionalFiles() {

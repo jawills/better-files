@@ -254,16 +254,96 @@ public with sharing class FileListController {
     Integer page,
     Boolean includeEmails,
     Integer minContentSize,
-    String fileTypeFilter
+    String fileTypeFilter,
+    String searchTerm,
+    String sortBy,
+    String sortDirection
   ) {
-    return getFiles(
-      recordId,
-      fileLimit,
-      page,
-      includeEmails,
+    List<ContentDocumentLink> links = relatedListLinkQuery(
+        recordId,
+        includeEmails,
+        minContentSize,
+        fileTypeFilter,
+        searchTerm
+      )
+      .asUser()
+      .getList();
+
+    // Page unique files, not links: a file can belong to both the record and emails.
+    Map<Id, ContentDocumentLink> preferredByVersionId = new Map<Id, ContentDocumentLink>();
+    for (ContentDocumentLink link : links) {
+      Id versionId = link.ContentDocument.LatestPublishedVersionId;
+      if (
+        versionId != null &&
+        (!preferredByVersionId.containsKey(versionId) ||
+        isEmailMessage(link.LinkedEntityId))
+      ) {
+        preferredByVersionId.put(versionId, link);
+      }
+    }
+    if (preferredByVersionId.isEmpty()) {
+      return new List<FileRow>();
+    }
+
+    Integer limitSize = fileLimit == null ? PAGE_SIZE : fileLimit;
+    Integer pageNumber = page == null ? 0 : page;
+    List<FileRow> rows = new List<FileRow>();
+    for (
+      ContentVersion version : (List<ContentVersion>) new ContentVersionQuery()
+        .byId(preferredByVersionId.keySet())
+        .orderBy(relatedListOrderBy(sortBy, sortDirection))
+        .withLimit(limitSize)
+        .withOffset(pageNumber * limitSize)
+        .asUser()
+        .getList()
+    ) {
+      rows.add(buildFileRow(version, preferredByVersionId.get(version.Id)));
+    }
+    return rows;
+  }
+
+  /** Only allow known fields and directions into the dynamic ORDER BY clause. */
+  private static String relatedListOrderBy(
+    String sortBy,
+    String sortDirection
+  ) {
+    Map<String, String> fields = new Map<String, String>{
+      'Title' => 'ContentDocument.Title',
+      'Owner' => 'ContentDocument.Owner.Name',
+      'LastModifiedDate' => 'ContentDocument.LastModifiedDate',
+      'LastModifiedBy' => 'ContentDocument.LastModifiedBy.Name',
+      'ContentSize' => 'ContentDocument.ContentSize'
+    };
+    String field = fields.get(sortBy);
+    String direction = sortDirection == 'asc' ? 'ASC' : 'DESC';
+    if (field == null) {
+      field = fields.get('LastModifiedDate');
+      direction = 'DESC';
+    }
+    // A unique tie-breaker keeps equal values in the same order across pages.
+    return field + ' ' + direction + ' NULLS LAST, Id ASC';
+  }
+
+  private static ContentDocumentLinkQuery relatedListLinkQuery(
+    Id recordId,
+    Boolean includeEmails,
+    Integer minContentSize,
+    String fileTypeFilter,
+    String searchTerm
+  ) {
+    Set<Id> recordIds = new Set<Id>{ recordId };
+    if (includeEmails == true) {
+      recordIds.addAll(getEmailMessageIds(recordId));
+    }
+    ContentDocumentLinkQuery query = baseContentDocumentLinkQuery(
+      recordIds,
       minContentSize,
       fileTypeFilter
     );
+    if (String.isNotBlank(searchTerm)) {
+      query.byContentDocumentTitle(searchTerm);
+    }
+    return query;
   }
 
   /** Non-cacheable so View All always loads fresh data after record-page uploads. */
@@ -272,9 +352,26 @@ public with sharing class FileListController {
     Id recordId,
     Boolean includeEmails,
     Integer minContentSize,
-    String fileTypeFilter
+    String fileTypeFilter,
+    String searchTerm
   ) {
-    return getFileCount(recordId, includeEmails, minContentSize, fileTypeFilter);
+    Set<Id> versionIds = new Set<Id>();
+    for (
+      ContentDocumentLink link : (List<ContentDocumentLink>) relatedListLinkQuery(
+          recordId,
+          includeEmails,
+          minContentSize,
+          fileTypeFilter,
+          searchTerm
+        )
+        .asUser()
+        .getList()
+    ) {
+      if (link.ContentDocument.LatestPublishedVersionId != null) {
+        versionIds.add(link.ContentDocument.LatestPublishedVersionId);
+      }
+    }
+    return versionIds.size();
   }
 
   @AuraEnabled
