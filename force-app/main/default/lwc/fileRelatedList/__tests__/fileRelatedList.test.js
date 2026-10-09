@@ -69,12 +69,6 @@ jest.mock(
 );
 
 jest.mock(
-  "@salesforce/apex/FileListController.searchContentVersions",
-  () => ({ default: jest.fn() }),
-  { virtual: true }
-);
-
-jest.mock(
   "@salesforce/apex/FileListController.getRelatedListConfig",
   () => {
     const { createApexTestWireAdapter } = require("@salesforce/sfdx-lwc-jest");
@@ -125,7 +119,11 @@ function mockListData(files = [mockFile], count = files.length) {
   getRelatedListFileCount.mockResolvedValue(count);
 }
 
-async function loadRelatedList(element, files = [mockFile], count = files.length) {
+async function loadRelatedList(
+  element,
+  files = [mockFile],
+  count = files.length
+) {
   mockListData(files, count);
   emitPageReference();
   emitDefaultConfig();
@@ -151,7 +149,9 @@ describe("c-file-related-list", () => {
     const element = createComponent();
     await loadRelatedList(element);
 
-    expect(element.shadowRoot.querySelector(".slds-page-header")).not.toBeNull();
+    expect(
+      element.shadowRoot.querySelector(".slds-page-header")
+    ).not.toBeNull();
     expect(element.shadowRoot.querySelector("c-stencil")).toBeNull();
   });
 
@@ -159,7 +159,9 @@ describe("c-file-related-list", () => {
     const element = createComponent();
     await loadRelatedList(element, [mockFile], 5);
 
-    expect(element.shadowRoot.querySelector("h2").textContent).toBe("Files (5)");
+    expect(element.shadowRoot.querySelector("h2").textContent).toBe(
+      "Files (5)"
+    );
   });
 
   it("clears the skeleton when file load errors", async () => {
@@ -171,7 +173,9 @@ describe("c-file-related-list", () => {
     await flushPromises();
     await flushPromises();
 
-    expect(element.shadowRoot.querySelector(".slds-page-header")).not.toBeNull();
+    expect(
+      element.shadowRoot.querySelector(".slds-page-header")
+    ).not.toBeNull();
     expect(element.shadowRoot.querySelector("c-stencil")).toBeNull();
   });
 
@@ -190,7 +194,9 @@ describe("c-file-related-list", () => {
 
     await loadRelatedList(element, [fileWithoutModifier], 1);
 
-    expect(element.shadowRoot.querySelector("c-file-data-table")).not.toBeNull();
+    expect(
+      element.shadowRoot.querySelector("c-file-data-table")
+    ).not.toBeNull();
   });
 
   it("replaces loaded files on refresh instead of appending", async () => {
@@ -215,7 +221,9 @@ describe("c-file-related-list", () => {
     await flushPromises();
     await flushPromises();
 
-    expect(element.shadowRoot.querySelector("h2").textContent).toBe("Files (1)");
+    expect(element.shadowRoot.querySelector("h2").textContent).toBe(
+      "Files (1)"
+    );
     expect(getRelatedListFiles).toHaveBeenCalled();
   });
 
@@ -237,7 +245,9 @@ describe("c-file-related-list", () => {
     const element = createComponent();
     await loadRelatedList(element, [mockFile], 30);
 
-    expect(element.shadowRoot.querySelector("[data-id='get-more']")).not.toBeNull();
+    expect(
+      element.shadowRoot.querySelector("[data-id='get-more']")
+    ).not.toBeNull();
   });
 
   it("hides Get More when the next page returns no new files", async () => {
@@ -251,7 +261,9 @@ describe("c-file-related-list", () => {
     await flushPromises();
 
     expect(element.shadowRoot.querySelector("[data-id='get-more']")).toBeNull();
-    expect(element.shadowRoot.querySelector("c-file-data-table")).not.toBeNull();
+    expect(
+      element.shadowRoot.querySelector("c-file-data-table")
+    ).not.toBeNull();
   });
 
   it("loads files via non-cacheable apex on navigation", async () => {
@@ -273,7 +285,9 @@ describe("c-file-related-list", () => {
 
     expect(getRelatedListFiles).toHaveBeenCalled();
     expect(getRelatedListFileCount).toHaveBeenCalled();
-    expect(element.shadowRoot.querySelector("h2").textContent).toBe("Files (2)");
+    expect(element.shadowRoot.querySelector("h2").textContent).toBe(
+      "Files (2)"
+    );
   });
 
   it("loads files when state uses the package namespace prefix", async () => {
@@ -300,8 +314,12 @@ describe("c-file-related-list", () => {
         includeEmails: true
       })
     );
-    expect(element.shadowRoot.querySelector("c-file-data-table")).not.toBeNull();
-    expect(element.shadowRoot.querySelector("h2").textContent).toBe("Files (1)");
+    expect(
+      element.shadowRoot.querySelector("c-file-data-table")
+    ).not.toBeNull();
+    expect(element.shadowRoot.querySelector("h2").textContent).toBe(
+      "Files (1)"
+    );
   });
 
   it("coerces string includeEmails from URL state to a boolean for Apex", async () => {
@@ -327,8 +345,12 @@ describe("c-file-related-list", () => {
         includeEmails: true
       })
     );
-    expect(element.shadowRoot.querySelector("c-file-data-table")).not.toBeNull();
-    expect(element.shadowRoot.querySelector("[data-id='empty-table']")).toBeNull();
+    expect(
+      element.shadowRoot.querySelector("c-file-data-table")
+    ).not.toBeNull();
+    expect(
+      element.shadowRoot.querySelector("[data-id='empty-table']")
+    ).toBeNull();
   });
 
   it("shows the Apex error when file load fails", async () => {
@@ -372,5 +394,188 @@ describe("c-file-related-list", () => {
     expect(table.columns.every((col) => col.initialWidth === undefined)).toBe(
       true
     );
+  });
+
+  it.each([
+    ["fileUrl", "Title"],
+    [undefined, "Title"],
+    ["OwnerLink", "Owner"],
+    ["LastModifiedDate", "LastModifiedDate"],
+    ["LastModifiedByLink", "LastModifiedBy"],
+    ["ContentSize", "ContentSize"]
+  ])(
+    "sorts %s by its server field %s in both directions",
+    async (fieldName, sortBy) => {
+      const element = createComponent();
+      await loadRelatedList(element);
+      const table = element.shadowRoot.querySelector("c-file-data-table");
+      expect(table.sortedBy).toBe("LastModifiedDate");
+      expect(table.sortedDirection).toBe("desc");
+      expect(table.columns.filter((column) => column.sortable)).toHaveLength(5);
+
+      for (const sortDirection of ["asc", "desc"]) {
+        table.dispatchEvent(
+          new CustomEvent("sort", {
+            detail: { fieldName, sortDirection }
+          })
+        );
+        await flushPromises();
+        expect(getRelatedListFiles).toHaveBeenLastCalledWith(
+          expect.objectContaining({
+            sortBy,
+            sortDirection,
+            page: 0
+          })
+        );
+        expect(table.sortedBy).toBe(fieldName ?? "fileUrl");
+        expect(table.sortedDirection).toBe(sortDirection);
+      }
+    }
+  );
+
+  it("restarts pagination on sort and ignores an older page response", async () => {
+    const element = createComponent();
+    await loadRelatedList(element, [mockFile], 30);
+    let finishOldPage;
+    getRelatedListFiles.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishOldPage = resolve;
+        })
+    );
+    element.shadowRoot.querySelector("[data-id='get-more']").click();
+    expect(getRelatedListFiles).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 1 })
+    );
+
+    const sortedFile = {
+      ...mockFile,
+      version: {
+        ...mockFile.version,
+        Id: "068xx0000000002",
+        ContentDocumentId: "069xx0000000002",
+        ContentDocument: {
+          ...mockFile.version.ContentDocument,
+          Id: "069xx0000000002",
+          Title: "A First File"
+        }
+      }
+    };
+    getRelatedListFiles.mockResolvedValue([sortedFile]);
+    const table = element.shadowRoot.querySelector("c-file-data-table");
+    table.dispatchEvent(
+      new CustomEvent("sort", {
+        detail: { fieldName: "fileUrl", sortDirection: "asc" }
+      })
+    );
+    await flushPromises();
+    finishOldPage([mockFile]);
+    await flushPromises();
+    expect(table.data.map((file) => file.Title)).toEqual(["A First File"]);
+    expect(getRelatedListFiles).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 0, sortBy: "Title" })
+    );
+
+    element.shadowRoot.querySelector("[data-id='get-more']").click();
+    await flushPromises();
+    expect(getRelatedListFiles).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        page: 1,
+        sortBy: "Title",
+        sortDirection: "asc"
+      })
+    );
+  });
+
+  it("keeps sorting through search, clearing search, and file-type changes", async () => {
+    const element = createComponent();
+    await loadRelatedList(element, [mockFile], 30);
+    const table = element.shadowRoot.querySelector("c-file-data-table");
+    const search = element.shadowRoot.querySelector("lightning-input");
+    search.value = "Spec";
+    search.dispatchEvent(new CustomEvent("change"));
+    // Sorting while the search is debounced must run only the current query.
+    table.dispatchEvent(
+      new CustomEvent("sort", {
+        detail: { fieldName: "ContentSize", sortDirection: "asc" }
+      })
+    );
+    await flushPromises();
+    expect(getRelatedListFiles).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        searchTerm: "Spec",
+        sortBy: "ContentSize",
+        sortDirection: "asc",
+        page: 0
+      })
+    );
+    expect(getRelatedListFileCount).toHaveBeenLastCalledWith(
+      expect.objectContaining({ searchTerm: "Spec" })
+    );
+
+    element.shadowRoot.querySelector("[data-id='get-more']").click();
+    await flushPromises();
+    expect(getRelatedListFiles).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        searchTerm: "Spec",
+        sortBy: "ContentSize",
+        page: 1
+      })
+    );
+
+    search.value = "";
+    search.dispatchEvent(new CustomEvent("change"));
+    await flushPromises();
+    expect(getRelatedListFiles).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        searchTerm: "",
+        sortBy: "ContentSize",
+        page: 0
+      })
+    );
+
+    element.shadowRoot.querySelector("lightning-combobox").dispatchEvent(
+      new CustomEvent("change", {
+        detail: { value: "image" }
+      })
+    );
+    await flushPromises();
+    expect(getRelatedListFiles).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        fileTypeFilter: "image",
+        sortBy: "ContentSize",
+        sortDirection: "asc",
+        page: 0
+      })
+    );
+  });
+
+  it("discards an in-flight search when the search is cleared", async () => {
+    const element = createComponent();
+    await loadRelatedList(element);
+    let finishSearch;
+    getRelatedListFiles.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishSearch = resolve;
+        })
+    );
+    const search = element.shadowRoot.querySelector("lightning-input");
+    jest.useFakeTimers();
+    search.value = "missing";
+    search.dispatchEvent(new CustomEvent("change"));
+    jest.advanceTimersByTime(350);
+    jest.useRealTimers();
+    expect(getRelatedListFiles).toHaveBeenLastCalledWith(
+      expect.objectContaining({ searchTerm: "missing" })
+    );
+    search.value = "";
+    search.dispatchEvent(new CustomEvent("change"));
+    await flushPromises();
+    finishSearch([]);
+    await flushPromises();
+    expect(
+      element.shadowRoot.querySelector("c-file-data-table").data
+    ).toHaveLength(1);
   });
 });

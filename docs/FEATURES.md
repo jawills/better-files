@@ -71,6 +71,11 @@ Default columns, controlled by **Custom Metadata** (not App Builder):
 | **File Size** | Human-readable size (KB, MB, …) |
 | **Actions** | Preview, Download, Delete |
 
+Click any data column header to sort ascending or descending. The default is
+**Last Modified Date, descending**. Sorting runs on the server before pagination,
+using names for Owner/Last Modified By and bytes for File Size. Duplicate links
+to the same file occupy one slot, including files linked through emails.
+
 ### Row actions
 
 - **Preview** — Salesforce native file preview page.
@@ -88,7 +93,8 @@ When one or more rows are selected:
 
 - Server-side search by **file title** (debounced 350ms).
 - Respects current file-type filter, email inclusion, and minimum size settings.
-- Clears back to the loaded list when search is emptied.
+- Uses the selected sort order and supports paging through matching files.
+- Clearing search reloads the full list with the selected sort order.
 
 ### File type filter
 
@@ -217,8 +223,10 @@ Previewable on the record card and via row actions:
 |--------|-----------|---------|
 | `getFiles` | Yes | Paginated file rows for a record |
 | `getFileCount` | Yes | Unique file count for a record |
+| `getRelatedListFiles` | No | Sorted, paginated unique files for View All; optional title search |
+| `getRelatedListFileCount` | No | Unique count matching View All filters and search |
 | `getRelatedListConfig` | Yes | Column flags from CMDT |
-| `searchContentVersions` | Yes | Title search for View All |
+| `searchContentVersions` | Yes | Legacy title search (up to 25 results) |
 | `getRecordName` | Yes | Breadcrumb label for parent record |
 | `uploadFile` | No | Base64 upload + link to record |
 | `deleteFile` | No | Delete single ContentDocument |
