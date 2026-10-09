@@ -20,6 +20,8 @@ public with sharing class FileListController {
     public Boolean showLastModifiedBy { get; set; }
     @AuraEnabled
     public Boolean showFileSize { get; set; }
+    @AuraEnabled
+    public String filterMode { get; set; }
   }
 
   private static final String RELATED_LIST_CONFIG_DEVELOPER_NAME = 'Default';
@@ -31,13 +33,15 @@ public with sharing class FileListController {
     config.showLastModifiedDate = true;
     config.showLastModifiedBy = true;
     config.showFileSize = true;
+    config.filterMode = 'Basic';
 
     List<File_Related_List_Config__mdt> rows = [
       SELECT
         Show_Owner__c,
         Show_Last_Modified_Date__c,
         Show_Last_Modified_By__c,
-        Show_File_Size__c
+        Show_File_Size__c,
+        Filter_Mode__c
       FROM File_Related_List_Config__mdt
       WHERE DeveloperName = :RELATED_LIST_CONFIG_DEVELOPER_NAME
       WITH USER_MODE
@@ -49,6 +53,9 @@ public with sharing class FileListController {
       config.showLastModifiedDate = row.Show_Last_Modified_Date__c;
       config.showLastModifiedBy = row.Show_Last_Modified_By__c;
       config.showFileSize = row.Show_File_Size__c;
+      config.filterMode = row.Filter_Mode__c == 'Advanced'
+        ? 'Advanced'
+        : 'Basic';
     }
     return config;
   }
@@ -244,6 +251,37 @@ public with sharing class FileListController {
       cvIds.add(cdl.ContentDocument.LatestPublishedVersionId);
     }
     return cvIds.size();
+  }
+
+  /** Available extensions across the whole eligible record, independent of search and pagination. */
+  @AuraEnabled
+  public static List<String> getRelatedListFileExtensions(
+    Id recordId,
+    Boolean includeEmails,
+    Integer minContentSize
+  ) {
+    Set<String> extensions = new Set<String>();
+    for (
+      ContentDocumentLink link : (List<ContentDocumentLink>) relatedListLinkQuery(
+          recordId,
+          includeEmails,
+          minContentSize,
+          null,
+          null
+        )
+        .asUser()
+        .getList()
+    ) {
+      if (link.ContentDocument.LatestPublishedVersionId != null) {
+        String extension = link.ContentDocument.FileExtension;
+        extensions.add(
+          String.isBlank(extension) ? '' : extension.toLowerCase()
+        );
+      }
+    }
+    List<String> result = new List<String>(extensions);
+    result.sort();
+    return result;
   }
 
   /** Non-cacheable so View All always loads fresh data after record-page uploads. */

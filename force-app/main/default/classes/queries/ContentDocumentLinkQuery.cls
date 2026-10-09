@@ -61,6 +61,16 @@ public with sharing class ContentDocumentLinkQuery extends QueryObject {
     if (String.isBlank(fileTypeFilter) || fileTypeFilter == 'all') {
       return this;
     }
+    // Prefix exact extensions so files named .image or .document remain distinct from categories.
+    if (fileTypeFilter.startsWith('extension:')) {
+      String extension = fileTypeFilter.substring('extension:'.length())
+        .toLowerCase();
+      return (ContentDocumentLinkQuery) byField(
+        'ContentDocument.FileExtension',
+        '=',
+        String.isBlank(extension) ? null : extension
+      );
+    }
     if (fileTypeFilter == 'image') {
       return (ContentDocumentLinkQuery) byField(
         'ContentDocument.FileExtension',

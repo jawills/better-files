@@ -8,7 +8,7 @@ A better way to manage files on Salesforce record pages — compact card view, n
 - **View All related list** — data table with Owner, dates, size, preview, download, delete
 - **Bulk download & delete** on View All
 - **Search by file name** (View All)
-- **File type filter** — All, Images, Documents (View All)
+- **File type filter** — Basic categories or Advanced record-specific extensions, configured in custom metadata (View All)
 - **Email message attachments** — optionally include files from related emails
 - **Minimum file size** filter
 - **Service Console** — View All opens in a subtab

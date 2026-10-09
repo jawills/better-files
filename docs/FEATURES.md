@@ -98,13 +98,22 @@ When one or more rows are selected:
 
 ### File type filter
 
-Available on View All only (not the record-page card):
+Available on View All only (not the record-page card). The **Filter Mode** custom metadata setting chooses between **Basic** (default) and **Advanced**.
+
+**Basic** keeps the existing categories:
 
 | Filter | Extensions included |
 |--------|---------------------|
 | **All files** | No filter |
 | **Images** | png, jpg, jpeg, gif, bmp, svg, webp, tif, tiff, heic |
 | **Documents** | pdf, doc, docx, xls, xlsx, csv, ppt, pptx, txt, rtf, odt, ods, odp |
+
+**Advanced** uses the same dropdown with **All files** plus the exact extensions present on the current record (for example, PDF, PNG, and XLSX). Files without an extension have a **No extension** option.
+
+- Options include all eligible files across every page, including email files when enabled, and respect minimum file size and user access.
+- Search and the selected type do not narrow the available options. Results and total counts apply the exact extension filter on the server.
+- Navigation, uploads, and deletions refresh the available types. If a selected type disappears, selection returns to **All files**.
+- Empty records offer only **All files**. Missing or unrecognized metadata defaults to **Basic**.
 
 ### Pagination
 
@@ -171,12 +180,13 @@ Existing Lightning pages that saved these values will continue to deploy; values
 
 ### View All — Custom Metadata
 
-Because `fileRelatedList` is URL-addressable, it cannot expose App Builder design attributes. Column visibility is controlled org-wide via:
+Because `fileRelatedList` is URL-addressable, it cannot expose App Builder design attributes. Column visibility and filter mode are controlled org-wide via:
 
 **Setup → Custom Metadata Types → File Related List Config → Manage Records → Default**
 
 | Field | Default | Controls |
 |-------|---------|----------|
+| `Filter_Mode__c` | `Basic` | Basic categories or Advanced record-specific extensions |
 | `Show_Owner__c` | `true` | Owner column |
 | `Show_Last_Modified_Date__c` | `true` | Last Modified Date column |
 | `Show_Last_Modified_By__c` | `true` | Last Modified By column |
@@ -225,12 +235,15 @@ Previewable on the record card and via row actions:
 | `getFileCount` | Yes | Unique file count for a record |
 | `getRelatedListFiles` | No | Sorted, paginated unique files for View All; optional title search |
 | `getRelatedListFileCount` | No | Unique count matching View All filters and search |
-| `getRelatedListConfig` | Yes | Column flags from CMDT |
+| `getRelatedListFileExtensions` | No | Unique eligible extensions for the whole record, independent of search and pagination |
+| `getRelatedListConfig` | Yes | Column flags and filter mode from CMDT |
 | `searchContentVersions` | Yes | Legacy title search (up to 25 results) |
 | `getRecordName` | Yes | Breadcrumb label for parent record |
 | `uploadFile` | No | Base64 upload + link to record |
 | `deleteFile` | No | Delete single ContentDocument |
 | `deleteFiles` | No | Bulk delete ContentDocuments |
+
+`fileTypeFilter` accepts `all`, `image`, `document`, or `extension:<lowercase extension>`. `extension:` selects files without an extension.
 
 `FileRow` DTO fields: `version` (ContentVersion), `linkedEntityId`, `linkedEntityType`.
 
@@ -248,7 +261,7 @@ Previewable on the record card and via row actions:
 1. Install the managed package.
 2. Assign the **Better Files** permission set to users who need file management.
 3. Add **Better Files** to record pages via Lightning App Builder.
-4. (Optional) Edit **File Related List Config → Default** to tune View All columns.
+4. (Optional) Edit **File Related List Config → Default** to tune View All columns and select **Basic** or **Advanced** filtering.
 
 ### Dependencies
 
@@ -277,7 +290,7 @@ Record Page                    View All (URL-addressable)
  Query                Query           Query
                         │
                         ▼
-         File_Related_List_Config__mdt (columns)
+         File_Related_List_Config__mdt (columns, filter mode)
 ```
 
 ---
@@ -288,4 +301,4 @@ Record Page                    View All (URL-addressable)
 - **Per-user column preferences** are not supported; column config is org-wide via CMDT.
 - **Deprecated App Builder column toggles** cannot be removed from `fileList` meta while referenced on existing Lightning pages in subscriber orgs.
 - **Large file upload** is subject to Salesforce platform limits for `lightning-file-upload` and Apex heap/ payload size.
-- View All **file type filter** does not include an “Other” category; non-image/non-document files appear only under **All files**.
+- **Basic** filtering has no “Other” category; non-image/non-document files appear only under **All files**. **Advanced** allows filtering by any extension present on the record.

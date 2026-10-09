@@ -1,6 +1,7 @@
 import { LightningElement, wire, track } from "lwc";
 import getRelatedListFiles from "@salesforce/apex/FileListController.getRelatedListFiles";
 import getRelatedListFileCount from "@salesforce/apex/FileListController.getRelatedListFileCount";
+import getRelatedListFileExtensions from "@salesforce/apex/FileListController.getRelatedListFileExtensions";
 import deleteFile from "@salesforce/apex/FileListController.deleteFile";
 import deleteFiles from "@salesforce/apex/FileListController.deleteFiles";
 import getRecordName from "@salesforce/apex/FileListController.getRecordName";
@@ -35,6 +36,8 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   @track baseRecordId;
   @track searchTerm = "";
   @track fileTypeFilter = "all";
+  filterMode = "Basic";
+  availableFileExtensions = null;
   @track relatedRecordName;
   @track relatedRecordUrl;
   @track selectedRecords = [];
@@ -144,10 +147,28 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
       console.error("Error loading related list config:", result.error);
       this.buildColumns();
     }
+    if (result.data || result.error) {
+      const filterMode =
+        result.data?.filterMode === "Advanced" ? "Advanced" : "Basic";
+      if (filterMode !== this.filterMode) {
+        this.filterMode = filterMode;
+        this.fileTypeFilter = "all";
+        void this.refreshFileData();
+      }
+    }
   }
 
   get fileTypeOptions() {
-    return getFileTypeFilterOptions();
+    if (this.filterMode !== "Advanced") {
+      return getFileTypeFilterOptions();
+    }
+    return [
+      { label: "All files", value: "all" },
+      ...(this.availableFileExtensions ?? []).map((extension) => ({
+        label: extension ? extension.toUpperCase() : "No extension",
+        value: `extension:${extension}`
+      }))
+    ];
   }
 
   resetFileListState() {
@@ -358,6 +379,28 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     this.isLoading = true;
 
     try {
+      if (
+        this.filterMode === "Advanced" &&
+        this.availableFileExtensions === null
+      ) {
+        const extensions = await getRelatedListFileExtensions({
+          recordId: this.baseRecordId,
+          includeEmails: this.includeEmails,
+          minContentSize: this.minimumFileSizeBytes
+        });
+        if (requestId !== this.loadRequestId) {
+          return;
+        }
+        this.availableFileExtensions = extensions;
+      }
+      // A deleted type or a filter from another mode must not leave an invalid selection.
+      if (
+        !this.fileTypeOptions.some(
+          (option) => option.value === this.fileTypeFilter
+        )
+      ) {
+        this.fileTypeFilter = "all";
+      }
       const [files, count] = await Promise.all([
         getRelatedListFiles({
           ...this.getFilesQueryParams(),
@@ -414,6 +457,8 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
   }
 
   refreshFileData() {
+    this.availableFileExtensions = null;
+    this.resetFileListState();
     return this.loadAllFileData();
   }
 
@@ -454,7 +499,7 @@ export default class FileRelatedList extends NavigationMixin(LightningElement) {
     this.getBaseObjectUrl();
 
     if (nextRecordId) {
-      void this.loadAllFileData();
+      void this.refreshFileData();
     }
 
     getRecordName({
