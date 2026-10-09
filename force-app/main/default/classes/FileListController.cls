@@ -262,15 +262,13 @@ public with sharing class FileListController {
   ) {
     Set<String> extensions = new Set<String>();
     for (
-      ContentDocumentLink link : (List<ContentDocumentLink>) relatedListLinkQuery(
-          recordId,
-          includeEmails,
-          minContentSize,
-          null,
-          null
-        )
-        .asUser()
-        .getList()
+      ContentDocumentLink link : (List<ContentDocumentLink>) getRelatedListLinks(
+        recordId,
+        includeEmails,
+        minContentSize,
+        null,
+        null
+      )
     ) {
       if (link.ContentDocument.LatestPublishedVersionId != null) {
         String extension = link.ContentDocument.FileExtension;
@@ -297,15 +295,13 @@ public with sharing class FileListController {
     String sortBy,
     String sortDirection
   ) {
-    List<ContentDocumentLink> links = relatedListLinkQuery(
-        recordId,
-        includeEmails,
-        minContentSize,
-        fileTypeFilter,
-        searchTerm
-      )
-      .asUser()
-      .getList();
+    List<ContentDocumentLink> links = getRelatedListLinks(
+      recordId,
+      includeEmails,
+      minContentSize,
+      fileTypeFilter,
+      searchTerm
+    );
 
     // Page unique files, not links: a file can belong to both the record and emails.
     Map<Id, ContentDocumentLink> preferredByVersionId = new Map<Id, ContentDocumentLink>();
@@ -362,7 +358,7 @@ public with sharing class FileListController {
     return field + ' ' + direction + ' NULLS LAST, Id ASC';
   }
 
-  private static ContentDocumentLinkQuery relatedListLinkQuery(
+  private static List<ContentDocumentLink> getRelatedListLinks(
     Id recordId,
     Boolean includeEmails,
     Integer minContentSize,
@@ -376,12 +372,22 @@ public with sharing class FileListController {
     ContentDocumentLinkQuery query = baseContentDocumentLinkQuery(
       recordIds,
       minContentSize,
-      fileTypeFilter
+      fileTypeFilter == 'extension:' ? null : fileTypeFilter
     );
     if (String.isNotBlank(searchTerm)) {
       query.byContentDocumentTitle(searchTerm);
     }
-    return query;
+    List<ContentDocumentLink> links = query.asUser().getList();
+    if (fileTypeFilter == 'extension:') {
+      // Salesforce returns blank extensions but does not match them with a
+      // null/empty SOQL predicate. Filter before deduplication, paging, and counting.
+      for (Integer i = links.size() - 1; i >= 0; i--) {
+        if (String.isNotBlank(links[i].ContentDocument.FileExtension)) {
+          links.remove(i);
+        }
+      }
+    }
+    return links;
   }
 
   /** Non-cacheable so View All always loads fresh data after record-page uploads. */
@@ -395,15 +401,13 @@ public with sharing class FileListController {
   ) {
     Set<Id> versionIds = new Set<Id>();
     for (
-      ContentDocumentLink link : (List<ContentDocumentLink>) relatedListLinkQuery(
-          recordId,
-          includeEmails,
-          minContentSize,
-          fileTypeFilter,
-          searchTerm
-        )
-        .asUser()
-        .getList()
+      ContentDocumentLink link : (List<ContentDocumentLink>) getRelatedListLinks(
+        recordId,
+        includeEmails,
+        minContentSize,
+        fileTypeFilter,
+        searchTerm
+      )
     ) {
       if (link.ContentDocument.LatestPublishedVersionId != null) {
         versionIds.add(link.ContentDocument.LatestPublishedVersionId);

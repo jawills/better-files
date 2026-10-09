@@ -68,7 +68,7 @@ public with sharing class ContentDocumentLinkQuery extends QueryObject {
       return (ContentDocumentLinkQuery) byField(
         'ContentDocument.FileExtension',
         '=',
-        String.isBlank(extension) ? null : extension
+        extension
       );
     }
     if (fileTypeFilter == 'image') {

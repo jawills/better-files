@@ -884,6 +884,11 @@ public with sharing class FileListControllerTest {
       ),
       'Extensionless files can be selected'
     );
+    List<FileListController.FileRow> extensionless = FileListController.getRelatedListFiles(
+      account.Id, 1, 0, false, null, 'extension:', null, 'Title', 'asc'
+    );
+    System.assertEquals(1, extensionless.size());
+    System.assertEquals('No extension', extensionless[0].version.ContentDocument.Title);
     System.assertEquals(
       1,
       FileListController.getRelatedListFileCount(
