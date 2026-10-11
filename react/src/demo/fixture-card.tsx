@@ -50,11 +50,11 @@ export function FixtureCard({
           },
           viewAll: (context, config) =>
             setNotice(
-              `Demo: View All requested for ${context.recordId}. Email files: ${config.includeEmails ? "included" : "excluded"}; minimum size: ${config.minimumFileSizeKb} KB. Salesforce navigation is milestone 3.`
+              `Demo: View All requested for ${context.recordId}. Email files: ${config.includeEmails ? "included" : "excluded"}; minimum size: ${config.minimumFileSizeKb} KB.`
             ),
           requestUpload: (_context, config) =>
             setNotice(
-              `Demo: upload requested (${config.multiple ? "multiple files" : "one file"}; ${config.accept}). No file was uploaded. Upload handling is milestone 2.`
+              `Demo: upload requested (${config.multiple ? "multiple files" : "one file"}; ${config.accept}). No file was uploaded.`
             ),
           retry: () => {
             setRecovered(true);
@@ -80,8 +80,7 @@ export function FixtureCard({
             {selectedFile?.title}
           </DialogTitle>
           <DialogDescription className="bf-dialog-description">
-            Fixture preview. Salesforce’s native file preview will be connected
-            in milestone 3.
+            Sample file preview. Live records use Salesforce’s native preview.
           </DialogDescription>
           {selectedFile && (
             <div className="bf-fixture-preview">

@@ -1,6 +1,6 @@
 import type { FileSettings } from "./model.ts";
 
-// This milestone's base64 transport is deliberately bounded for synchronous Apex.
+// The base64 transport is deliberately bounded for synchronous Apex.
 export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
 
 export function validateUpload(
@@ -14,8 +14,7 @@ export function validateUpload(
   )
     return "Use a filename without path separators, up to 255 characters.";
   if (!file.size) return "This file is empty.";
-  if (file.size > MAX_UPLOAD_BYTES)
-    return "The upload limit for this test is 2 MB per file.";
+  if (file.size > MAX_UPLOAD_BYTES) return "The upload limit is 2 MB per file.";
   const allowed = settings.accept
     .split(",")
     .map((value) => value.trim().toLowerCase())

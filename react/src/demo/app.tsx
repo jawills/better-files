@@ -27,7 +27,7 @@ function CardDemo() {
   return (
     <main className="demo">
       <h1>
-        Better Files <span>Milestone 4</span>
+        Better Files <span>Record card</span>
       </h1>
       <p className="demo-intro">
         {scenario === "Live record"

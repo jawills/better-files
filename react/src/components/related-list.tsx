@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type SyntheticEvent
+} from "react";
 import { Files, ChevronDown } from "lucide-react";
 import { UploadSurface } from "./upload-file-card";
 import { FileIcon } from "./file-icon";
@@ -60,6 +66,7 @@ export function RelatedList(props: RelatedListProps) {
   const generation = useRef(0);
   const inFlight = useRef(false);
   const deleteTrigger = useRef<HTMLElement | null>(null);
+  const searchInput = useRef<HTMLInputElement | null>(null);
   const alive = useRef(true);
   useEffect(() => {
     alive.current = true;
@@ -170,6 +177,16 @@ export function RelatedList(props: RelatedListProps) {
         q.sortBy === field && q.sortDirection === "asc" ? "desc" : "asc"
     }));
   }
+  function rememberActionTrigger(event: SyntheticEvent<HTMLElement>) {
+    // Portal events bubble through React, but their buttons disappear on close.
+    if (
+      !(event.target instanceof Element) ||
+      !event.currentTarget.contains(event.target)
+    )
+      return;
+    const button = event.target.closest<HTMLElement>("button");
+    if (button) deleteTrigger.current = button;
+  }
   function confirmDelete(rows: RelatedFile[]) {
     setDeleting(rows);
     setDeleteError("");
@@ -229,11 +246,8 @@ export function RelatedList(props: RelatedListProps) {
         <section
           className="bf-related"
           aria-label="Related files"
-          onClickCapture={(event) => {
-            if (event.target instanceof Element)
-              deleteTrigger.current =
-                event.target.closest<HTMLElement>("button");
-          }}
+          onClickCapture={rememberActionTrigger}
+          onKeyDownCapture={rememberActionTrigger}
         >
           <header className="bf-related-header">
             <span className="bf-related-badge">
@@ -259,6 +273,7 @@ export function RelatedList(props: RelatedListProps) {
           </header>
           <div className="bf-related-toolbar">
             <input
+              ref={searchInput}
               type="search"
               aria-label="Search files"
               placeholder="Search files…"
@@ -497,7 +512,11 @@ export function RelatedList(props: RelatedListProps) {
             }}
           >
             <DialogContent
-              finalFocus={deleteTrigger}
+              finalFocus={() =>
+                deleteTrigger.current?.isConnected
+                  ? deleteTrigger.current
+                  : searchInput.current
+              }
               closeLabel="Cancel deletion"
             >
               <DialogTitle className="bf-dialog-title">

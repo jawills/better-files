@@ -203,4 +203,52 @@ describe("related list", () => {
       screen.getByText("review.txt uploaded successfully.")
     ).toBeInTheDocument();
   });
+  it("returns focus to the row menu after cancel and to search after deletion", async () => {
+    const load = vi
+      .fn()
+      .mockResolvedValueOnce({ files: [file("1")], total: 1 })
+      .mockResolvedValue({ files: [], total: 0 });
+    const { user } = setup({ load });
+    const trigger = await screen.findByRole("button", {
+      name: "Actions for File 1"
+    });
+    await user.click(trigger);
+    await user.click(await screen.findByRole("menuitem", { name: "Delete" }));
+    await user.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Cancel"
+      })
+    );
+    await waitFor(() => expect(trigger).toHaveFocus());
+    await user.keyboard("{Enter}");
+    await user.click(await screen.findByRole("menuitem", { name: "Delete" }));
+    await user.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Delete"
+      })
+    );
+    await screen.findByText("0 of 0 files loaded");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("searchbox", { name: "Search files" })
+      ).toHaveFocus()
+    );
+  });
+  it("returns focus to the bulk action when confirmation is cancelled", async () => {
+    const { user, adapter } = setup();
+    await screen.findByText("1 of 1 files loaded");
+    await user.click(screen.getByRole("checkbox", { name: "Select File 1" }));
+    const trigger = screen.getByRole("button", { name: "Delete" });
+    await user.click(trigger);
+    await user.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Cancel"
+      })
+    );
+    await waitFor(() => expect(trigger).toHaveFocus());
+    expect(
+      screen.getByRole("checkbox", { name: "Select File 1" })
+    ).toBeChecked();
+    expect(adapter.delete).not.toHaveBeenCalled();
+  });
 });

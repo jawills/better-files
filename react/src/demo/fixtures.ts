@@ -138,7 +138,7 @@ export const scenarios = [
 ] as const;
 export type Scenario = (typeof scenarios)[number];
 
-/** Local-only adapter; actual filtering and counting stay in Apex in milestone 3. */
+/** Local-only adapter; live Salesforce filtering and counting stay in Apex. */
 export function getFixtureState(
   scenario: Scenario,
   settings: FileSettings = defaultSettings

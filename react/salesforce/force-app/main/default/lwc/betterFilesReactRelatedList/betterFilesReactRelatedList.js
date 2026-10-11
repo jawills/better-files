@@ -12,6 +12,12 @@ import getConfig from "@salesforce/apex/FileListController.getRelatedListConfig"
 import getRecordName from "@salesforce/apex/FileListController.getRecordName";
 import deleteFiles from "@salesforce/apex/FileListController.deleteFiles";
 import uploadFile from "@salesforce/apex/BetterFilesReactUpload.uploadFile";
+import {
+  IsConsoleNavigation,
+  EnclosingTabId,
+  setTabLabel,
+  setTabIcon
+} from "lightning/platformWorkspaceApi";
 import reactFiles from "@salesforce/resourceUrl/betterFilesReact";
 
 const message = (error) =>
@@ -32,6 +38,41 @@ export default class BetterFilesReactRelatedList extends NavigationMixin(
   isLoadingLibrary = true;
   refreshRegistration;
   revision = 0;
+  recordName = "";
+  isConsoleNavigation;
+  enclosingTabId;
+  previousTitle;
+  appliedTitle;
+
+  @wire(IsConsoleNavigation)
+  navigationMode(value) {
+    this.isConsoleNavigation = typeof value === "boolean" ? value : value?.data;
+    this.updateTabIdentity();
+  }
+
+  @wire(EnclosingTabId)
+  enclosingTab(value) {
+    this.enclosingTabId = typeof value === "string" ? value : value?.data;
+    this.updateTabIdentity();
+  }
+
+  updateTabIdentity() {
+    if (!this.isConnected || !this.context?.recordId) return;
+    const label = this.recordName ? `${this.recordName} · Files` : "Files";
+    if (this.isConsoleNavigation === true && this.enclosingTabId) {
+      // Use this component's tab, even if the user focused another tab while loading.
+      Promise.all([
+        setTabLabel(this.enclosingTabId, label),
+        setTabIcon(this.enclosingTabId, "standard:file", { iconAlt: "Files" })
+      ]).catch((error) =>
+        console.warn("Unable to name the Files tab", message(error))
+      );
+    } else if (this.isConsoleNavigation === false) {
+      this.previousTitle ??= document.title;
+      this.appliedTitle = `${label} | Salesforce`;
+      document.title = this.appliedTitle;
+    }
+  }
 
   @wire(CurrentPageReference)
   pageReference(reference) {
@@ -51,6 +92,8 @@ export default class BetterFilesReactRelatedList extends NavigationMixin(
     if (JSON.stringify(context) === JSON.stringify(this.context)) return;
     this.unmount();
     this.context = context;
+    this.recordName = "";
+    this.updateTabIdentity();
     this.props = undefined;
     this.mount();
   }
@@ -142,6 +185,13 @@ export default class BetterFilesReactRelatedList extends NavigationMixin(
                 objectAPIName: context.objectApiName
               })
             ]);
+            if (
+              this.isConnected &&
+              this.context?.recordId === context.recordId
+            ) {
+              this.recordName = recordName;
+              this.updateTabIdentity();
+            }
             const extensions =
               config.filterMode === "Advanced"
                 ? await getExtensions(scope)
@@ -233,6 +283,11 @@ export default class BetterFilesReactRelatedList extends NavigationMixin(
   }
   disconnectedCallback() {
     this.unmount();
+    if (this.appliedTitle && document.title === this.appliedTitle) {
+      document.title = this.previousTitle ?? "Salesforce";
+    }
+    this.previousTitle = undefined;
+    this.appliedTitle = undefined;
     unregisterRefreshHandler(this.refreshRegistration);
   }
 }

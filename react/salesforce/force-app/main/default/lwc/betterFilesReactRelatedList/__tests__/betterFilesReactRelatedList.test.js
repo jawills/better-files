@@ -1,3 +1,9 @@
+import {
+  IsConsoleNavigation,
+  EnclosingTabId,
+  setTabLabel,
+  setTabIcon
+} from "lightning/platformWorkspaceApi";
 import { createElement } from "lwc";
 import RelatedList from "c/betterFilesReactRelatedList";
 import { CurrentPageReference, NavigationMixin } from "lightning/navigation";
@@ -76,6 +82,7 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 let instances;
 let library;
 beforeEach(() => {
+  document.title = "Salesforce";
   instances = [];
   library = {
     defaultSettings: {},
@@ -192,4 +199,51 @@ it("normalizes Salesforce errors and verifies deletion results", async () => {
     type: "standard__webPage",
     attributes: { url: "/sfc/servlet.shepherd/version/download/068x/068y?" }
   });
+});
+
+it("names the browser tab and leaves a later page's title alone on disconnect", async () => {
+  const element = await mount();
+  IsConsoleNavigation.emit(false);
+  expect(document.title).toBe("Files | Salesforce");
+  await instances[0].props.adapter.info();
+  expect(document.title).toBe("1Sync · Files | Salesforce");
+  document.title = "Accounts | Salesforce";
+  element.remove();
+  expect(document.title).toBe("Accounts | Salesforce");
+});
+it("labels the enclosing console tab when its ID arrives after record data", async () => {
+  const element = await mount();
+  IsConsoleNavigation.emit({ data: true });
+  await instances[0].props.adapter.info();
+  expect(setTabLabel).not.toHaveBeenCalled();
+  EnclosingTabId.emit({ data: "files-tab" });
+  expect(setTabLabel).toHaveBeenLastCalledWith("files-tab", "1Sync · Files");
+  expect(setTabIcon).toHaveBeenLastCalledWith("files-tab", "standard:file", {
+    iconAlt: "Files"
+  });
+  expect(document.title).toBe("Salesforce");
+  element.remove();
+});
+it("ignores a stale record name and restores its previous browser title", async () => {
+  const element = await mount();
+  IsConsoleNavigation.emit(false);
+  let resolveOld;
+  getRecordName.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveOld = resolve;
+      })
+  );
+  const oldInfo = instances[0].props.adapter.info();
+  CurrentPageReference.emit({
+    state: { c__recordId: "001b", c__objectName: "Account" }
+  });
+  await flush();
+  getRecordName.mockResolvedValueOnce("Acme");
+  await instances[1].props.adapter.info();
+  resolveOld("Old record");
+  await oldInfo;
+  expect(document.title).toBe("Acme · Files | Salesforce");
+  element.remove();
+  expect(document.title).toBe("Salesforce");
 });

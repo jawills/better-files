@@ -2,33 +2,15 @@
 @import "tailwindcss/theme.css" layer(theme) prefix(bf);
 @import "tailwindcss/utilities.css" layer(utilities) prefix(bf);
 
-@theme inline {
-  --color-background: #fff;
-  --color-foreground: #181818;
-  --color-primary: #0176d3;
-  --color-border: #c9c9c9;
-  --color-accent: #eef4ff;
-  --color-accent-foreground: #014486;
-  --color-popover: #fff;
-  --color-popover-foreground: #181818;
-  --radius-md: 4px;
-}
+@import "./theme.css";
 
 /* No global Tailwind preflight: resets stay inside our Salesforce host. */
 @layer base {
-  .better-files {
-    color: #181818;
-    font:
-      13px/1.5 Arial,
-      Helvetica,
-      sans-serif;
-    text-align: left;
-  }
   .better-files *,
   .better-files *::before,
   .better-files *::after {
     box-sizing: border-box;
-    border: 0 solid #c9c9c9;
+    border: 0 solid var(--files-color-border);
   }
   .better-files button {
     font: inherit;
@@ -47,9 +29,13 @@
     list-style: none;
   }
   .better-files button:focus-visible,
+  .better-files input:focus-visible,
+  .better-files select:focus-visible,
+  .better-files a:focus-visible,
+  .better-files [tabindex="0"]:focus-visible,
   .better-files [role="menuitem"]:focus-visible {
-    outline: 2px solid #0176d3;
-    outline-offset: 3px;
+    outline: 2px solid var(--files-color-link);
+    outline-offset: 2px;
   }
   .better-files svg {
     display: block;
@@ -61,16 +47,15 @@
   container-type: inline-size;
 }
 .bf-card {
-  border: 1px solid #c9c9c9;
-  border-radius: 4px;
-  background: #fff;
-  box-shadow: 0 1px 2px #0000000a;
+  border: 1px solid var(--files-color-panel-border);
+  border-radius: var(--files-radius-panel);
+  background: var(--files-color-background);
 }
 .bf-header {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 12px 14px;
+  gap: var(--files-space-3);
+  padding: var(--files-space-3);
   min-height: 59px;
 }
 .bf-badge {
@@ -79,20 +64,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1b96ff;
-  border-radius: 3px;
+  background: var(--files-color-icon);
+  border-radius: var(--files-radius-control);
   flex-shrink: 0;
 }
 .bf-header h2 {
-  font-size: 16px;
+  font-size: var(--files-text-card-title);
   line-height: 1.2;
-  font-weight: 700;
+  font-weight: var(--files-weight-heading);
   flex: 1;
   min-width: 0;
 }
 .better-files .bf-title-link {
   font: inherit;
-  color: #181818;
+  color: var(--files-color-foreground);
 }
 .bf-title-link:hover {
   text-decoration: underline;
@@ -104,7 +89,7 @@
   display: grid;
   grid-template-columns: repeat(var(--bf-columns, 3), minmax(0, 1fr));
   gap: 14px 18px;
-  padding: 0 14px 12px;
+  padding: 0 var(--files-space-3) var(--files-space-3);
 }
 .bf-grid li {
   min-width: 0;
@@ -126,7 +111,7 @@
   height: 34px;
   object-fit: cover;
   flex-shrink: 0;
-  border: 1px solid #ddd;
+  border: 1px solid var(--files-color-panel-border);
 }
 .bf-file-copy {
   min-width: 0;
@@ -134,27 +119,27 @@
 }
 .bf-filename {
   display: block;
-  color: #0176d3;
+  color: var(--files-color-link);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  line-height: 20px;
+  line-height: var(--files-line-height);
 }
 .bf-file:hover .bf-filename {
   text-decoration: underline;
 }
 .bf-metadata {
   display: block;
-  color: #444;
-  font-size: 11px;
-  line-height: 18px;
+  color: var(--files-color-muted);
+  font-size: var(--files-text-meta);
+  line-height: var(--files-line-height);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .bf-footer {
-  border-top: 1px solid #e5e5e5;
-  padding: 3px 14px;
+  border-top: 1px solid var(--files-color-divider);
+  padding: var(--files-space-1) var(--files-space-3);
   text-align: center;
 }
 .bf-message {
@@ -165,8 +150,8 @@
   margin: 0 0 12px;
 }
 .bf-error-detail {
-  color: #444;
-  font-size: 12px;
+  color: var(--files-color-muted);
+  font-size: var(--files-text-meta);
 }
 .bf-skeleton {
   display: flex;
@@ -177,7 +162,7 @@
 .bf-skeleton > span {
   width: 27px;
   height: 32px;
-  background: #e7e7e7;
+  background: var(--files-color-divider);
 }
 .bf-skeleton > div {
   flex: 1;
@@ -185,7 +170,7 @@
 .bf-skeleton i {
   display: block;
   height: 8px;
-  background: #e7e7e7;
+  background: var(--files-color-divider);
   width: 80%;
 }
 .bf-skeleton i + i {
@@ -201,14 +186,6 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
-.better-files .bf-demo-notice {
-  margin-top: 10px;
-  font-size: 12px;
-  overflow-wrap: anywhere;
-}
-.bf-demo-notice:empty {
-  display: none;
-}
 /* Stay above Salesforce's sticky record header while keeping portals in the host. */
 .bf-dialog-backdrop {
   z-index: 9000;
@@ -217,30 +194,21 @@
   z-index: 9001;
 }
 .bf-dialog-title {
-  font-size: 17px;
+  margin: 0;
+  font-size: var(--files-text-heading);
+  font-weight: var(--files-weight-heading);
+  line-height: 1.25;
   padding-right: 20px;
   overflow-wrap: anywhere;
 }
 .better-files .bf-dialog-description {
-  color: #444;
+  color: var(--files-color-muted);
   margin: 12px 0;
 }
 .bf-dialog-close {
   position: absolute;
   top: 14px;
   right: 14px;
-}
-.bf-fixture-preview {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 24px 16px;
-  background: #f3f3f3;
-  overflow-wrap: anywhere;
-}
-.bf-fixture-preview .bf-file-icon {
-  width: 50px;
-  height: 62px;
 }
 @container (max-width: 599px) {
   .better-files .bf-grid {
@@ -269,10 +237,10 @@
   justify-content: center;
   gap: 6px;
   min-height: 100px;
-  border: 2px dashed #0176d3;
-  border-radius: 3px;
-  background: #eef6fff5;
-  color: #014486;
+  border: 2px dashed var(--files-color-link);
+  border-radius: var(--files-radius-panel);
+  background: color-mix(in srgb, var(--files-color-accent) 96%, transparent);
+  color: var(--files-color-on-accent);
 }
 .bf-drop-overlay > span:first-child {
   font-size: 28px;
@@ -287,24 +255,24 @@
   height: 6px;
   appearance: none;
   border: 0;
-  background: #e5e5e5;
+  background: var(--files-color-divider);
   margin-bottom: 12px;
 }
 .bf-upload-progress::-webkit-progress-bar {
-  background: #e5e5e5;
+  background: var(--files-color-divider);
 }
 .bf-upload-progress::-webkit-progress-value {
-  background: #0176d3;
+  background: var(--files-color-link);
 }
 .bf-upload-progress::-moz-progress-bar {
-  background: #0176d3;
+  background: var(--files-color-link);
 }
 .better-files .bf-upload-rows {
   max-height: 45vh;
   overflow: auto;
 }
 .bf-upload-rows li {
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid var(--files-color-divider);
   padding: 10px 0;
 }
 .bf-upload-rows li > div {
@@ -314,27 +282,28 @@
   gap: 16px;
 }
 .bf-upload-rows strong {
-  font-size: 12px;
+  font-size: var(--files-text-body);
   font-weight: normal;
   overflow-wrap: anywhere;
 }
 .bf-upload-state {
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: var(--files-text-meta);
 }
 .bf-upload-state-uploaded {
-  color: #2e844a;
+  color: var(--files-color-success);
 }
 .bf-upload-state-failed,
 .bf-upload-rows p {
-  color: #ba0517;
+  color: var(--files-color-error);
 }
 .bf-upload-rows p {
-  font-size: 12px;
+  font-size: var(--files-text-meta);
   padding-top: 6px;
 }
 .bf-upload-footer {
   display: flex;
+  gap: var(--files-space-2);
   justify-content: flex-end;
   margin-top: 16px;
 }
@@ -360,54 +329,58 @@
   overflow: auto;
 }
 .bf-upload-toast {
-  color: white;
-  padding: 12px 14px;
-  border-radius: 4px;
+  padding: 10px var(--files-space-3);
+  border: 1px solid transparent;
+  border-radius: var(--files-radius-control);
   display: flex;
   gap: 12px;
   justify-content: space-between;
-  box-shadow: 0 2px 6px #0002;
-  font-size: 13px;
+  font-size: var(--files-text-body);
   overflow-wrap: anywhere;
 }
 .bf-upload-toast-success {
-  background: #2e844a;
+  color: var(--files-color-success);
+  background: var(--files-color-success-surface);
+  border-color: var(--files-color-success-border);
 }
 .bf-upload-toast-error {
-  background: #ba0517;
+  color: var(--files-color-error);
+  background: var(--files-color-error-surface);
+  border-color: var(--files-color-error-border);
 }
 .better-files .bf-upload-toast button {
-  color: white;
+  color: inherit;
   align-self: flex-start;
-  font-size: 20px;
+  font-size: var(--files-text-heading);
   line-height: 18px;
   flex-shrink: 0;
 }
 
 /* Related-list layout follows the approved Salesforce table treatment. */
 .better-files .bf-related {
-  background: #fff;
-  color: #181818;
-  border: 1px solid #c9c9c9;
-  border-radius: 4px;
-  font-size: 13px;
+  background: var(--files-color-background);
+  color: var(--files-color-foreground);
+  border: 1px solid var(--files-color-panel-border);
+  border-radius: var(--files-radius-panel);
+  font-size: var(--files-text-body);
 }
 .better-files .bf-related-header {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 16px;
-  background: #f3f3f3;
-  border-bottom: 1px solid #c9c9c9;
+  background: var(--files-color-header);
+  border-radius: calc(var(--files-radius-panel) - 1px)
+    calc(var(--files-radius-panel) - 1px) 0 0;
 }
 .better-files .bf-related-badge {
   display: grid;
   place-items: center;
-  background: #939393;
+  background: var(--files-color-icon);
   color: white;
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--files-radius-control);
   flex-shrink: 0;
 }
 .better-files .bf-related-heading {
@@ -416,17 +389,20 @@
 }
 .better-files .bf-related-heading h2 {
   margin: 2px 0 0;
-  font-size: 20px;
-  font-weight: 700;
+  font-size: var(--files-text-heading);
+  font-weight: var(--files-weight-heading);
+  line-height: 1.25;
 }
 .better-files .bf-related-heading nav {
+  font-size: var(--files-text-meta);
+  color: var(--files-color-muted);
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 .better-files .bf-related-heading nav button,
 .better-files .bf-related-title button {
-  color: #0176d3;
+  color: var(--files-color-link);
   background: none;
   border: 0;
   text-align: left;
@@ -436,26 +412,28 @@
 .better-files .bf-related-toolbar {
   display: flex;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 10px var(--files-space-4);
   align-items: center;
   flex-wrap: wrap;
 }
 .better-files .bf-related-toolbar input,
 .better-files .bf-related-toolbar select {
-  border: 1px solid #747474;
-  border-radius: 4px;
-  background: white;
-  color: #181818;
-  padding: 7px 10px;
-  min-height: 32px;
+  border: 1px solid var(--files-color-border);
+  border-radius: var(--files-radius-control);
+  background: var(--files-color-background);
+  color: var(--files-color-foreground);
+  padding: 4px 10px;
+  font: inherit;
+  min-height: var(--files-control-height);
   max-width: 100%;
 }
 .better-files .bf-related-toolbar input {
-  width: 260px;
+  width: 250px;
 }
 .better-files .bf-related-selection {
+  font-size: var(--files-text-meta);
   margin-left: auto;
-  color: #444;
+  color: var(--files-color-muted);
 }
 .better-files .bf-related-scroll {
   overflow-x: auto;
@@ -467,13 +445,18 @@
   white-space: nowrap;
 }
 .better-files .bf-related-table th {
-  background: #fafaf9;
-  font-weight: 600;
+  background: var(--files-color-table-header);
+  font-weight: var(--files-weight-heading);
+  font-size: var(--files-text-meta);
+  color: var(--files-color-muted);
 }
 .better-files .bf-related-table th,
 .better-files .bf-related-table td {
-  border-top: 1px solid #e5e5e5;
-  padding: 10px 12px;
+  border-top: 1px solid var(--files-color-divider);
+  padding: 11px 10px;
+}
+.better-files .bf-related-table th {
+  padding-block: var(--files-space-2);
 }
 .better-files .bf-related-table th button {
   border: 0;
@@ -484,7 +467,7 @@
   font: inherit;
 }
 .better-files .bf-related-table a {
-  color: #0176d3;
+  color: var(--files-color-link);
   text-decoration: none;
 }
 .better-files .bf-related-table button:hover,
@@ -494,7 +477,7 @@
 .better-files .bf-related-table input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: #0176d3;
+  accent-color: var(--files-color-link);
   vertical-align: middle;
 }
 .better-files .bf-related-title {
@@ -504,9 +487,9 @@
   min-width: 200px;
 }
 .better-files .bf-related-title .bf-file-icon {
-  width: 24px;
-  height: 30px;
-  flex: 0 0 24px;
+  width: 21px;
+  height: 26px;
+  flex: 0 0 21px;
 }
 .better-files .bf-related-title button {
   white-space: normal;
@@ -518,14 +501,14 @@
   height: 26px;
   display: grid;
   place-items: center;
-  border: 1px solid #c9c9c9;
-  border-radius: 4px;
-  background: white;
-  color: #444;
+  border: 1px solid var(--files-color-border);
+  border-radius: var(--files-radius-control);
+  background: var(--files-color-background);
+  color: var(--files-color-muted);
   cursor: pointer;
 }
 .better-files .bf-related-selected {
-  background: #eef4ff;
+  background: var(--files-color-accent);
 }
 .better-files .bf-related-message,
 .better-files .bf-related-empty {
@@ -545,9 +528,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  border-top: 1px solid #e5e5e5;
-  min-height: 52px;
+  padding: 9px var(--files-space-4);
+  border-top: 1px solid var(--files-color-divider);
+  font-size: var(--files-text-meta);
+  color: var(--files-color-muted);
+  min-height: 38px;
 }
 @media (max-width: 600px) {
   .better-files .bf-related-header {
@@ -565,7 +550,11 @@
 
 /* Unlayered SLDS button resets otherwise override Tailwind's spacing utilities. */
 .better-files .bf-button {
-  padding-inline: 12px;
+  padding-inline: 15px;
+}
+.better-files .bf-button,
+.better-files .bf-button-icon {
+  font-weight: var(--files-weight-heading);
 }
 .better-files .bf-button-icon {
   padding: 0;
@@ -573,8 +562,10 @@
 .better-files .bf-related-table th:first-child,
 .better-files .bf-related-table td:first-child {
   width: 40px;
+  padding-left: var(--files-space-4);
 }
 .better-files .bf-related-table th:last-child,
 .better-files .bf-related-table td:last-child {
   width: 50px;
+  padding-right: var(--files-space-4);
 }

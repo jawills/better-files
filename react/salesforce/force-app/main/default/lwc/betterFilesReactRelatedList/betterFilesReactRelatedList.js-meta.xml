@@ -3,6 +3,6 @@
   <apiVersion>67.0</apiVersion>
   <isExposed>true</isExposed>
   <masterLabel>Better Files React Related List</masterLabel>
-  <description>React related list for the Better Files development review.</description>
+  <description>React file related list with search, filters, file actions, and uploads.</description>
   <targets><target>lightning__UrlAddressable</target></targets>
 </LightningComponentBundle>

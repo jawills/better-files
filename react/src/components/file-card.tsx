@@ -47,7 +47,12 @@ export function FileCard({ context, settings, state, actions }: FileCardProps) {
       >
         <header className="bf-header">
           <span className="bf-badge">
-            <File size={21} fill="white" stroke="#1b96ff" aria-hidden="true" />
+            <File
+              size={21}
+              fill="white"
+              stroke="var(--files-color-icon)"
+              aria-hidden="true"
+            />
           </span>
           <h2 id={titleId}>
             <button type="button" className="bf-title-link" onClick={viewAll}>

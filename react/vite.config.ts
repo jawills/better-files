@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => ({
             "salesforce/force-app/main/default/staticresources/betterFilesReact",
           emptyOutDir: true,
           lib: {
-            entry: "src/spike.tsx",
+            entry: "src/index.ts",
             name: "BetterFilesReact",
             formats: ["iife"],
             fileName: () => "better-files.js",

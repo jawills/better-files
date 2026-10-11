@@ -249,7 +249,7 @@ export function UploadSurface(props: UploadSurfaceProps) {
             {successful} of {rows.length} files uploaded.{" "}
             {running
               ? "Uploads continue if you close this window."
-              : "2 MB limit per file for this test."}
+              : "2 MB limit per file."}
           </DialogDescription>
           <progress
             className="bf-upload-progress"
@@ -281,7 +281,7 @@ export function UploadSurface(props: UploadSurfaceProps) {
           </ul>
           {refreshError && <p role="alert">{refreshError}</p>}
           <div className="bf-upload-footer">
-            <Button onClick={() => setOpen(false)}>
+            <Button variant="primary" onClick={() => setOpen(false)}>
               {running ? "Close" : "Done"}
             </Button>
           </div>
