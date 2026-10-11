@@ -1,0 +1,10 @@
+{
+  "packageDirectories": [
+    {
+      "path": "force-app",
+      "default": true
+    }
+  ],
+  "namespace": "file1sync",
+  "sourceApiVersion": "67.0"
+}

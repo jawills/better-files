@@ -4,6 +4,10 @@
 
 # Salesforce cache
 .sfdx/
+.sf/
+
+# Generated React fixture resource (npm run build:salesforce --prefix react)
+react/salesforce/force-app/main/default/staticresources/betterFilesReact/
 
 # LWC VSCode autocomplete
 jsconfig.json

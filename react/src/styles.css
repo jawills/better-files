@@ -1,0 +1,385 @@
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme) prefix(bf);
+@import "tailwindcss/utilities.css" layer(utilities) prefix(bf);
+
+@theme inline {
+  --color-background: #fff;
+  --color-foreground: #181818;
+  --color-primary: #0176d3;
+  --color-border: #c9c9c9;
+  --color-accent: #eef4ff;
+  --color-accent-foreground: #014486;
+  --color-popover: #fff;
+  --color-popover-foreground: #181818;
+  --radius-md: 4px;
+}
+
+/* No global Tailwind preflight: resets stay inside our Salesforce host. */
+@layer base {
+  .better-files {
+    color: #181818;
+    font:
+      13px/1.5 Arial,
+      Helvetica,
+      sans-serif;
+    text-align: left;
+  }
+  .better-files *,
+  .better-files *::before,
+  .better-files *::after {
+    box-sizing: border-box;
+    border: 0 solid #c9c9c9;
+  }
+  .better-files button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    background: transparent;
+    padding: 0;
+  }
+  .better-files h2,
+  .better-files p,
+  .better-files ul {
+    margin: 0;
+  }
+  .better-files ul {
+    padding: 0;
+    list-style: none;
+  }
+  .better-files button:focus-visible,
+  .better-files [role="menuitem"]:focus-visible {
+    outline: 2px solid #0176d3;
+    outline-offset: 3px;
+  }
+  .better-files svg {
+    display: block;
+    flex-shrink: 0;
+  }
+}
+
+.bf-card-container {
+  container-type: inline-size;
+}
+.bf-card {
+  border: 1px solid #c9c9c9;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 1px 2px #0000000a;
+}
+.bf-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 14px;
+  min-height: 59px;
+}
+.bf-badge {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1b96ff;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.bf-header h2 {
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 700;
+  flex: 1;
+  min-width: 0;
+}
+.better-files .bf-title-link {
+  font: inherit;
+  color: #181818;
+}
+.bf-title-link:hover {
+  text-decoration: underline;
+}
+.bf-upload-narrow {
+  display: none;
+}
+.better-files .bf-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--bf-columns, 3), minmax(0, 1fr));
+  gap: 14px 18px;
+  padding: 0 14px 12px;
+}
+.bf-grid li {
+  min-width: 0;
+}
+.better-files .bf-file {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+}
+.bf-file-icon {
+  width: 27px;
+  height: 34px;
+  flex-shrink: 0;
+}
+.bf-thumbnail {
+  width: 27px;
+  height: 34px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #ddd;
+}
+.bf-file-copy {
+  min-width: 0;
+  flex: 1;
+}
+.bf-filename {
+  display: block;
+  color: #0176d3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 20px;
+}
+.bf-file:hover .bf-filename {
+  text-decoration: underline;
+}
+.bf-metadata {
+  display: block;
+  color: #444;
+  font-size: 11px;
+  line-height: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bf-footer {
+  border-top: 1px solid #e5e5e5;
+  padding: 3px 14px;
+  text-align: center;
+}
+.bf-message {
+  padding: 12px 16px 24px;
+  text-align: center;
+}
+.bf-message p {
+  margin: 0 0 12px;
+}
+.bf-error-detail {
+  color: #444;
+  font-size: 12px;
+}
+.bf-skeleton {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  height: 38px;
+}
+.bf-skeleton > span {
+  width: 27px;
+  height: 32px;
+  background: #e7e7e7;
+}
+.bf-skeleton > div {
+  flex: 1;
+}
+.bf-skeleton i {
+  display: block;
+  height: 8px;
+  background: #e7e7e7;
+  width: 80%;
+}
+.bf-skeleton i + i {
+  height: 6px;
+  width: 55%;
+  margin-top: 8px;
+}
+.bf-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.better-files .bf-demo-notice {
+  margin-top: 10px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.bf-demo-notice:empty {
+  display: none;
+}
+/* Stay above Salesforce's sticky record header while keeping portals in the host. */
+.bf-dialog-backdrop {
+  z-index: 9000;
+}
+.bf-dialog {
+  z-index: 9001;
+}
+.bf-dialog-title {
+  font-size: 17px;
+  padding-right: 20px;
+  overflow-wrap: anywhere;
+}
+.better-files .bf-dialog-description {
+  color: #444;
+  margin: 12px 0;
+}
+.bf-dialog-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+.bf-fixture-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 24px 16px;
+  background: #f3f3f3;
+  overflow-wrap: anywhere;
+}
+.bf-fixture-preview .bf-file-icon {
+  width: 50px;
+  height: 62px;
+}
+@container (max-width: 599px) {
+  .better-files .bf-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .better-files .bf-upload-wide {
+    display: none;
+  }
+  .bf-upload-narrow {
+    display: block;
+  }
+}
+
+.bf-drop-region {
+  position: relative;
+}
+.bf-drop-overlay {
+  position: absolute;
+  inset: 2px;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 100px;
+  border: 2px dashed #0176d3;
+  border-radius: 3px;
+  background: #eef6fff5;
+  color: #014486;
+}
+.bf-drop-overlay > span:first-child {
+  font-size: 28px;
+}
+.better-files .bf-upload-dialog {
+  max-height: calc(100vh - 40px);
+  overflow: visible;
+}
+.bf-upload-progress {
+  display: block;
+  width: 100%;
+  height: 6px;
+  appearance: none;
+  border: 0;
+  background: #e5e5e5;
+  margin-bottom: 12px;
+}
+.bf-upload-progress::-webkit-progress-bar {
+  background: #e5e5e5;
+}
+.bf-upload-progress::-webkit-progress-value {
+  background: #0176d3;
+}
+.bf-upload-progress::-moz-progress-bar {
+  background: #0176d3;
+}
+.better-files .bf-upload-rows {
+  max-height: 45vh;
+  overflow: auto;
+}
+.bf-upload-rows li {
+  border-bottom: 1px solid #e5e5e5;
+  padding: 10px 0;
+}
+.bf-upload-rows li > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+.bf-upload-rows strong {
+  font-size: 12px;
+  font-weight: normal;
+  overflow-wrap: anywhere;
+}
+.bf-upload-state {
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.bf-upload-state-uploaded {
+  color: #2e844a;
+}
+.bf-upload-state-failed,
+.bf-upload-rows p {
+  color: #ba0517;
+}
+.bf-upload-rows p {
+  font-size: 12px;
+  padding-top: 6px;
+}
+.bf-upload-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+.better-files .bf-upload-footer button {
+  min-width: 72px;
+  padding: 0 16px;
+}
+.bf-upload-toasts {
+  position: fixed;
+  right: 16px;
+  top: 16px;
+  z-index: 9010;
+  display: grid;
+  gap: 8px;
+  width: min(400px, calc(100vw - 32px));
+}
+.bf-upload-dialog .bf-upload-toasts {
+  position: absolute;
+  top: auto;
+  right: 0;
+  bottom: calc(100% + 12px);
+  max-height: 20vh;
+  overflow: auto;
+}
+.bf-upload-toast {
+  color: white;
+  padding: 12px 14px;
+  border-radius: 4px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  box-shadow: 0 2px 6px #0002;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.bf-upload-toast-success {
+  background: #2e844a;
+}
+.bf-upload-toast-error {
+  background: #ba0517;
+}
+.better-files .bf-upload-toast button {
+  color: white;
+  align-self: flex-start;
+  font-size: 20px;
+  line-height: 18px;
+  flex-shrink: 0;
+}

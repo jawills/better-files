@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Better Files React</masterLabel>
+    <description>React file card with drag-and-drop uploads. Development review: 2 MB per file, Lightning Web Security required.</description>
+    <targets>
+        <target>lightning__RecordPage</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage">
+            <supportedFormFactors><supportedFormFactor type="Large" /></supportedFormFactors>
+            <property name="accept" type="String" default=".pdf,.doc,.docx,.rtf,.txt,.xls,.xlsx,.csv,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.zip" label="Accepted file formats" description="Comma-separated extensions. The development upload service supports the default extensions; narrow this list as needed." />
+            <property name="multiple" type="Boolean" default="true" label="Allow multiple file uploads" />
+            <property name="filePreview" type="Boolean" default="true" label="Show file thumbnails" />
+            <property name="fileLimit" type="Integer" default="6" min="1" max="100" label="Number of files displayed" />
+            <property name="filesPerRow" type="Integer" default="3" min="1" max="11" label="Files per row" />
+            <property name="includeEmails" type="Boolean" default="true" label="Include email attachments" />
+            <property name="minimumFileSizeKb" type="Integer" default="0" min="0" max="2097151" label="Minimum file size (KB)" />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
