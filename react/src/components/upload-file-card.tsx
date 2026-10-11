@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { CircleAlert, CircleCheck, X } from "lucide-react";
 import { FileCard } from "./file-card";
 import { Button } from "./ui/button";
 import {
@@ -148,13 +149,26 @@ export function UploadSurface(props: UploadSurfaceProps) {
           className={`bf-upload-toast bf-upload-toast-${toast.kind}`}
           role={toast.kind === "error" ? "alert" : "status"}
         >
-          <span>{toast.message}</span>
+          {toast.kind === "success" ? (
+            <CircleCheck
+              className="bf-upload-toast-icon"
+              size={24}
+              aria-hidden="true"
+            />
+          ) : (
+            <CircleAlert
+              className="bf-upload-toast-icon"
+              size={24}
+              aria-hidden="true"
+            />
+          )}
+          <span className="bf-upload-toast-message">{toast.message}</span>
           <button
             type="button"
             aria-label={`Dismiss ${toast.kind} notification`}
             onClick={() => dismiss(toast.id)}
           >
-            ×
+            <X size={20} aria-hidden="true" />
           </button>
         </div>
       ))}

@@ -15,7 +15,8 @@ export function Dialog(props: ComponentProps<typeof DialogPrimitive.Root>) {
 export const DialogTitle = DialogPrimitive.Title;
 export const DialogDescription = DialogPrimitive.Description;
 
-// shadcn/ui Base UI dialog with overlays contained within the Salesforce host.
+// Center without transforms so fixed notifications inside a dialog use the viewport.
+// The portal and keyboard-focus boundary remain within the Salesforce host.
 export function DialogContent({
   className,
   children,
@@ -33,7 +34,7 @@ export function DialogContent({
       <DialogPrimitive.Backdrop className="bf-dialog-backdrop bf:fixed bf:inset-0 bf:bg-black/40" />
       <DialogPrimitive.Popup
         className={cn(
-          "bf-dialog bf:fixed bf:left-1/2 bf:top-1/2 bf:w-[calc(100%-32px)] bf:max-w-md bf:-translate-x-1/2 bf:-translate-y-1/2 bf:rounded-lg bf:border bf:border-border bf:bg-background bf:p-6 bf:shadow-lg",
+          "bf-dialog bf:fixed bf:inset-0 bf:m-auto bf:h-fit bf:w-[calc(100%-32px)] bf:max-w-md bf:rounded-lg bf:border bf:border-border bf:bg-background bf:p-6 bf:shadow-lg",
           className
         )}
         {...props}

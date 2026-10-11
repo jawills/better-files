@@ -313,47 +313,64 @@
 }
 .bf-upload-toasts {
   position: fixed;
-  right: 16px;
+  left: 50%;
   top: 16px;
+  transform: translateX(-50%);
   z-index: 9010;
   display: grid;
   gap: 8px;
-  width: min(400px, calc(100vw - 32px));
-}
-.bf-upload-dialog .bf-upload-toasts {
-  position: absolute;
-  top: auto;
-  right: 0;
-  bottom: calc(100% + 12px);
-  max-height: 20vh;
+  width: min(580px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
   overflow: auto;
+  padding: 4px;
+  pointer-events: none;
 }
 .bf-upload-toast {
-  padding: 10px var(--files-space-3);
-  border: 1px solid transparent;
+  padding: 12px 14px;
   border-radius: var(--files-radius-control);
   display: flex;
+  align-items: center;
   gap: 12px;
-  justify-content: space-between;
   font-size: var(--files-text-body);
+  line-height: var(--files-line-height);
+  color: var(--files-color-toast-text);
+  background: var(--bf-toast-background);
+  box-shadow: 0 3px 10px #18181820;
+  pointer-events: auto;
+}
+.bf-upload-toast-message {
+  flex: 1;
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 .bf-upload-toast-success {
-  color: var(--files-color-success);
-  background: var(--files-color-success-surface);
-  border-color: var(--files-color-success-border);
+  --bf-toast-background: var(--files-color-toast-success);
 }
 .bf-upload-toast-error {
-  color: var(--files-color-error);
-  background: var(--files-color-error-surface);
-  border-color: var(--files-color-error-border);
+  --bf-toast-background: var(--files-color-toast-error);
+}
+.bf-upload-toast-icon {
+  align-self: flex-start;
+  margin-top: 4px;
+  fill: var(--files-color-toast-text);
+  stroke: var(--bf-toast-background);
 }
 .better-files .bf-upload-toast button {
   color: inherit;
   align-self: flex-start;
-  font-size: var(--files-text-heading);
-  line-height: 18px;
   flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  border-radius: var(--files-radius-small);
+}
+.better-files .bf-upload-toast button:hover {
+  background: #ffffff26;
+}
+.better-files .bf-upload-toast button:focus-visible {
+  outline-color: var(--files-color-toast-text);
 }
 
 /* Related-list layout follows the approved Salesforce table treatment. */

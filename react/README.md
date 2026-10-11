@@ -57,6 +57,11 @@ Approved [option A styling](https://hmsar0grfxmy.postplan.dev/v/1) with
 14px labels/metadata, 20px card headings, and 24px page/dialog headings. Panels
 use 12px corners, inputs/menus 8px corners, and buttons rounded ends with 36px height.
 
+Toasts use [option A](https://legectt22zbr.postplan.dev/v/1): solid green/red,
+white 16px text, status icons, and 8px corners. They stay centered near the top of
+the viewport with the upload modal open or closed; dismiss controls remain within
+the modal's keyboard-focus boundary while it is open.
+
 `src/theme.css` owns the scoped `--files-*` values and maps them into Tailwind’s
 `bf`-prefixed theme. Use these shared values for custom styling. No SLDS stylesheet
 or `design-system-react` dependency is bundled. White surfaces and light native

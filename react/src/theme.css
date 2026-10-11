@@ -36,6 +36,9 @@
   --files-color-error: #ba0517;
   --files-color-error-surface: #fff1f2;
   --files-color-error-border: #e8acb3;
+  --files-color-toast-success: #2e7546;
+  --files-color-toast-error: #ba0517;
+  --files-color-toast-text: #fff;
 
   /* Unlayered so the host's global typography cannot replace the chosen theme. */
   color: var(--files-color-foreground);
