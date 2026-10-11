@@ -2,9 +2,9 @@ import { mountView } from "./mount";
 import { FixtureCard, type FixtureCardProps } from "./demo/fixture-card";
 import "./styles.css";
 
-export { mountFiles } from "./mount";
+export { mountFiles, mountRelatedList } from "./mount";
 export { defaultSettings } from "./model";
-export { fromSalesforceFile } from "./salesforce";
+export { fromSalesforceFile, fromSalesforceRelatedFile } from "./salesforce";
 export function mountFixture(
   container: HTMLElement,
   props: FixtureCardProps = {}

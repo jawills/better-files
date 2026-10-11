@@ -27,7 +27,11 @@ export function Button({
   VariantProps<typeof buttonVariants> & { className?: string }) {
   return (
     <ButtonPrimitive
-      className={cn(buttonVariants({ variant, size }), className)}
+      className={cn(
+        size === "icon" ? "bf-button-icon" : "bf-button",
+        buttonVariants({ variant, size }),
+        className
+      )}
       {...props}
     />
   );

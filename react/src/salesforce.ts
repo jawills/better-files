@@ -7,6 +7,10 @@ export type SalesforceFileRow = {
     ContentDocumentId: string;
     ContentDocument: {
       Title: string;
+      OwnerId?: string;
+      Owner?: { Name: string };
+      LastModifiedById?: string;
+      LastModifiedBy?: { Name: string };
       FileExtension: string | null;
       ContentSize: number;
       LastModifiedDate: string;
@@ -46,5 +50,17 @@ export function fromSalesforceFile(row: SalesforceFileRow): FileRecord {
     thumbnailUrl: thumbnailExtensions.has(extension)
       ? `/sfc/servlet.shepherd/version/renditionDownload?rendition=thumb120by90&versionId=${encodeURIComponent(version.Id)}`
       : undefined
+  };
+}
+
+export function fromSalesforceRelatedFile(row: SalesforceFileRow) {
+  const doc = row.version.ContentDocument;
+  return {
+    ...fromSalesforceFile(row),
+    owner: { id: doc.OwnerId, name: doc.Owner?.Name ?? "" },
+    modifiedBy: {
+      id: doc.LastModifiedById,
+      name: doc.LastModifiedBy?.Name ?? ""
+    }
   };
 }

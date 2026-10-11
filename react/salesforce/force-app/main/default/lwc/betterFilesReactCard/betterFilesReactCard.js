@@ -219,7 +219,7 @@ export default class BetterFilesReactCard extends NavigationMixin(
         viewAll: (context, currentSettings) =>
           this[NavigationMixin.Navigate]({
             type: "standard__component",
-            attributes: { componentName: "file1sync__fileRelatedList" },
+            attributes: { componentName: "file1sync__betterFilesReactRelatedList" },
             state: {
               file1sync__recordId: context.recordId,
               file1sync__objectName: context.objectApiName,

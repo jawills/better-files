@@ -1,3 +1,5 @@
+import { RelatedList } from "./components/related-list";
+import type { RelatedListProps } from "./related-list";
 import { createRoot, type Root } from "react-dom/client";
 import type { ReactNode } from "react";
 import { UploadFileCard } from "@/components/upload-file-card";
@@ -39,6 +41,24 @@ export function mountFiles(container: HTMLElement, props: FileCardProps) {
     (next) => (
       <FileSurface>
         <UploadFileCard {...next} />
+      </FileSurface>
+    ),
+    props
+  );
+}
+
+export function mountRelatedList(
+  container: HTMLElement,
+  props: RelatedListProps
+) {
+  return mountView(
+    container,
+    (next) => (
+      <FileSurface>
+        <RelatedList
+          key={`${next.context.recordId}:${next.settings.includeEmails}:${next.settings.minimumFileSizeKb}`}
+          {...next}
+        />
       </FileSurface>
     ),
     props

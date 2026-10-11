@@ -1,3 +1,4 @@
+import { RelatedDemo } from "./related-demo";
 import { useState } from "react";
 import { FixtureCard } from "./fixture-card";
 import { scenarios, type Scenario } from "./fixtures";
@@ -7,6 +8,15 @@ import { LiveCard, useLiveFiles } from "./live-card";
 const demoScenarios = ["Live record", ...scenarios] as const;
 
 export function App() {
+  return new URLSearchParams(window.location.search).get("view") ===
+    "related" ? (
+    <RelatedDemo />
+  ) : (
+    <CardDemo />
+  );
+}
+
+function CardDemo() {
   const [scenario, setScenario] = useState<Scenario | "Live record">(
     import.meta.env.DEV ? "Live record" : "Populated"
   );
@@ -17,12 +27,15 @@ export function App() {
   return (
     <main className="demo">
       <h1>
-        Better Files <span>Milestone 2</span>
+        Better Files <span>Milestone 4</span>
       </h1>
       <p className="demo-intro">
         {scenario === "Live record"
           ? `Live files: ${live.state.status === "ready" ? live.state.data.recordName : "1Sync"} account in better-files.`
           : "Option A. Fixture data only. Preview, upload, and View All demonstrate host callbacks."}
+      </p>
+      <p>
+        <a href="/?view=related">Review related list</a>
       </p>
       <div className="demo-controls">
         <label>

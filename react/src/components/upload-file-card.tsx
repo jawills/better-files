@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { FileCard } from "./file-card";
 import { Button } from "./ui/button";
@@ -21,6 +21,24 @@ type Toast = { id: number; kind: "success" | "error"; message: string };
 
 /** Shared interaction layer; each host supplies its own upload and refresh transport. */
 export function UploadFileCard(props: FileCardProps) {
+  return (
+    <UploadSurface {...props}>
+      {(requestUpload) => (
+        <FileCard {...props} actions={{ ...props.actions, requestUpload }} />
+      )}
+    </UploadSurface>
+  );
+}
+
+type UploadSurfaceProps = Pick<
+  FileCardProps,
+  "context" | "settings" | "upload"
+> & {
+  children: (requestUpload: () => void) => ReactNode;
+  actions?: Pick<FileCardProps["actions"], "requestUpload">;
+};
+
+export function UploadSurface(props: UploadSurfaceProps) {
   const [dragging, setDragging] = useState(false);
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<Row[]>([]);
@@ -185,20 +203,12 @@ export function UploadFileCard(props: FileCardProps) {
           void start(Array.from(event.dataTransfer.files));
         }}
       >
-        <FileCard
-          {...props}
-          actions={{
-            ...props.actions,
-            requestUpload: (...args) => {
-              if (!props.upload) {
-                props.actions.requestUpload(...args);
-                return;
-              }
-              if (busy.current) setOpen(true);
-              else input.current?.click();
-            }
-          }}
-        />
+        {props.children(() => {
+          if (!props.upload)
+            props.actions?.requestUpload(props.context, props.settings);
+          else if (busy.current) setOpen(true);
+          else input.current?.click();
+        })}
         {props.upload && (
           <input
             ref={input}

@@ -1,7 +1,8 @@
-# React file card: milestones 1–3
+# React files: milestones 1–5
 
 Option A from the [approved design mocks](https://mcmijra1n885.postplan.dev).
-Status: milestones 1 and 2 approved by Justin. Milestone 3 implemented for review.
+Status: all five milestones approved by Justin. Milestone 4 uses option A.
+Milestone 5 is satisfied by opening the URL-addressable related list in a new tab.
 Justin selected upload option A, with an upload-status modal and success/failure toasts.
 
 ## Run locally
@@ -225,8 +226,7 @@ Salesforce compilation/deployment is not a managed-package installation test.
 Lightning Locker, mobile Salesforce, and restricted-user file permissions
 remain unverified. Live reads, uploads, and native preview were checked as the
 development-org user. The record-page wrapper and App Builder configuration are
-development-review components until milestone 3 is approved and package validation
-is complete.
+development-review components pending package validation.
 
 Use Lightning navigation or the explicit mount/unmount API for lifecycle changes.
 An additional probe that manually removed and reinserted the LWC host through
@@ -234,10 +234,50 @@ external DOM APIs did not restore its React roots. That relocation path is not
 supported by this spike; ordinary navigation back to the component and its
 mount/unmount controls were verified.
 
-## Next gate
+## Milestone 4: related list
 
-Review milestone 3 in the dedicated development app. Stop for Justin's approval
-before milestone 4's related-list implementation and milestone 5's tab embedding.
+Justin selected option A from [the related-list mocks](review/milestone-4.html).
+
+- Local fixture review: http://localhost:5173/?view=related (58 sample rows).
+  Search, sort, pagination, selection, upload and deletion operate on memory-only
+  fixtures. Preview/download/navigation report their requested callbacks.
+- Live review: open the **Better Files React Review** app, open the 1Sync account,
+  and click **View All** on the React card. The URL-addressable host is
+  `file1sync__betterFilesReactRelatedList`; the legacy related list is unchanged.
+- Reuses `FileListController` for server search, global sorting, 25-row pages,
+  deduplicated counts, Basic/Advanced filters, configured columns, and user-mode
+  deletion. Record/email inclusion and minimum-size settings travel with View All.
+- Select all selects loaded rows only. Search, filter and sort changes clear
+  selection. Failed pagination keeps rows and retries the same page; request IDs
+  discard late results. Both single and bulk deletion require confirmation and
+  explain that deleting a Salesforce file affects all records sharing it.
+- `UploadSurface` shares the existing drop/picker queue, modal, toasts, validation
+  and 2 MB/file transport with both views. Upload refresh uses the current query,
+  including when search changes while an upload is running.
+- Dialogs stay in the per-instance portal. Lightning prevents the library from
+  reliably traversing DOM ancestors for document-wide aria hiding, so the shared
+  popup uses `aria-modal`, local Tab wrapping, and the backdrop instead.
+
+Focused checks: 17 React tests and 9 LWC tests pass, including append retry,
+stale response rejection, delete failure/confirmation, metadata filters, scoped
+Apex requests, context changes, and navigation. Both build modes pass.
+Live review verified View All, the account's nine files, Advanced PNG filtering,
+search, title sorting, native preview, and a synthetic-file deletion with a
+backend soft-delete check. The synthetic file was removed; existing files remain.
+Local browser pagination was verified from 25 to 50 rows. The revised dialog's
+accessible controls and keyboard focus wrapping were verified in Salesforce.
+Download navigation is covered by the wrapper tests; the connected browser did
+not expose a completed-download event, so file arrival was not independently
+verified. The shared upload transport passed earlier live milestones and remains
+covered by the React upload and wrapper tests.
+
+## Milestone 5: open the related list in a new tab
+
+Justin confirmed that the existing URL-addressable related list satisfies this
+milestone. A separate standalone Salesforce navigation-tab component is not needed.
+All five milestone reviews are complete.
+The 2 MB upload limit and restricted-user/package-installation verification remain
+production-readiness work.
 
 ## References
 
