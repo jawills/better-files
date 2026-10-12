@@ -31,6 +31,7 @@ export type FileListState =
 /** The Salesforce wrapper owns data, navigation, and upload transport. */
 export type FileCardProps = {
   upload?: {
+    maxBytes?: number;
     send: (file: File, context: RecordContext) => Promise<void>;
     refresh: () => void | Promise<void>;
   };

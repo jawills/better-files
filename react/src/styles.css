@@ -4,6 +4,9 @@
 
 @import "./theme.css";
 
+/* Both the localhost and embedding entry points use these components. */
+@source "./components";
+
 /* No global Tailwind preflight: resets stay inside our Salesforce host. */
 @layer base {
   .better-files *,

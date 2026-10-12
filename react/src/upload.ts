@@ -5,7 +5,8 @@ export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
 
 export function validateUpload(
   file: Pick<File, "name" | "size" | "type">,
-  settings: Pick<FileSettings, "accept">
+  settings: Pick<FileSettings, "accept">,
+  maxBytes = MAX_UPLOAD_BYTES
 ) {
   if (
     !file.name ||
@@ -14,7 +15,8 @@ export function validateUpload(
   )
     return "Use a filename without path separators, up to 255 characters.";
   if (!file.size) return "This file is empty.";
-  if (file.size > MAX_UPLOAD_BYTES) return "The upload limit is 2 MB per file.";
+  if (file.size > maxBytes)
+    return `The upload limit is ${Math.floor(maxBytes / 1024 / 1024)} MB per file.`;
   const allowed = settings.accept
     .split(",")
     .map((value) => value.trim().toLowerCase())

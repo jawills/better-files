@@ -40,6 +40,7 @@ export type RelatedListProps = {
   initialFilter?: string;
   revision?: number;
   adapter: {
+    maxUploadBytes?: number;
     info: () => Promise<RelatedInfo>;
     load: (
       query: RelatedQuery

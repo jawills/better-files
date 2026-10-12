@@ -1,6 +1,5 @@
 import { LightningElement, wire } from "lwc";
 import { NavigationMixin, CurrentPageReference } from "lightning/navigation";
-import { loadScript, loadStyle } from "lightning/platformResourceLoader";
 import {
   registerRefreshHandler,
   unregisterRefreshHandler
@@ -11,14 +10,12 @@ import getExtensions from "@salesforce/apex/FileListController.getRelatedListFil
 import getConfig from "@salesforce/apex/FileListController.getRelatedListConfig";
 import getRecordName from "@salesforce/apex/FileListController.getRecordName";
 import deleteFiles from "@salesforce/apex/FileListController.deleteFiles";
-import uploadFile from "@salesforce/apex/BetterFilesReactUpload.uploadFile";
 import {
   IsConsoleNavigation,
   EnclosingTabId,
   setTabLabel,
   setTabIcon
 } from "lightning/platformWorkspaceApi";
-import reactFiles from "@salesforce/resourceUrl/betterFilesReact";
 
 const message = (error) =>
   error?.body?.message || error?.message || "Unable to load files.";
@@ -30,12 +27,7 @@ export default class BetterFilesReactRelatedList extends NavigationMixin(
   LightningElement
 ) {
   context;
-  library;
-  instance;
-  loading;
   props;
-  resourceError;
-  isLoadingLibrary = true;
   refreshRegistration;
   revision = 0;
   recordName = "";
@@ -90,7 +82,6 @@ export default class BetterFilesReactRelatedList extends NavigationMixin(
       fileTypeFilter: stateValue(state, "fileTypeFilter") || "all"
     };
     if (JSON.stringify(context) === JSON.stringify(this.context)) return;
-    this.unmount();
     this.context = context;
     this.recordName = "";
     this.updateTabIdentity();
@@ -98,58 +89,18 @@ export default class BetterFilesReactRelatedList extends NavigationMixin(
     this.mount();
   }
   get showMissingRecord() {
-    return (
-      !this.context?.recordId && !this.isLoadingLibrary && !this.resourceError
-    );
+    return !this.context?.recordId;
   }
   connectedCallback() {
     this.refreshRegistration = registerRefreshHandler(this, async () => {
-      if (this.instance)
-        this.instance.update({ ...this.props, revision: ++this.revision });
+      if (this.props) this.props = { ...this.props, revision: ++this.revision };
       return true;
     });
-  }
-  renderedCallback() {
-    if (this.library) {
-      this.mount();
-      return;
-    }
-    if (this.loading || this.resourceError) return;
-    this.loading = Promise.all([
-      loadScript(this, reactFiles + "/better-files.js"),
-      loadStyle(this, reactFiles + "/better-files.css")
-    ])
-      .then(() => {
-        this.library = window.BetterFilesReact;
-        if (!this.library?.mountRelatedList)
-          throw new Error("Unable to initialize the related list.");
-        this.mount();
-      })
-      .catch((error) => {
-        this.library = undefined;
-        this.resourceError = message(error);
-      })
-      .finally(() => {
-        this.loading = undefined;
-        this.isLoadingLibrary = false;
-      });
-  }
-  retryResource() {
-    this.resourceError = undefined;
-    this.isLoadingLibrary = true;
+    this.mount();
   }
   mount() {
-    if (
-      !this.isConnected ||
-      !this.library ||
-      !this.context?.recordId ||
-      this.instance
-    )
-      return;
-    const container = this.template.querySelector("[data-card]");
-    if (!container) return;
+    if (!this.isConnected || !this.context?.recordId || this.props) return;
     const context = { ...this.context };
-    const library = this.library;
     const scope = {
       recordId: context.recordId,
       includeEmails: context.includeEmails,
@@ -170,7 +121,6 @@ export default class BetterFilesReactRelatedList extends NavigationMixin(
         objectApiName: context.objectApiName
       },
       settings: {
-        ...library.defaultSettings,
         includeEmails: context.includeEmails,
         minimumFileSizeKb: context.minimumFileSizeKb
       },
@@ -213,7 +163,7 @@ export default class BetterFilesReactRelatedList extends NavigationMixin(
               getCount({ ...scope, ...filters })
             ]);
             return {
-              files: rows.map(library.fromSalesforceRelatedFile),
+              rows,
               total
             };
           }),
@@ -224,18 +174,6 @@ export default class BetterFilesReactRelatedList extends NavigationMixin(
             if (!deleted || !ids.every((id) => deleted.includes(id)))
               throw new Error(
                 "Deletion not confirmed. Refresh the list before trying again."
-              );
-          }),
-        upload: (file, record) =>
-          safe(async () => {
-            const id = await uploadFile({
-              filename: file.name,
-              base64: await library.fileToBase64(file),
-              recordId: record.recordId
-            });
-            if (!id)
-              throw new Error(
-                "Upload not confirmed. Refresh the list before trying again."
               );
           })
       },
@@ -275,14 +213,8 @@ export default class BetterFilesReactRelatedList extends NavigationMixin(
           })
       }
     };
-    this.instance = library.mountRelatedList(container, this.props);
-  }
-  unmount() {
-    this.instance?.unmount();
-    this.instance = undefined;
   }
   disconnectedCallback() {
-    this.unmount();
     if (this.appliedTitle && document.title === this.appliedTitle) {
       document.title = this.previousTitle ?? "Salesforce";
     }

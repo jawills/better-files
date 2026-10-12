@@ -240,7 +240,11 @@ export function RelatedList(props: RelatedListProps) {
     <UploadSurface
       context={props.context}
       settings={props.settings}
-      upload={adapter.upload ? { send: adapter.upload, refresh } : undefined}
+      upload={
+        adapter.upload
+          ? { send: adapter.upload, refresh, maxBytes: adapter.maxUploadBytes }
+          : undefined
+      }
     >
       {(requestUpload) => (
         <section

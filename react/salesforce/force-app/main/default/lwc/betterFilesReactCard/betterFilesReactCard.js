@@ -1,6 +1,5 @@
 import { LightningElement, api, wire } from "lwc";
 import { NavigationMixin } from "lightning/navigation";
-import { loadScript, loadStyle } from "lightning/platformResourceLoader";
 import { refreshApex } from "@salesforce/apex";
 import {
   registerRefreshHandler,
@@ -9,8 +8,6 @@ import {
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import getFiles from "@salesforce/apex/FileListController.getFiles";
 import getFileCount from "@salesforce/apex/FileListController.getFileCount";
-import uploadFile from "@salesforce/apex/BetterFilesReactUpload.uploadFile";
-import reactFiles from "@salesforce/resourceUrl/betterFilesReact";
 
 function message(error) {
   return (
@@ -18,18 +15,13 @@ function message(error) {
   );
 }
 
-/** Record-page host. React owns only the DOM inside data-card. */
+/** Record-page host. Data and native navigation stay in Lightning. */
 export default class BetterFilesReactCard extends NavigationMixin(
   LightningElement
 ) {
   _recordId;
   _objectApiName;
   options = {};
-  library;
-  instance;
-  loading;
-  resourceError;
-  isLoadingLibrary = true;
   filesResult;
   countResult;
   refreshRegistration;
@@ -40,11 +32,9 @@ export default class BetterFilesReactCard extends NavigationMixin(
   set recordId(value) {
     if (value === this._recordId) return;
     // Stop the old record's queued uploads and dialogs before switching context.
-    this.unmountCard();
     this.filesResult = undefined;
     this.countResult = undefined;
     this._recordId = value || undefined;
-    this.mountCard();
   }
 
   @api get objectApiName() {
@@ -52,7 +42,6 @@ export default class BetterFilesReactCard extends NavigationMixin(
   }
   set objectApiName(value) {
     this._objectApiName = value;
-    this.updateCard();
   }
 
   @api get accept() {
@@ -114,14 +103,13 @@ export default class BetterFilesReactCard extends NavigationMixin(
     if (filtersChanged) {
       this.countResult = undefined;
     }
-    this.updateCard();
   }
 
   get hasRecord() {
     return Boolean(this.recordId);
   }
   get showMissingRecord() {
-    return !this.hasRecord && !this.isLoadingLibrary && !this.resourceError;
+    return !this.hasRecord;
   }
   get wiredFileLimit() {
     const value = Number(this.fileLimit);
@@ -147,7 +135,6 @@ export default class BetterFilesReactCard extends NavigationMixin(
   })
   handleFiles(result) {
     this.filesResult = result;
-    this.updateCard();
   }
 
   @wire(getFileCount, {
@@ -158,7 +145,6 @@ export default class BetterFilesReactCard extends NavigationMixin(
   })
   handleCount(result) {
     this.countResult = result;
-    this.updateCard();
   }
 
   get cardProps() {
@@ -171,12 +157,11 @@ export default class BetterFilesReactCard extends NavigationMixin(
     ) {
       state = {
         status: "ready",
-        files: this.filesResult.data.map(this.library.fromSalesforceFile),
+        rows: this.filesResult.data,
         total: this.countResult.data
       };
     }
     const settings = {
-      ...this.library.defaultSettings,
       ...Object.fromEntries(
         Object.entries(this.options).filter(([, value]) => value != null)
       ),
@@ -191,24 +176,7 @@ export default class BetterFilesReactCard extends NavigationMixin(
       },
       settings,
       state,
-      upload: {
-        send: async (file, context) => {
-          try {
-            const versionId = await uploadFile({
-              filename: file.name,
-              base64: await this.library.fileToBase64(file),
-              recordId: context.recordId
-            });
-            if (!versionId)
-              throw new Error(
-                "Upload not confirmed. Refresh files before trying again."
-              );
-          } catch (error) {
-            throw new Error(message(error));
-          }
-        },
-        refresh: () => this.refreshFiles()
-      },
+      upload: { refresh: () => this.refreshFiles() },
       actions: {
         preview: (file) =>
           this[NavigationMixin.Navigate]({
@@ -219,7 +187,9 @@ export default class BetterFilesReactCard extends NavigationMixin(
         viewAll: (context, currentSettings) =>
           this[NavigationMixin.Navigate]({
             type: "standard__component",
-            attributes: { componentName: "file1sync__betterFilesReactRelatedList" },
+            attributes: {
+              componentName: "file1sync__betterFilesReactRelatedList"
+            },
             state: {
               file1sync__recordId: context.recordId,
               file1sync__objectName: context.objectApiName,
@@ -264,56 +234,7 @@ export default class BetterFilesReactCard extends NavigationMixin(
     );
   }
 
-  renderedCallback() {
-    if (this.library) {
-      this.mountCard();
-      return;
-    }
-    if (this.loading || this.resourceError) return;
-    this.loading = Promise.all([
-      loadScript(this, reactFiles + "/better-files.js"),
-      loadStyle(this, reactFiles + "/better-files.css")
-    ])
-      .then(() => {
-        this.library = window.BetterFilesReact;
-        if (!this.library?.mountFiles || !this.library?.fromSalesforceFile)
-          throw new Error("Unable to initialize the file card.");
-        this.mountCard();
-      })
-      .catch((error) => {
-        this.library = undefined;
-        this.resourceError = message(error);
-      })
-      .finally(() => {
-        this.isLoadingLibrary = false;
-        this.loading = undefined;
-      });
-  }
-
-  retryResource() {
-    this.resourceError = undefined;
-    this.isLoadingLibrary = true;
-  }
-
-  mountCard() {
-    if (!this.isConnected || !this.recordId || !this.library || this.instance)
-      return;
-    const container = this.template.querySelector("[data-card]");
-    if (container)
-      this.instance = this.library.mountFiles(container, this.cardProps);
-  }
-
-  updateCard() {
-    if (this.instance) this.instance.update(this.cardProps);
-  }
-
-  unmountCard() {
-    this.instance?.unmount();
-    this.instance = undefined;
-  }
-
   disconnectedCallback() {
-    this.unmountCard();
     unregisterRefreshHandler(this.refreshRegistration);
     this.refreshRegistration = undefined;
   }

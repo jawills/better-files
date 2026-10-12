@@ -28,7 +28,7 @@ and broken-thumbnail states without changing Salesforce files.
 pinned to the approved org and account in `src/demo/live-record.ts`, verifies the
 org ID, checks loopback/same-origin requests, and serves only file versions linked
 to that record or its emails. Credentials stay on the server. Temporary downloads
-are removed after the response. This adapter is absent from static builds.
+are removed after the response. This adapter is absent from deployed builds.
 
 ## Component boundary
 
@@ -41,7 +41,8 @@ are removed after the response. This adapter is absent from static builds.
   modal, and success/error toasts.
 - `src/mount.tsx`: `mountFiles` and `mountRelatedList`, each returning `update`
   and `unmount`. One React root per host; unmount before removing that host.
-- `src/index.ts`: Salesforce library entry point, exposed as `window.BetterFilesReact`.
+- `src/embedding/`: UI Bundle entry point, typed host channel, and SDK binary upload transport.
+- `src/index.ts`: reusable component library exports.
 - `src/salesforce.ts`: maps Apex rows to typed React file records.
 - `src/demo/`: localhost harness and fixtures, excluded from the Salesforce bundle.
 
@@ -74,9 +75,12 @@ The separate project in `salesforce/` contains only the retained integration:
 
 - `betterFilesReactCard`: record-page LWC, labelled **Better Files React** in App Builder.
 - `betterFilesReactRelatedList`: URL-addressable related list opened by View All.
-- `betterFilesReact`: generated JavaScript/CSS static resource, ignored by Git.
+- `betterFilesEmbedding`: shared `lightning-ui-embedding` host and command bridge.
+- `uiBundles/betterFiles`: hosted React build; generated `dist` is ignored by Git.
+- `BetterFilesReact`: the Salesforce application granting access to the UI Bundle.
 - `BetterFilesReactUpload` and its Apex tests: user-mode file upload service.
-- `Better_Files_React`: permission set granting access to that upload service.
+- `Better_Files_React`: permission set granting app and upload-service access.
+- `BetterFilesReactAppUrl` label and `BetterFilesReact` Trusted URL: explicit development-org hosting configuration.
 
 The existing `FileListController` handles reads, server-side search/sorting,
 25-row pages, metadata-driven columns/filters, and user-mode deletion. The wrappers
@@ -99,6 +103,11 @@ card. The embedding experiment’s spike LWC, review app, and duplicate review p
 have been removed; the active record page and its assignments are preserved.
 The original package’s `force-app/` components remain separate from this project.
 
+When upgrading an existing checkout, remove the old generated
+`react/salesforce/force-app/main/default/staticresources/betterFilesReact/`
+folder before deployment. It is no longer a build output. The obsolete
+`betterFilesReact` static resource has already been removed from `better-files`.
+
 Build before deploying from the repository root:
 
 ```sh
@@ -110,23 +119,34 @@ sf org assign permset --target-org better-files --name Better_Files_React
 ```
 
 Also grant the existing Better Files permission set and appropriate record/file
-access. The CLI assignment above applies only to the authenticated development user.
+access. Users need **API Enabled** for the Data SDK; the current React permission
+set grants app visibility and Apex access but does not grant API Enabled.
+The CLI assignment above applies only to the authenticated development user.
 
 [Open the account](https://1sync-file-dev-ed.develop.lightning.force.com/lightning/r/Account/001fL000009dbKKQAY/view)
 · [Open its React related list](https://1sync-file-dev-ed.develop.lightning.force.com/lightning/cmp/file1sync__betterFilesReactRelatedList?file1sync__recordId=001fL000009dbKKQAY&file1sync__objectName=Account)
 
 ## Uploads and file actions
 
-Uploads are limited to **2 MB per file** by the synchronous Apex/base64 transport.
-Validation rejects empty files, invalid names, disallowed types, oversized files,
-and multiple files when disabled. The server creates each ContentVersion and its
-record link atomically in user mode.
+The embedded Salesforce card and related list accept **100 MB per file**. React
+gets a fresh upload configuration through `@salesforce/platform-sdk/data`, sends
+the binary file to Salesforce as multipart data, then passes the returned body ID
+to Apex. Apex creates the ContentVersion and record link in user mode without
+reading the bytes. Both layers enforce the 100 MB product limit; the transport
+also respects the org's reported maximum. Tokens stay inside the authenticated
+UI Bundle and never cross the LWC channel. Host props and replies are serialized
+to avoid sending LWC proxy objects across the iframe boundary.
+
+The localhost demo retains its separate **2 MB** development transport. The old
+Apex/base64 method remains for compatibility, but the embedded components no
+longer call it. Validation rejects empty files, invalid names, disallowed types,
+oversized files, and multiple files when disabled.
 
 The modal reports Waiting, Uploading, Uploaded, or Failed per file. Progress counts
 processed files, not bytes. Success toasts disappear after eight seconds; error
 toasts stay until dismissed. Closing the modal keeps the queue running; reopening
-shows its status. Unmounting stops queued files, but an already submitted upload
-may finish. Failed refreshes do not mark successful uploads as failed.
+shows its status. Changing records aborts the embedded binary request and stops queued files. An
+already submitted publish request may finish against its original record. Failed refreshes do not mark successful uploads as failed.
 
 Related-list select-all applies to loaded rows. Search, sorting, and filter changes
 clear selection. Failed pagination preserves the current rows and retries the same
@@ -147,12 +167,47 @@ host lifecycle, portal focus, query races, pagination retry, selection/deletion,
 upload validation/outcomes, record scoping, and navigation. Fixtures remain local
 so these checks and the localhost preview can keep exercising the real components.
 
-Live development-org checks have covered record reads, uploads, native preview,
+The UI Bundle transport was verified in `better-files` with a generated 100 MiB
+file using the production upload helper and Apex finalizer through an embedded
+verification host. Salesforce confirmed 104,857,600 bytes, the expected MD5
+checksum, and the Account link. The record card and related-list embedding were
+also checked live. The automated browser cannot operate the closed embedding
+iframe's file chooser, so a manual drag/drop and modal/toast review is still needed
+for this migration. Temporary verification metadata and files were removed.
+
+Before this migration, live development-org checks covered record reads, uploads, native preview,
 View All, sorting/filtering, console naming, dialog focus, and a disposable-file
 deletion. Typography B was verified in the LWC and on wide/narrow local cards.
 Download navigation is tested, but browser download completion was not independently
 verified. Lightning Locker, Salesforce mobile, restricted-user access, and managed
-package installation remain unverified. Larger/resumable uploads and cancellation
-need a separate transport decision before production use.
+package installation remain unverified. Resumable uploads and user-controlled cancellation are not implemented.
+
+This integration is a development preview, not a package-ready release.
+[Standalone UI Bundles support 2GP packaging](https://developer.salesforce.com/docs/platform/multiframework/guide/mfw-packaging.html),
+but Salesforce's [internally hosted embedding documentation](https://developer.salesforce.com/docs/platform/microfrontend/guide/internal-ui-bundles.html)
+still marks this embedding path beta and explicitly lists packaging and dynamic
+URL resolution as unavailable. Its explicit app URL and Trusted URL target only
+`better-files`; configure both for another org before deploying there.
+The root package includes only `force-app/`, so these separate `react/salesforce/`
+components are not included by the existing package-version command.
+
+Before considering customer distribution, resolve the embedding support limit,
+replace the development-org configuration with a supported subscriber setup,
+verify installation/upgrades and restricted-user access in a clean org, and add
+the required build sourcemaps and Code Analyzer `uibundle` checks for AppExchange
+review. The current build and root analyzer command do not include those checks.
+[Salesforce's access guidance](https://developer.salesforce.com/docs/platform/multiframework/guide/mfw-manage.html)
+distinguishes app visibility/API access from object, field, and record permissions;
+successful admin testing does not establish ordinary-user access.
+
+The iframe isolates styles and confines dialogs/toasts to its bounds; it expands
+while a dialog is open. The frame follows the body's height, uses a transparent
+background around rounded panels, and leaves page scrolling to Lightning.
+The native file preview still opens through the LWC host.
+
+Once the SDK connects to an embedding host, scoped CSS hides Salesforce's
+`sf-session-banner` and removes its reserved body padding. Standalone launches
+retain the banner. This is a workaround using platform markup, not a documented
+SDK option; recheck these selectors after Salesforce updates.
 
 Static design review artifacts remain in `review/`; they are not deployed.

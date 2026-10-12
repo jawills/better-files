@@ -10,7 +10,7 @@ import {
   DialogTitle
 } from "./ui/dialog";
 import { usePortalContainer } from "./portal-context";
-import { validateUpload } from "@/upload";
+import { MAX_UPLOAD_BYTES, validateUpload } from "@/upload";
 import type { FileCardProps } from "@/model";
 
 type Row = {
@@ -88,7 +88,7 @@ export function UploadSurface(props: UploadSurfaceProps) {
       const message =
         !props.settings.multiple && files.length > 1
           ? "Choose one file at a time."
-          : validateUpload(file, props.settings);
+          : validateUpload(file, props.settings, adapter.maxBytes);
       return {
         name: file.name,
         status: message ? "failed" : "waiting",
@@ -263,7 +263,7 @@ export function UploadSurface(props: UploadSurfaceProps) {
             {successful} of {rows.length} files uploaded.{" "}
             {running
               ? "Uploads continue if you close this window."
-              : "2 MB limit per file."}
+              : `${Math.floor((props.upload?.maxBytes ?? MAX_UPLOAD_BYTES) / 1024 / 1024)} MB limit per file.`}
           </DialogDescription>
           <progress
             className="bf-upload-progress"

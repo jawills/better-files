@@ -6,16 +6,18 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
-    "build:salesforce": "tsc --noEmit && vite build --mode salesforce",
+    "build:salesforce": "npm run build:embedding",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:embedding": "tsc --noEmit && vite build --config vite.embedding.config.ts"
   },
   "dependencies": {
-    "react": "^19.3.0",
     "@base-ui/react": "^1.9.0",
+    "@salesforce/platform-sdk": "^12.11.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.54.0",
+    "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tailwind-merge": "^3.7.0"
   },

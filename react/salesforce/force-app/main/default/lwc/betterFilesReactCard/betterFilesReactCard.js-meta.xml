@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
-    <apiVersion>67.0</apiVersion>
+    <apiVersion>68.0</apiVersion>
     <isExposed>true</isExposed>
     <masterLabel>Better Files React</masterLabel>
-    <description>React file card with drag-and-drop uploads. Maximum 2 MB per upload; Lightning Web Security required.</description>
+    <description>React file card with drag-and-drop uploads. Maximum 100 MB per upload using Salesforce UI embedding.</description>
     <targets>
         <target>lightning__RecordPage</target>
     </targets>

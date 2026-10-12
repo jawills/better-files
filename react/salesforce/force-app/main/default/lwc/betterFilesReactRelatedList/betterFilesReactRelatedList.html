@@ -1,18 +1,13 @@
 <template>
-  <template lwc:if={resourceError}>
-    <div class="slds-box slds-theme_default">
-      <p role="alert">{resourceError}</p>
-      <lightning-button
-        label="Retry"
-        onclick={retryResource}
-      ></lightning-button>
-    </div>
-  </template>
-  <template lwc:elseif={isLoadingLibrary}>
-    <p class="slds-box slds-theme_default" role="status">Loading files…</p>
-  </template>
-  <template lwc:if={showMissingRecord}>
-    <p class="slds-box slds-theme_default">Select a record to see its files.</p>
-  </template>
-  <div data-card lwc:dom="manual"></div>
+  <template lwc:if={props}
+    ><c-better-files-embedding
+      view="related"
+      config={props}
+    ></c-better-files-embedding
+  ></template>
+  <template lwc:elseif={showMissingRecord}
+    ><p class="slds-box slds-theme_default">
+      Select a record to see its files.
+    </p></template
+  >
 </template>
