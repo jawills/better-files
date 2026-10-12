@@ -3,6 +3,10 @@ import FileRelatedList from "c/fileRelatedList";
 import { CurrentPageReference } from "lightning/navigation";
 import getRelatedListFiles from "@salesforce/apex/FileListController.getRelatedListFiles";
 import getRelatedListFileCount from "@salesforce/apex/FileListController.getRelatedListFileCount";
+import getRelatedListFileExtensions from "@salesforce/apex/FileListController.getRelatedListFileExtensions";
+import deleteFile from "@salesforce/apex/FileListController.deleteFile";
+import deleteFiles from "@salesforce/apex/FileListController.deleteFiles";
+import LightningConfirm from "lightning/confirm";
 import getRecordName from "@salesforce/apex/FileListController.getRecordName";
 import getRelatedListConfig from "@salesforce/apex/FileListController.getRelatedListConfig";
 
@@ -31,6 +35,18 @@ const mockFile = {
   linkedEntityId: "001xx0000000001",
   linkedEntityType: "Account"
 };
+
+jest.mock(
+  "@salesforce/apex/FileListController.getRelatedListFileExtensions",
+  () => ({ default: jest.fn() }),
+  { virtual: true }
+);
+
+jest.mock(
+  "lightning/confirm",
+  () => ({ __esModule: true, default: { open: jest.fn() } }),
+  { virtual: true }
+);
 
 jest.mock(
   "@salesforce/apex/FileListController.getRelatedListFiles",
@@ -128,6 +144,8 @@ async function loadRelatedList(
   emitPageReference();
   emitDefaultConfig();
   await flushPromises();
+  // Wait for the existing layout remount before tests retain a table reference.
+  await new Promise(requestAnimationFrame);
   await flushPromises();
   return element;
 }
@@ -135,6 +153,10 @@ async function loadRelatedList(
 describe("c-file-related-list", () => {
   beforeEach(() => {
     getRecordName.mockResolvedValue("Acme");
+    getRelatedListFileExtensions.mockResolvedValue(["pdf", "png"]);
+    deleteFile.mockResolvedValue(mockFile.version.ContentDocumentId);
+    deleteFiles.mockResolvedValue([mockFile.version.ContentDocumentId]);
+    LightningConfirm.open.mockResolvedValue(true);
     mockListData();
   });
 
@@ -577,5 +599,254 @@ describe("c-file-related-list", () => {
     expect(
       element.shadowRoot.querySelector("c-file-data-table").data
     ).toHaveLength(1);
+  });
+  it.each([undefined, "Basic", "unknown"])(
+    "keeps basic filters for mode %s",
+    async (filterMode) => {
+      const element = createComponent();
+      emitPageReference();
+      getRelatedListConfig.emit({ filterMode });
+      await flushPromises();
+      expect(
+        element.shadowRoot.querySelector("lightning-combobox").options
+      ).toEqual([
+        { label: "All files", value: "all" },
+        { label: "Images", value: "image" },
+        { label: "Documents", value: "document" }
+      ]);
+      expect(getRelatedListFileExtensions).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each([true, false])(
+    "loads record-wide types when config arrives first: %s",
+    async (configFirst) => {
+      const element = createComponent();
+      getRelatedListFileExtensions.mockResolvedValue(["", "pdf", "png"]);
+      if (configFirst) getRelatedListConfig.emit({ filterMode: "Advanced" });
+      emitPageReference();
+      await flushPromises();
+      if (!configFirst) getRelatedListConfig.emit({ filterMode: "Advanced" });
+      await flushPromises();
+      const filter = element.shadowRoot.querySelector("lightning-combobox");
+      expect(filter.options).toEqual([
+        { label: "All files", value: "all" },
+        { label: "No extension", value: "extension:" },
+        { label: "PDF", value: "extension:pdf" },
+        { label: "PNG", value: "extension:png" }
+      ]);
+      expect(getRelatedListFileExtensions).toHaveBeenCalledWith({
+        recordId: "001xx0000000001",
+        includeEmails: false,
+        minContentSize: null
+      });
+      // Only a PDF is loaded, but the server discovered PNG and extensionless files too.
+      expect(
+        element.shadowRoot.querySelector("c-file-data-table").data
+      ).toHaveLength(1);
+      filter.dispatchEvent(
+        new CustomEvent("change", { detail: { value: "extension:png" } })
+      );
+      await flushPromises();
+      expect(getRelatedListFiles).toHaveBeenLastCalledWith(
+        expect.objectContaining({ fileTypeFilter: "extension:png", page: 0 })
+      );
+      expect(getRelatedListFileCount).toHaveBeenLastCalledWith(
+        expect.objectContaining({ fileTypeFilter: "extension:png" })
+      );
+      expect(getRelatedListFileExtensions).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  it("keeps advanced options stable through search and pagination", async () => {
+    const element = createComponent();
+    mockListData([mockFile], 30);
+    getRelatedListConfig.emit({ filterMode: "Advanced" });
+    emitPageReference();
+    await flushPromises();
+    const filter = element.shadowRoot.querySelector("lightning-combobox");
+    const options = filter.options;
+    filter.dispatchEvent(
+      new CustomEvent("change", { detail: { value: "extension:pdf" } })
+    );
+    await flushPromises();
+    const search = element.shadowRoot.querySelector("lightning-input");
+    jest.useFakeTimers();
+    search.value = "Spec";
+    search.dispatchEvent(new CustomEvent("change"));
+    jest.advanceTimersByTime(350);
+    jest.useRealTimers();
+    await flushPromises();
+    expect(getRelatedListFileCount).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        searchTerm: "Spec",
+        fileTypeFilter: "extension:pdf"
+      })
+    );
+    element.shadowRoot.querySelector("[data-id='get-more']").click();
+    await flushPromises();
+    expect(getRelatedListFiles).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        page: 1,
+        searchTerm: "Spec",
+        fileTypeFilter: "extension:pdf"
+      })
+    );
+    expect(filter.options).toEqual(options);
+    expect(getRelatedListFileExtensions).toHaveBeenCalledTimes(1);
+  });
+
+  it("discovers newly uploaded types and retains the selected type", async () => {
+    const element = createComponent();
+    getRelatedListFileExtensions.mockResolvedValue(["pdf"]);
+    getRelatedListConfig.emit({ filterMode: "Advanced" });
+    emitPageReference();
+    await flushPromises();
+    const filter = element.shadowRoot.querySelector("lightning-combobox");
+    filter.dispatchEvent(
+      new CustomEvent("change", { detail: { value: "extension:pdf" } })
+    );
+    await flushPromises();
+    getRelatedListFileExtensions.mockResolvedValue(["pdf", "xlsx"]);
+    element.shadowRoot
+      .querySelector("lightning-file-upload")
+      .dispatchEvent(new CustomEvent("uploadfinished"));
+    await flushPromises();
+    expect(filter.value).toBe("extension:pdf");
+    expect(filter.options).toContainEqual({
+      label: "XLSX",
+      value: "extension:xlsx"
+    });
+    expect(getRelatedListFileExtensions).toHaveBeenCalledTimes(2);
+  });
+
+  it.each(["single", "bulk"])(
+    "resets to All files after %s deletion removes the selected type",
+    async (action) => {
+      const element = createComponent();
+      getRelatedListConfig.emit({ filterMode: "Advanced" });
+      emitPageReference();
+      await flushPromises();
+      const filter = element.shadowRoot.querySelector("lightning-combobox");
+      filter.dispatchEvent(
+        new CustomEvent("change", { detail: { value: "extension:pdf" } })
+      );
+      await flushPromises();
+      getRelatedListFileExtensions.mockResolvedValue(["png"]);
+      const table = element.shadowRoot.querySelector("c-file-data-table");
+      if (action === "single") {
+        table.dispatchEvent(
+          new CustomEvent("rowaction", {
+            detail: { action: { name: "Delete" }, row: table.data[0] }
+          })
+        );
+      } else {
+        table.dispatchEvent(
+          new CustomEvent("rowselection", {
+            detail: { selectedRows: table.data }
+          })
+        );
+        await flushPromises();
+        [...element.shadowRoot.querySelectorAll("lightning-button")]
+          .find((button) => button.label === "Delete")
+          .click();
+      }
+      await flushPromises();
+      expect(action === "single" ? deleteFile : deleteFiles).toHaveBeenCalled();
+      expect(filter.value).toBe("all");
+      expect(filter.options).toEqual([
+        { label: "All files", value: "all" },
+        { label: "PNG", value: "extension:png" }
+      ]);
+      expect(getRelatedListFiles).toHaveBeenLastCalledWith(
+        expect.objectContaining({ fileTypeFilter: "all", page: 0 })
+      );
+      expect(getRelatedListFileCount).toHaveBeenLastCalledWith(
+        expect.objectContaining({ fileTypeFilter: "all" })
+      );
+    }
+  );
+
+  it("ignores stale types after navigation and respects the new record context", async () => {
+    const element = createComponent();
+    let finishOldTypes;
+    getRelatedListFileExtensions.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishOldTypes = resolve;
+        })
+    );
+    getRelatedListConfig.emit({ filterMode: "Advanced" });
+    emitPageReference();
+    await flushPromises();
+    getRelatedListFileExtensions.mockResolvedValue([]);
+    CurrentPageReference.emit({
+      state: {
+        c__recordId: "001xx0000000002",
+        c__objectName: "Account",
+        c__includeEmails: "true",
+        c__minimumFileSizeKb: "10"
+      }
+    });
+    await flushPromises();
+    finishOldTypes(["pdf"]);
+    await flushPromises();
+    expect(getRelatedListFileExtensions).toHaveBeenLastCalledWith({
+      recordId: "001xx0000000002",
+      includeEmails: true,
+      minContentSize: 10240
+    });
+    expect(
+      element.shadowRoot.querySelector("lightning-combobox").options
+    ).toEqual([{ label: "All files", value: "all" }]);
+    expect(getRelatedListFiles).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns to basic filters when the mode changes", async () => {
+    const element = createComponent();
+    getRelatedListConfig.emit({ filterMode: "Advanced" });
+    emitPageReference();
+    await flushPromises();
+    element.shadowRoot
+      .querySelector("lightning-combobox")
+      .dispatchEvent(
+        new CustomEvent("change", { detail: { value: "extension:pdf" } })
+      );
+    await flushPromises();
+    emitDefaultConfig();
+    await flushPromises();
+    expect(element.shadowRoot.querySelector("lightning-combobox").value).toBe(
+      "all"
+    );
+    expect(
+      element.shadowRoot.querySelector("lightning-combobox").options
+    ).toHaveLength(3);
+    expect(getRelatedListFiles).toHaveBeenLastCalledWith(
+      expect.objectContaining({ fileTypeFilter: "all" })
+    );
+  });
+
+  it("shows extension discovery failures and retries on refresh", async () => {
+    const element = createComponent();
+    getRelatedListFileExtensions.mockRejectedValueOnce({
+      body: { message: "Unable to read file types" }
+    });
+    getRelatedListConfig.emit({ filterMode: "Advanced" });
+    emitPageReference();
+    await flushPromises();
+    expect(
+      element.shadowRoot.querySelector("[data-id='load-error']").textContent
+    ).toContain("Unable to read file types");
+    expect(getRelatedListFiles).not.toHaveBeenCalled();
+    element.shadowRoot
+      .querySelector("lightning-file-upload")
+      .dispatchEvent(new CustomEvent("uploadfinished"));
+    await flushPromises();
+    expect(
+      element.shadowRoot.querySelector("[data-id='load-error']")
+    ).toBeNull();
+    expect(
+      element.shadowRoot.querySelector("lightning-combobox").options
+    ).toHaveLength(3);
   });
 });

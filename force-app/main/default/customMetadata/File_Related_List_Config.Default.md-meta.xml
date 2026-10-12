@@ -3,6 +3,10 @@
     <label>Default</label>
     <protected>false</protected>
     <values>
+        <field>Filter_Mode__c</field>
+        <value xsi:type="xsd:string">Basic</value>
+    </values>
+    <values>
         <field>Show_File_Size__c</field>
         <value xsi:type="xsd:boolean">true</value>
     </values>

@@ -509,6 +509,50 @@ public with sharing class FileListControllerTest {
         null
       )
     );
+
+    ContentVersion emailOnly = new ContentVersion(
+      Title = 'Email only',
+      PathOnClient = 'Email.csv',
+      VersionData = Blob.valueOf('email data')
+    );
+    insert emailOnly;
+    emailOnly = [
+      SELECT ContentDocumentId
+      FROM ContentVersion
+      WHERE Id = :emailOnly.Id
+    ];
+    insert new ContentDocumentLink(
+      ContentDocumentId = emailOnly.ContentDocumentId,
+      LinkedEntityId = emailMsg.Id,
+      ShareType = 'V'
+    );
+    System.assertEquals(
+      new List<String>{ 'pdf' },
+      FileListController.getRelatedListFileExtensions(
+        parentCase.Id,
+        false,
+        null
+      )
+    );
+    System.assertEquals(
+      new List<String>{ 'csv', 'pdf' },
+      FileListController.getRelatedListFileExtensions(
+        parentCase.Id,
+        true,
+        null
+      ),
+      'Include email-only types and deduplicate files linked to both record and email'
+    );
+    System.assertEquals(
+      1,
+      FileListController.getRelatedListFileCount(
+        parentCase.Id,
+        true,
+        null,
+        'extension:csv',
+        null
+      )
+    );
   }
 
   @isTest
@@ -697,6 +741,180 @@ public with sharing class FileListControllerTest {
   }
 
   @isTest
+  static void testAvailableFileExtensions() {
+    Account account = [SELECT Id FROM Account WHERE Name = 'Test 1Sync File'];
+    Account other = new Account(Name = 'Other record');
+    insert other;
+    insert new ContentVersion(
+      Title = 'Unrelated',
+      PathOnClient = 'Unrelated.csv',
+      VersionData = Blob.valueOf('data'),
+      FirstPublishLocationId = other.Id
+    );
+    Test.startTest();
+    System.assertEquals(
+      new List<String>{ 'bin', 'jpg' },
+      FileListController.getRelatedListFileExtensions(account.Id, false, null),
+      'Only extensions linked to this record should be offered'
+    );
+    System.assertEquals(
+      new List<String>{ 'bin' },
+      FileListController.getRelatedListFileExtensions(account.Id, false, 100),
+      'Types below the minimum size should be excluded'
+    );
+    System.assertEquals(
+      new List<String>(),
+      FileListController.getRelatedListFileExtensions(account.Id, false, 10000)
+    );
+    Test.stopTest();
+  }
+
+  @isTest
+  static void testExactExtensionFiltersAcrossPages() {
+    Account account = [SELECT Id FROM Account WHERE Name = 'Test 1Sync File'];
+    List<ContentVersion> versions = new List<ContentVersion>();
+    for (Integer i = 0; i < 27; i++) {
+      versions.add(
+        new ContentVersion(
+          Title = 'PDF ' + ('0' + i).right(2),
+          PathOnClient = 'File.PDF',
+          VersionData = Blob.valueOf('PDF data'),
+          FirstPublishLocationId = account.Id
+        )
+      );
+    }
+    versions.add(
+      new ContentVersion(
+        Title = 'No extension',
+        PathOnClient = 'README',
+        VersionData = Blob.valueOf('data'),
+        FirstPublishLocationId = account.Id
+      )
+    );
+    versions.add(
+      new ContentVersion(
+        Title = 'Category name',
+        PathOnClient = 'File.image',
+        VersionData = Blob.valueOf('data'),
+        FirstPublishLocationId = account.Id
+      )
+    );
+    insert versions;
+    Test.startTest();
+    System.assertEquals(
+      new List<String>{ '', 'bin', 'image', 'jpg', 'pdf' },
+      FileListController.getRelatedListFileExtensions(account.Id, false, null),
+      'Types must be unique, normalized, and include files beyond the first page'
+    );
+    List<FileListController.FileRow> firstPage = FileListController.getRelatedListFiles(
+      account.Id,
+      25,
+      0,
+      false,
+      null,
+      'extension:pdf',
+      null,
+      'Title',
+      'asc'
+    );
+    List<FileListController.FileRow> secondPage = FileListController.getRelatedListFiles(
+      account.Id,
+      25,
+      1,
+      false,
+      null,
+      'extension:pdf',
+      null,
+      'Title',
+      'asc'
+    );
+    System.assertEquals(25, firstPage.size());
+    System.assertEquals(2, secondPage.size());
+    System.assertEquals('PDF 25', secondPage[0].version.ContentDocument.Title);
+    System.assertEquals(
+      27,
+      FileListController.getRelatedListFileCount(
+        account.Id,
+        false,
+        null,
+        'extension:pdf',
+        null
+      )
+    );
+    List<FileListController.FileRow> searched = FileListController.getRelatedListFiles(
+      account.Id,
+      25,
+      0,
+      false,
+      null,
+      'extension:pdf',
+      'PDF 26',
+      'Title',
+      'asc'
+    );
+    System.assertEquals(1, searched.size());
+    System.assertEquals(
+      searched.size(),
+      FileListController.getRelatedListFileCount(
+        account.Id,
+        false,
+        null,
+        'extension:pdf',
+        'PDF 26'
+      )
+    );
+    System.assertEquals(
+      0,
+      FileListController.getRelatedListFileCount(
+        account.Id,
+        false,
+        100,
+        'extension:pdf',
+        null
+      )
+    );
+    System.assertEquals(
+      1,
+      FileListController.getRelatedListFileCount(
+        account.Id,
+        false,
+        null,
+        'extension:',
+        null
+      ),
+      'Extensionless files can be selected'
+    );
+    List<FileListController.FileRow> extensionless = FileListController.getRelatedListFiles(
+      account.Id, 1, 0, false, null, 'extension:', null, 'Title', 'asc'
+    );
+    System.assertEquals(1, extensionless.size());
+    System.assertEquals('No extension', extensionless[0].version.ContentDocument.Title);
+    System.assertEquals(
+      1,
+      FileListController.getRelatedListFileCount(
+        account.Id,
+        false,
+        null,
+        'extension:image',
+        null
+      ),
+      'An exact extension must not be interpreted as the Images category'
+    );
+    System.assertEquals(
+      0,
+      FileListController.getRelatedListFileCount(
+        account.Id,
+        false,
+        null,
+        'extension:pdf\' OR Id != null',
+        null
+      ),
+      'Extension values must be bound, not inserted into SOQL'
+    );
+    Test.stopTest();
+  }
+
+  @isTest
   static void testRelatedListConfigDefaults() {
     FileListController.RelatedListConfig config = FileListController.getRelatedListConfig();
     System.assertEquals(true, config.showOwner, 'Owner column on by default');
@@ -711,5 +929,10 @@ public with sharing class FileListControllerTest {
       'Last Modified By on by default'
     );
     System.assertEquals(true, config.showFileSize, 'File Size on by default');
+    System.assertEquals(
+      'Basic',
+      config.filterMode,
+      'Existing filters are the default'
+    );
   }
 }

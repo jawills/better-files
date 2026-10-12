@@ -20,6 +20,8 @@ public with sharing class FileListController {
     public Boolean showLastModifiedBy { get; set; }
     @AuraEnabled
     public Boolean showFileSize { get; set; }
+    @AuraEnabled
+    public String filterMode { get; set; }
   }
 
   private static final String RELATED_LIST_CONFIG_DEVELOPER_NAME = 'Default';
@@ -31,13 +33,15 @@ public with sharing class FileListController {
     config.showLastModifiedDate = true;
     config.showLastModifiedBy = true;
     config.showFileSize = true;
+    config.filterMode = 'Basic';
 
     List<File_Related_List_Config__mdt> rows = [
       SELECT
         Show_Owner__c,
         Show_Last_Modified_Date__c,
         Show_Last_Modified_By__c,
-        Show_File_Size__c
+        Show_File_Size__c,
+        Filter_Mode__c
       FROM File_Related_List_Config__mdt
       WHERE DeveloperName = :RELATED_LIST_CONFIG_DEVELOPER_NAME
       WITH USER_MODE
@@ -49,6 +53,9 @@ public with sharing class FileListController {
       config.showLastModifiedDate = row.Show_Last_Modified_Date__c;
       config.showLastModifiedBy = row.Show_Last_Modified_By__c;
       config.showFileSize = row.Show_File_Size__c;
+      config.filterMode = row.Filter_Mode__c == 'Advanced'
+        ? 'Advanced'
+        : 'Basic';
     }
     return config;
   }
@@ -246,6 +253,35 @@ public with sharing class FileListController {
     return cvIds.size();
   }
 
+  /** Available extensions across the whole eligible record, independent of search and pagination. */
+  @AuraEnabled
+  public static List<String> getRelatedListFileExtensions(
+    Id recordId,
+    Boolean includeEmails,
+    Integer minContentSize
+  ) {
+    Set<String> extensions = new Set<String>();
+    for (
+      ContentDocumentLink link : (List<ContentDocumentLink>) getRelatedListLinks(
+        recordId,
+        includeEmails,
+        minContentSize,
+        null,
+        null
+      )
+    ) {
+      if (link.ContentDocument.LatestPublishedVersionId != null) {
+        String extension = link.ContentDocument.FileExtension;
+        extensions.add(
+          String.isBlank(extension) ? '' : extension.toLowerCase()
+        );
+      }
+    }
+    List<String> result = new List<String>(extensions);
+    result.sort();
+    return result;
+  }
+
   /** Non-cacheable so View All always loads fresh data after record-page uploads. */
   @AuraEnabled
   public static List<FileRow> getRelatedListFiles(
@@ -259,15 +295,13 @@ public with sharing class FileListController {
     String sortBy,
     String sortDirection
   ) {
-    List<ContentDocumentLink> links = relatedListLinkQuery(
-        recordId,
-        includeEmails,
-        minContentSize,
-        fileTypeFilter,
-        searchTerm
-      )
-      .asUser()
-      .getList();
+    List<ContentDocumentLink> links = getRelatedListLinks(
+      recordId,
+      includeEmails,
+      minContentSize,
+      fileTypeFilter,
+      searchTerm
+    );
 
     // Page unique files, not links: a file can belong to both the record and emails.
     Map<Id, ContentDocumentLink> preferredByVersionId = new Map<Id, ContentDocumentLink>();
@@ -324,7 +358,7 @@ public with sharing class FileListController {
     return field + ' ' + direction + ' NULLS LAST, Id ASC';
   }
 
-  private static ContentDocumentLinkQuery relatedListLinkQuery(
+  private static List<ContentDocumentLink> getRelatedListLinks(
     Id recordId,
     Boolean includeEmails,
     Integer minContentSize,
@@ -338,12 +372,22 @@ public with sharing class FileListController {
     ContentDocumentLinkQuery query = baseContentDocumentLinkQuery(
       recordIds,
       minContentSize,
-      fileTypeFilter
+      fileTypeFilter == 'extension:' ? null : fileTypeFilter
     );
     if (String.isNotBlank(searchTerm)) {
       query.byContentDocumentTitle(searchTerm);
     }
-    return query;
+    List<ContentDocumentLink> links = query.asUser().getList();
+    if (fileTypeFilter == 'extension:') {
+      // Salesforce returns blank extensions but does not match them with a
+      // null/empty SOQL predicate. Filter before deduplication, paging, and counting.
+      for (Integer i = links.size() - 1; i >= 0; i--) {
+        if (String.isNotBlank(links[i].ContentDocument.FileExtension)) {
+          links.remove(i);
+        }
+      }
+    }
+    return links;
   }
 
   /** Non-cacheable so View All always loads fresh data after record-page uploads. */
@@ -357,15 +401,13 @@ public with sharing class FileListController {
   ) {
     Set<Id> versionIds = new Set<Id>();
     for (
-      ContentDocumentLink link : (List<ContentDocumentLink>) relatedListLinkQuery(
-          recordId,
-          includeEmails,
-          minContentSize,
-          fileTypeFilter,
-          searchTerm
-        )
-        .asUser()
-        .getList()
+      ContentDocumentLink link : (List<ContentDocumentLink>) getRelatedListLinks(
+        recordId,
+        includeEmails,
+        minContentSize,
+        fileTypeFilter,
+        searchTerm
+      )
     ) {
       if (link.ContentDocument.LatestPublishedVersionId != null) {
         versionIds.add(link.ContentDocument.LatestPublishedVersionId);

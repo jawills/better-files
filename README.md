@@ -8,7 +8,7 @@ A better way to manage files on Salesforce record pages — compact card view, n
 - **View All related list** — data table with Owner, dates, size, preview, download, delete
 - **Bulk download & delete** on View All
 - **Search by file name** (View All)
-- **File type filter** — All, Images, Documents (View All)
+- **File type filter** — Basic categories or Advanced record-specific extensions, configured in custom metadata (View All)
 - **Email message attachments** — optionally include files from related emails
 - **Minimum file size** filter
 - **Service Console** — View All opens in a subtab
@@ -19,8 +19,8 @@ See **[docs/FEATURES.md](docs/FEATURES.md)** for full documentation: configurati
 
 ## Install
 
-- [Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tQl000000G1OLIA0)
-- [Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tQl000000G1OLIA0)
+- [Production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tQl000000Tis5IAC)
+- [Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tQl000000Tis5IAC)
 
 After install:
 
