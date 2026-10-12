@@ -10,6 +10,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   build: {
+    sourcemap: true,
+    // Preloading is optional; avoid Vite's unmapped fetch polyfill in the bundle.
+    modulePreload: { polyfill: false },
     outDir: fileURLToPath(
       new URL(
         "./salesforce/force-app/main/default/uiBundles/betterFiles/dist",

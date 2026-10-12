@@ -80,6 +80,15 @@ it("uploads a dropped batch sequentially, reports mixed outcomes, and refreshes 
   expect(value.upload.refresh).toHaveBeenCalledTimes(1);
 });
 
+it("rejects unsafe filename characters while allowing Unicode filenames", () => {
+  for (const name of ["folder/file.txt", "folder\\file.txt", "null\u0000.txt", "control\u001f.txt"]) {
+    expect(validateUpload({ name, size: 1, type: "text/plain" }, defaultSettings))
+      .toContain("filename without path separators");
+  }
+  expect(validateUpload({ name: "Résumé 📄.txt", size: 1, type: "text/plain" }, defaultSettings))
+    .toBeUndefined();
+});
+
 it("rejects type, empty, oversize, and multiple-file violations before sending", async () => {
   expect(
     validateUpload(

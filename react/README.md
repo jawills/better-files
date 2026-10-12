@@ -193,9 +193,12 @@ components are not included by the existing package-version command.
 
 Before considering customer distribution, resolve the embedding support limit,
 replace the development-org configuration with a supported subscriber setup,
-verify installation/upgrades and restricted-user access in a clean org, and add
-the required build sourcemaps and Code Analyzer `uibundle` checks for AppExchange
-review. The current build and root analyzer command do not include those checks.
+verify installation/upgrades and restricted-user access in a clean org, and run
+Code Analyzer `uibundle` checks for AppExchange review. The embedding build emits
+sourcemaps for every JavaScript chunk; the root analyzer command still excludes
+this separate React project. For source-integrity checks, the current analyzer
+also needs `src` beside the bundle's `dist`; temporarily link it to `react/src`
+while scanning and remove the link before deployment.
 [Salesforce's access guidance](https://developer.salesforce.com/docs/platform/multiframework/guide/mfw-manage.html)
 distinguishes app visibility/API access from object, field, and record permissions;
 successful admin testing does not establish ordinary-user access.

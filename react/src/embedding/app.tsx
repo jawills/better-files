@@ -1,4 +1,6 @@
 import type { ViewSDK, DataSDK } from "@salesforce/platform-sdk/core";
+// Bootstrap the embedding session at entry, without an empty dynamic-import chunk.
+import "@salesforce/platform-sdk/ui-embedding";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { FileSurface } from "../components/file-surface";
@@ -225,7 +227,6 @@ function withThumbnailOrigin<T extends { thumbnailUrl?: string }>(
 }
 
 async function connectToSalesforce() {
-  await import("@salesforce/platform-sdk/ui-embedding");
   const { getViewSDK } = await import("@salesforce/platform-sdk/view");
   const sdk = await getViewSDK();
   const { createDataSDK } = await import("@salesforce/platform-sdk/data");

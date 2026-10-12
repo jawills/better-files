@@ -285,6 +285,8 @@ public inherited sharing class CollectionImpl extends Collection {
     /**
     * Facade for Field value filters.
     */
+    // equals() returns a filtered Collection, not Boolean object equality.
+    @SuppressWarnings('PMD.OverrideBothEqualsAndHashcode')
     private class FieldFilterImpl implements FieldFilter {
         private Collection collection;
         private CollectionConditions.FieldValueConditionFactory filterFactory;

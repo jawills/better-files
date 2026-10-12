@@ -11,7 +11,8 @@ export function validateUpload(
   if (
     !file.name ||
     file.name.length > 255 ||
-    /[\\/\u0000-\u001f]/.test(file.name)
+    /[\\/]/.test(file.name) ||
+    Array.from(file.name).some((character) => character.charCodeAt(0) < 32)
   )
     return "Use a filename without path separators, up to 255 characters.";
   if (!file.size) return "This file is empty.";
