@@ -1,10 +1,12 @@
 <template>
   <template lwc:if={error}><p role="alert">{error}</p></template>
-  <lightning-ui-embedding
-    lwc:ref="embedding"
-    src={appUrl}
-    title="Files"
-    props={guestProps}
-    onbfrequest={handleRequest}
-  ></lightning-ui-embedding>
+  <template lwc:if={appUrl}>
+    <lightning-ui-embedding
+      lwc:ref="embedding"
+      src={appUrl}
+      title="Files"
+      props={guestProps}
+      onbfrequest={handleRequest}
+    ></lightning-ui-embedding>
+  </template>
 </template>

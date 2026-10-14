@@ -1,2 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CspTrustedSite xmlns="http://soap.sforce.com/2006/04/metadata"><context>All</context><description>Better Files UI Bundle in the better-files development org</description><endpointUrl>https://1sync-file-dev-ed--file1sync.develop.my.salesforce.app</endpointUrl><isActive>true</isActive><isApplicableToFrameSrc>true</isApplicableToFrameSrc></CspTrustedSite>
+<CspTrustedSite xmlns="http://soap.sforce.com/2006/04/metadata">
+  <context>All</context>
+  <description>Allow Salesforce-hosted UI bundles in the Better Files embed. The app URL is configured separately for each org.</description>
+  <endpointUrl>https://*.salesforce.app</endpointUrl>
+  <isActive>true</isActive>
+  <isApplicableToFrameSrc>true</isApplicableToFrameSrc>
+</CspTrustedSite>
