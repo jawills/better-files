@@ -80,8 +80,8 @@ The separate project in `salesforce/` contains only the retained integration:
 - `BetterFilesReact`: the Salesforce application granting access to the UI Bundle.
 - `BetterFilesReactUpload` and its Apex tests: user-mode file upload service.
 - `Better_Files_React`: permission set granting app and upload-service access.
-- `BetterFilesReact` Trusted URL: permits Salesforce-hosted UI bundles with `https://*.salesforce.app` for `frame-src` only.
-- `File_Related_List_Config__mdt.Default.React_App_URL__c`: subscriber-controlled app URL shared by both React views. The old `BetterFilesReactAppUrl` label is retained for upgrades but is no longer used.
+- `FileListController.getReactAppUrl`: discovers the installed app URL from `AppMenuItem` in user mode, scoped to the `file1sync` namespace and requiring app access. Both React views share this lookup.
+- The legacy `BetterFilesReact` Trusted URL is inactive. The unused `React_App_URL__c` field (removed from the settings layout) and `BetterFilesReactAppUrl` label remain solely for managed-package upgrade compatibility.
 
 The existing `FileListController` handles reads, server-side search/sorting,
 25-row pages, metadata-driven columns/filters, and user-mode deletion. The wrappers
@@ -96,11 +96,11 @@ label. Navigation away preserves the next page’s title.
 After installation in each org:
 
 1. Assign the **Better Files** and **Better Files React** permission sets to the intended users.
-2. Open **Better Files** from the App Launcher and copy its full `https://...salesforce.app/app/file1sync__BetterFilesReact` URL.
-3. In **Setup → Custom Metadata Types → File Related List Config → Manage Records → Default**, set **React App URL** to that URL. This subscriber-controlled value is not supplied by the package and should be updated after org/domain changes.
-4. Refresh the record page. Both the card and View All use this setting, including related-list tabs opened directly.
+2. Refresh the record page. The card and View All discover this org's installed app URL automatically, including related-list tabs opened directly. No React URL configuration is required.
 
-No iframe is created until the configured URL is an HTTPS Salesforce app URL for Better Files. Missing or invalid configuration displays setup guidance. The packaged Trusted URL allows `frame-src` on `https://*.salesforce.app`; it does not grant app, API, record, or field access. For a narrower policy, an admin can use an exact-origin Trusted URL and disable the wildcard entry where permitted.
+No iframe is created until discovery returns an HTTPS Salesforce app URL for Better Files. Missing app access or an invalid URL displays an error. The package does not enable a Trusted URL. In the tested `1sync` org, Lightning's existing `frame-src https:` policy permits the embed with the legacy entry inactive. If another org's CSP blocks the frame, its admin must allow the discovered app origin for `frame-src` in Trusted URLs. This does not grant app, API, record, or field access.
+
+Previously released metadata is retained to avoid relying on Salesforce's restricted managed-package component-removal feature. Existing subscriber customizations can survive upgrades; the legacy URL field and label are ignored regardless of their values.
 
 To place the card on a record page, choose **Setup → Edit Page**,
 add **Better Files React**, configure it, then save/activate for the intended app.

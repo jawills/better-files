@@ -1,9 +1,9 @@
 import { createElement } from "lwc";
 import Embedding from "c/betterFilesEmbedding";
 import completeUpload from "@salesforce/apex/BetterFilesReactUpload.completeUpload";
-import getConfig from "@salesforce/apex/FileListController.getRelatedListConfig";
+import getReactAppUrl from "@salesforce/apex/FileListController.getReactAppUrl";
 jest.mock(
-  "@salesforce/apex/FileListController.getRelatedListConfig",
+  "@salesforce/apex/FileListController.getReactAppUrl",
   () => ({ default: jest.fn() }),
   { virtual: true }
 );
@@ -15,7 +15,7 @@ jest.mock(
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 const subscriberAppUrl = "https://subscriber--file1sync.my.salesforce.app/app/file1sync__BetterFilesReact";
 beforeEach(() => {
-  getConfig.mockResolvedValue({ reactAppUrl: subscriberAppUrl });
+  getReactAppUrl.mockResolvedValue(subscriberAppUrl);
 });
 afterEach(() => {
   document.body.replaceChildren();
@@ -39,7 +39,7 @@ async function mount() {
   const element = await mountComponent();
   return element.shadowRoot.querySelector("lightning-ui-embedding");
 }
-it("uses the subscriber-configured app URL", async () => {
+it("uses the automatically discovered subscriber app URL", async () => {
   const host = await mount();
   expect(host.src).toBe(subscriberAppUrl);
 });
@@ -51,14 +51,14 @@ it.each([
   `${subscriberAppUrl}?redirect=https://attacker.example`,
   "https://user:password@subscriber.salesforce.app/app/file1sync__BetterFilesReact"
 ])("does not create an iframe for a missing or invalid app URL: %s", async (reactAppUrl) => {
-  getConfig.mockResolvedValue({ reactAppUrl });
+  getReactAppUrl.mockResolvedValue(reactAppUrl);
   const element = await mountComponent();
   expect(element.shadowRoot.querySelector("lightning-ui-embedding")).toBeNull();
-  expect(element.shadowRoot.querySelector('[role="alert"]').textContent).toContain("React App URL");
+  expect(element.shadowRoot.querySelector('[role="alert"]').textContent).toContain("app is unavailable");
   expect(completeUpload).not.toHaveBeenCalled();
 });
-it("reports configuration access errors without creating an iframe", async () => {
-  getConfig.mockRejectedValue(new Error("Access denied"));
+it("reports app discovery access errors without creating an iframe", async () => {
+  getReactAppUrl.mockRejectedValue(new Error("Access denied"));
   const element = await mountComponent();
   expect(element.shadowRoot.querySelector("lightning-ui-embedding")).toBeNull();
   expect(element.shadowRoot.querySelector('[role="alert"]').textContent).toContain("permissions");

@@ -1,5 +1,5 @@
 import { LightningElement, api } from "lwc";
-import getConfig from "@salesforce/apex/FileListController.getRelatedListConfig";
+import getReactAppUrl from "@salesforce/apex/FileListController.getReactAppUrl";
 import completeUpload from "@salesforce/apex/BetterFilesReactUpload.completeUpload";
 
 /** The channel carries cloneable props and a small allowlist of commands, never file bytes. */
@@ -15,17 +15,17 @@ export default class BetterFilesEmbedding extends LightningElement {
   }
 
   async loadAppUrl() {
-    let config;
+    let appUrl;
     try {
-      config = await getConfig();
+      appUrl = await getReactAppUrl();
     } catch {
       if (this.isConnected)
-        this.error = "Unable to load Files configuration. Check your Better Files permissions and refresh the page.";
+        this.error = "Unable to find the Better Files app. Check your Better Files permissions and refresh the page.";
       return;
     }
     if (!this.isConnected) return;
     try {
-      const url = new URL(config?.reactAppUrl?.trim());
+      const url = new URL(appUrl?.trim());
       // Only the packaged app on a Salesforce-hosted origin may receive record data.
       if (
         url.protocol !== "https:" ||
@@ -36,7 +36,7 @@ export default class BetterFilesEmbedding extends LightningElement {
       this.appUrl = url.href;
       this.error = undefined;
     } catch {
-      this.error = "Set this org's React App URL in Setup → Custom Metadata Types → File Related List Config → Default.";
+      this.error = "The Better Files app is unavailable. Ask your admin to check the app installation and your Better Files React permission set.";
     }
   }
 

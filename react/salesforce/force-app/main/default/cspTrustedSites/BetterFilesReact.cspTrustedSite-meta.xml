@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CspTrustedSite xmlns="http://soap.sforce.com/2006/04/metadata">
   <context>All</context>
-  <description>Allow Salesforce-hosted UI bundles in the Better Files embed. The app URL is configured separately for each org.</description>
+  <description>Inactive legacy entry retained for managed-package upgrade compatibility. Better Files does not enable a Trusted URL automatically.</description>
   <endpointUrl>https://*.salesforce.app</endpointUrl>
-  <isActive>true</isActive>
+  <isActive>false</isActive>
   <isApplicableToFrameSrc>true</isApplicableToFrameSrc>
 </CspTrustedSite>
