@@ -5,6 +5,7 @@ import {
   setTabIcon
 } from "lightning/platformWorkspaceApi";
 import { createElement } from "lwc";
+import { registerRefreshHandler, unregisterRefreshHandler } from "lightning/refresh";
 import RelatedList from "c/betterFilesReactRelatedList";
 import { CurrentPageReference, NavigationMixin } from "lightning/navigation";
 import getFiles from "@salesforce/apex/FileListController.getRelatedListFiles";
@@ -84,6 +85,11 @@ function props() {
     .shadowRoot.querySelector("c-better-files-embedding").config;
 }
 beforeEach(() => {
+  registerRefreshHandler.mockImplementation((context) => {
+    if (!(context instanceof HTMLElement))
+      throw new TypeError("Invalid contextElement. Must be an HTMLElement or LightningElement.");
+    return 456;
+  });
   document.title = "Salesforce";
   getFiles.mockResolvedValue([{ documentId: "069x" }]);
   getCount.mockResolvedValue(1);
@@ -95,9 +101,9 @@ afterEach(() => {
   document.body.replaceChildren();
   jest.clearAllMocks();
 });
-async function mount() {
+async function mount(Component = RelatedList) {
   const element = createElement("c-better-files-react-related-list", {
-    is: RelatedList
+    is: Component
   });
   document.body.appendChild(element);
   CurrentPageReference.emit({
@@ -235,4 +241,32 @@ it("ignores a stale record name and restores its previous browser title", async 
   expect(document.title).toBe("Acme · Files | Salesforce");
   element.remove();
   expect(document.title).toBe("Salesforce");
+});
+
+it("registers an HTML host, refreshes the embedded list, and unregisters on disconnect", async () => {
+  const element = await mount();
+  const [context, refresh] = registerRefreshHandler.mock.calls[0];
+  expect(context === element).toBe(true);
+  expect(await refresh()).toBe(true);
+  await flush();
+  expect(props().revision).toBe(1);
+  element.remove();
+  expect(unregisterRefreshHandler).toHaveBeenCalledWith(456);
+  document.body.appendChild(element);
+  await flush();
+  expect(registerRefreshHandler).toHaveBeenCalledTimes(2);
+  expect(registerRefreshHandler.mock.calls[1][0] === element).toBe(true);
+});
+
+it("loads and names the list when Locker hides LightningElement.isConnected", async () => {
+  class LockerRelatedList extends RelatedList {
+    get isConnected() {
+      return undefined;
+    }
+  }
+  await mount(LockerRelatedList);
+  IsConsoleNavigation.emit(false);
+  expect(props().context.recordId).toBe("001a");
+  await props().adapter.info();
+  expect(document.title).toBe("1Sync · Files | Salesforce");
 });

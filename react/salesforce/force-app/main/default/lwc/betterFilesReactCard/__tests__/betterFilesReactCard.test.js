@@ -84,6 +84,12 @@ function props() {
     .shadowRoot.querySelector("c-better-files-embedding").config;
 }
 beforeEach(() => {
+  // Locker rejects LightningElement instances; both runtimes accept the host element.
+  registerRefreshHandler.mockImplementation((context) => {
+    if (!(context instanceof HTMLElement))
+      throw new TypeError("Invalid contextElement. Must be an HTMLElement or LightningElement.");
+    return 123;
+  });
   refreshApex.mockResolvedValue();
   completeUpload.mockResolvedValue("068000000000001AAA");
 });
@@ -189,4 +195,19 @@ it("waits for a record before rendering the embedding host", async () => {
   expect(
     element.shadowRoot.querySelector("c-better-files-embedding")
   ).toBeNull();
+});
+
+it("registers its host element and refresh callback again after reconnecting", async () => {
+  const element = createCard();
+  ready();
+  await flush();
+  const [context, refresh] = registerRefreshHandler.mock.calls[0];
+  expect(context === element).toBe(true);
+  expect(await refresh()).toBe(true);
+  expect(refreshApex).toHaveBeenCalledTimes(2);
+  element.remove();
+  expect(unregisterRefreshHandler).toHaveBeenCalledWith(123);
+  document.body.appendChild(element);
+  expect(registerRefreshHandler).toHaveBeenCalledTimes(2);
+  expect(registerRefreshHandler.mock.calls[1][0] === element).toBe(true);
 });

@@ -1,19 +1,19 @@
 {
   "packageDirectories": [
     {
-      "versionName": "v1.16",
-      "versionNumber": "1.16.0.NEXT",
-      "ancestorVersion": "HIGHEST",
+      "versionName": "v2.0.0 React Release",
+      "versionNumber": "2.0.0.NEXT",
+      "ancestorVersion": "1.21.0.1",
       "path": "force-app",
       "default": true,
       "package": "Better Files By 1Sync",
-      "versionDescription": ""
+      "versionDescription": "React file card and related list with drag-and-drop uploads up to 100 MB, upload progress and toasts, named tabs, automatic app URL discovery, and Lightning Locker/LWS compatibility."
     }
   ],
   "name": "1sync-file",
   "namespace": "file1sync",
   "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "67.0",
+  "sourceApiVersion": "68.0",
   "packageAliases": {
     "1Sync File App": "0HoQl00000000mPKAQ",
     "Better Files By 1Sync": "0HoQl00000000mPKAQ",

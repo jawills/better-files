@@ -19,11 +19,12 @@ export default class BetterFilesEmbedding extends LightningElement {
     try {
       appUrl = await getReactAppUrl();
     } catch {
-      if (this.isConnected)
+      if (this.template.host.isConnected)
         this.error = "Unable to find the Better Files app. Check your Better Files permissions and refresh the page.";
       return;
     }
-    if (!this.isConnected) return;
+    // Locker doesn't expose LightningElement.isConnected; the HTML host does.
+    if (!this.template.host.isConnected) return;
     try {
       const url = new URL(appUrl?.trim());
       // Only the packaged app on a Salesforce-hosted origin may receive record data.
@@ -141,7 +142,7 @@ export default class BetterFilesEmbedding extends LightningElement {
         failure?.message ||
         "Unable to complete the action.";
     }
-    if (this.isConnected && host === this.host)
+    if (this.template.host.isConnected && host === this.host)
       host.dispatchEvent(
         new CustomEvent("bfresponse", {
           detail: JSON.stringify({ id: request.id, result, error })

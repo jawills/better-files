@@ -81,7 +81,7 @@ The separate project in `salesforce/` contains only the retained integration:
 - `BetterFilesReactUpload` and its Apex tests: user-mode file upload service.
 - `Better_Files_React`: permission set granting app and upload-service access.
 - `FileListController.getReactAppUrl`: discovers the installed app URL from `AppMenuItem` in user mode, scoped to the `file1sync` namespace and requiring app access. Both React views share this lookup.
-- The legacy `BetterFilesReact` Trusted URL is inactive. The unused `React_App_URL__c` field (removed from the settings layout) and `BetterFilesReactAppUrl` label remain solely for managed-package upgrade compatibility.
+- The legacy `BetterFilesReact` Trusted URL was removed from the package in 1.21 and remains absent in 2.0. The unused `React_App_URL__c` field (removed from the settings layout) and `BetterFilesReactAppUrl` label remain solely for managed-package upgrade compatibility.
 
 The existing `FileListController` handles reads, server-side search/sorting,
 25-row pages, metadata-driven columns/filters, and user-mode deletion. The wrappers
@@ -100,7 +100,7 @@ After installation in each org:
 
 No iframe is created until discovery returns an HTTPS Salesforce app URL for Better Files. Missing app access or an invalid URL displays an error. The package does not enable a Trusted URL. In the tested `1sync` org, Lightning's existing `frame-src https:` policy permits the embed with the legacy entry inactive. If another org's CSP blocks the frame, its admin must allow the discovered app origin for `frame-src` in Trusted URLs. This does not grant app, API, record, or field access.
 
-Previously released metadata is retained to avoid relying on Salesforce's restricted managed-package component-removal feature. Existing subscriber customizations can survive upgrades; the legacy URL field and label are ignored regardless of their values.
+The unused URL field and label are retained for managed-package upgrade compatibility and are ignored regardless of their values. The Trusted URL removal was accepted in the fully validated 1.21.0.1 package build; subscriber upgrade behavior still needs verification.
 
 To place the card on a record page, choose **Setup → Edit Page**,
 add **Better Files React**, configure it, then save/activate for the intended app.
@@ -112,6 +112,13 @@ In `better-files`, the existing `Account_Record_Page3` already hosts the working
 card. The embedding experiment’s spike LWC, review app, and duplicate review page
 have been removed; the active record page and its assignments are preserved.
 The original package’s `force-app/` components remain separate from this project.
+
+The wrappers register RefreshView handlers with `this.template.host`, which works
+with both Lightning Locker and LWS. Locker does not expose
+`LightningElement.isConnected`; the embedding host checks the HTML element instead.
+The related list tracks connection through lifecycle callbacks because its wires
+can fire before connection, when accessing the Locker host can cause a
+“Re-setting of key is prohibited” error.
 
 When upgrading an existing checkout, remove the old generated
 `react/salesforce/force-app/main/default/staticresources/betterFilesReact/`
@@ -189,13 +196,16 @@ Before this migration, live development-org checks covered record reads, uploads
 View All, sorting/filtering, console naming, dialog focus, and a disposable-file
 deletion. Typography B was verified in the LWC and on wide/narrow local cards.
 Download navigation is tested, but browser download completion was not independently
-verified. Lightning Locker, Salesforce mobile, restricted-user access, and managed
-package installation remain unverified. Resumable uploads and user-controlled cancellation are not implemented.
+verified. Source-deployed card and related-list loading were verified in a temporary
+scratch org under both Lightning Locker and LWS, including automatic URL
+discovery and tab naming.
+Salesforce mobile, restricted-user access, and managed-package installation remain
+unverified. Resumable uploads and user-controlled cancellation are not implemented.
 
 Combined package builds have succeeded, including released versions 1.17.0.2 and 1.18.0.1.
 [Standalone UI Bundles support 2GP packaging](https://developer.salesforce.com/docs/platform/multiframework/guide/mfw-packaging.html),
 but Salesforce's [internally hosted embedding documentation](https://developer.salesforce.com/docs/platform/microfrontend/guide/internal-ui-bundles.html)
-still marks this embedding path beta and lists packaging and dynamic URL resolution as unavailable. Successful builds do not establish subscriber runtime support. Configure the explicit app URL once per org using the steps above; no development-org endpoint is shipped.
+still marks this embedding path beta and lists packaging and dynamic URL resolution as unavailable. Successful builds do not establish subscriber runtime support. The app URL is discovered automatically through `AppMenuItem`; no development-org endpoint is shipped.
 The root package-version script includes only `force-app/`. The combined builds use a temporary packaging project containing both `force-app/` and `react/salesforce/force-app/`, with API version 68.0.
 
 Before considering customer distribution, resolve the embedding support limit,
