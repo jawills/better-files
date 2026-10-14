@@ -1,14 +1,44 @@
 import { LightningElement, api } from "lwc";
-import appUrl from "@salesforce/label/c.BetterFilesReactAppUrl";
+import getConfig from "@salesforce/apex/FileListController.getRelatedListConfig";
 import completeUpload from "@salesforce/apex/BetterFilesReactUpload.completeUpload";
 
 /** The channel carries cloneable props and a small allowlist of commands, never file bytes. */
 export default class BetterFilesEmbedding extends LightningElement {
   @api view;
   @api config;
-  appUrl = appUrl;
+  appUrl;
   error;
   host;
+
+  connectedCallback() {
+    this.loadAppUrl();
+  }
+
+  async loadAppUrl() {
+    let config;
+    try {
+      config = await getConfig();
+    } catch {
+      if (this.isConnected)
+        this.error = "Unable to load Files configuration. Check your Better Files permissions and refresh the page.";
+      return;
+    }
+    if (!this.isConnected) return;
+    try {
+      const url = new URL(config?.reactAppUrl?.trim());
+      // Only the packaged app on a Salesforce-hosted origin may receive record data.
+      if (
+        url.protocol !== "https:" ||
+        !url.hostname.endsWith(".salesforce.app") ||
+        url.username || url.password || url.port || url.search || url.hash ||
+        url.pathname !== "/app/file1sync__BetterFilesReact"
+      ) throw new Error("Invalid app URL");
+      this.appUrl = url.href;
+      this.error = undefined;
+    } catch {
+      this.error = "Set this org's React App URL in Setup → Custom Metadata Types → File Related List Config → Default.";
+    }
+  }
 
   get guestProps() {
     const config = this.config;
@@ -29,6 +59,7 @@ export default class BetterFilesEmbedding extends LightningElement {
     const host = this.refs.embedding;
     if (this.host === host) return;
     this.host = host;
+    if (!host) return;
     host.addEventListener("sf-embedding.component.error", (event) => {
       this.error =
         event.detail?.message ||

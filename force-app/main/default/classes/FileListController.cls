@@ -22,6 +22,8 @@ public with sharing class FileListController {
     public Boolean showFileSize { get; set; }
     @AuraEnabled
     public String filterMode { get; set; }
+    @AuraEnabled
+    public String reactAppUrl { get; set; }
   }
 
   private static final String RELATED_LIST_CONFIG_DEVELOPER_NAME = 'Default';
@@ -41,7 +43,8 @@ public with sharing class FileListController {
         Show_Last_Modified_Date__c,
         Show_Last_Modified_By__c,
         Show_File_Size__c,
-        Filter_Mode__c
+        Filter_Mode__c,
+        React_App_URL__c
       FROM File_Related_List_Config__mdt
       WHERE DeveloperName = :RELATED_LIST_CONFIG_DEVELOPER_NAME
       WITH USER_MODE
@@ -53,6 +56,7 @@ public with sharing class FileListController {
       config.showLastModifiedDate = row.Show_Last_Modified_Date__c;
       config.showLastModifiedBy = row.Show_Last_Modified_By__c;
       config.showFileSize = row.Show_File_Size__c;
+      config.reactAppUrl = row.React_App_URL__c;
       config.filterMode = row.Filter_Mode__c == 'Advanced'
         ? 'Advanced'
         : 'Basic';

@@ -80,7 +80,8 @@ The separate project in `salesforce/` contains only the retained integration:
 - `BetterFilesReact`: the Salesforce application granting access to the UI Bundle.
 - `BetterFilesReactUpload` and its Apex tests: user-mode file upload service.
 - `Better_Files_React`: permission set granting app and upload-service access.
-- `BetterFilesReactAppUrl` label and `BetterFilesReact` Trusted URL: explicit development-org hosting configuration.
+- `BetterFilesReact` Trusted URL: permits Salesforce-hosted UI bundles with `https://*.salesforce.app` for `frame-src` only.
+- `File_Related_List_Config__mdt.Default.React_App_URL__c`: subscriber-controlled app URL shared by both React views. The old `BetterFilesReactAppUrl` label is retained for upgrades but is no longer used.
 
 The existing `FileListController` handles reads, server-side search/sorting,
 25-row pages, metadata-driven columns/filters, and user-mode deletion. The wrappers
@@ -92,7 +93,16 @@ Files icon. Standard navigation uses `<record name> · Files | Salesforce` as th
 browser title. Late responses from another record cannot overwrite the current
 label. Navigation away preserves the next page’s title.
 
-To place the card on a development record page, choose **Setup → Edit Page**,
+After installation in each org:
+
+1. Assign the **Better Files** and **Better Files React** permission sets to the intended users.
+2. Open **Better Files** from the App Launcher and copy its full `https://...salesforce.app/app/file1sync__BetterFilesReact` URL.
+3. In **Setup → Custom Metadata Types → File Related List Config → Manage Records → Default**, set **React App URL** to that URL. This subscriber-controlled value is not supplied by the package and should be updated after org/domain changes.
+4. Refresh the record page. Both the card and View All use this setting, including related-list tabs opened directly.
+
+No iframe is created until the configured URL is an HTTPS Salesforce app URL for Better Files. Missing or invalid configuration displays setup guidance. The packaged Trusted URL allows `frame-src` on `https://*.salesforce.app`; it does not grant app, API, record, or field access. For a narrower policy, an admin can use an exact-origin Trusted URL and disable the wildcard entry where permitted.
+
+To place the card on a record page, choose **Setup → Edit Page**,
 add **Better Files React**, configure it, then save/activate for the intended app.
 Salesforce supplies `recordId` and `objectApiName`. The wrapper supports thumbnails,
 file count, columns, accepted formats, multiple uploads, email attachments, and
@@ -182,17 +192,13 @@ Download navigation is tested, but browser download completion was not independe
 verified. Lightning Locker, Salesforce mobile, restricted-user access, and managed
 package installation remain unverified. Resumable uploads and user-controlled cancellation are not implemented.
 
-This integration is a development preview, not a package-ready release.
+Combined package builds have succeeded, including released versions 1.17.0.2 and 1.18.0.1.
 [Standalone UI Bundles support 2GP packaging](https://developer.salesforce.com/docs/platform/multiframework/guide/mfw-packaging.html),
 but Salesforce's [internally hosted embedding documentation](https://developer.salesforce.com/docs/platform/microfrontend/guide/internal-ui-bundles.html)
-still marks this embedding path beta and explicitly lists packaging and dynamic
-URL resolution as unavailable. Its explicit app URL and Trusted URL target only
-`better-files`; configure both for another org before deploying there.
-The root package includes only `force-app/`, so these separate `react/salesforce/`
-components are not included by the existing package-version command.
+still marks this embedding path beta and lists packaging and dynamic URL resolution as unavailable. Successful builds do not establish subscriber runtime support. Configure the explicit app URL once per org using the steps above; no development-org endpoint is shipped.
+The root package-version script includes only `force-app/`. The combined builds use a temporary packaging project containing both `force-app/` and `react/salesforce/force-app/`, with API version 68.0.
 
 Before considering customer distribution, resolve the embedding support limit,
-replace the development-org configuration with a supported subscriber setup,
 verify installation/upgrades and restricted-user access in a clean org, and run
 Code Analyzer `uibundle` checks for AppExchange review. The embedding build emits
 sourcemaps for every JavaScript chunk; the root analyzer command still excludes
