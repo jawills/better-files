@@ -1,0 +1,4 @@
+**/__tests__/**
+**/jsconfig.json
+**/tsconfig.json
+test/**

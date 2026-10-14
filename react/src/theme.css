@@ -1,0 +1,70 @@
+/* Option A styling with approved typography B. No SLDS stylesheet or runtime hooks. */
+.better-files {
+  --files-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --files-text-body: 16px;
+  --files-text-meta: 14px;
+  --files-text-card-title: 20px;
+  --files-text-heading: 24px;
+  --files-line-height: 1.45;
+  --files-weight-heading: 600;
+  --files-radius-panel: 12px;
+  --files-radius-control: 8px;
+  --files-radius-small: 4px;
+  --files-radius-button: 999px;
+  --files-control-height: 36px;
+  --files-space-1: 4px;
+  --files-space-2: 8px;
+  --files-space-3: 12px;
+  --files-space-4: 16px;
+  --files-color-background: #fff;
+  --files-color-foreground: #181818;
+  --files-color-muted: #525966;
+  --files-color-link: #065fcc;
+  --files-color-brand: #066afe;
+  --files-color-icon: #1686e0;
+  --files-color-border: #c9cdd3;
+  --files-color-panel-border: #d6dae0;
+  --files-color-divider: #e6e9ed;
+  --files-color-header: #f3f5f8;
+  --files-color-table-header: #fafbfc;
+  --files-color-accent: #eef4ff;
+  --files-color-on-accent: #064fac;
+  --files-color-success: #205635;
+  --files-color-success-surface: #f0faf3;
+  --files-color-success-border: #a0c7ae;
+  --files-color-error: #ba0517;
+  --files-color-error-surface: #fff1f2;
+  --files-color-error-border: #e8acb3;
+  --files-color-toast-success: #2e7546;
+  --files-color-toast-error: #ba0517;
+  --files-color-toast-text: #fff;
+
+  /* Unlayered so the host's global typography cannot replace the chosen theme. */
+  color: var(--files-color-foreground);
+  font: var(--files-text-body) / var(--files-line-height)
+    var(--files-font-family);
+  text-align: left;
+  color-scheme: light;
+}
+
+/* Tailwind/shadcn and component CSS consume the same scoped values. */
+@theme inline {
+  --font-sans: var(--files-font-family);
+  --text-sm: var(--files-text-meta);
+  --text-base: var(--files-text-body);
+  --color-background: var(--files-color-background);
+  --color-foreground: var(--files-color-foreground);
+  --color-primary: var(--files-color-link);
+  --color-brand: var(--files-color-brand);
+  --color-border: var(--files-color-border);
+  --color-accent: var(--files-color-accent);
+  --color-accent-foreground: var(--files-color-on-accent);
+  --color-popover: var(--files-color-background);
+  --color-popover-foreground: var(--files-color-foreground);
+  --radius-sm: var(--files-radius-small);
+  --radius-md: var(--files-radius-control);
+  --radius-lg: var(--files-radius-panel);
+  --radius-button: var(--files-radius-button);
+  --spacing-control: var(--files-control-height);
+}

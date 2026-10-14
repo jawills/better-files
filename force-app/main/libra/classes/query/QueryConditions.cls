@@ -228,6 +228,8 @@ public with sharing class QueryConditions {
     /**
      * Provides interface for building field WHERE clause.
      */
+    // equals() returns a SOQL Condition, not Boolean object equality.
+    @SuppressWarnings('PMD.OverrideBothEqualsAndHashcode')
     public class FieldExprFactory {
         private String field;
 

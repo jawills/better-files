@@ -5,6 +5,10 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "dev:react": "npm run dev --prefix react",
+    "build:react": "npm run build --prefix react",
+    "test:react": "npm test --prefix react",
+    "test:react:lwc": "cd react/salesforce && ../../node_modules/.bin/sfdx-lwc-jest",
     "test": "npm run test:unit",
     "test:unit": "sfdx-lwc-jest",
     "test:unit:watch": "sfdx-lwc-jest --watch",

@@ -53,6 +53,8 @@ public with sharing class CollectionConditions extends Conditions {
     /**
      * Creates instance of Field Filter using operator parameter
      */
+    // equals() returns a filter Condition, not Boolean object equality.
+    @SuppressWarnings('PMD.OverrideBothEqualsAndHashcode')
     public class FieldValueConditionFactory {
         private String field;
 

@@ -1,0 +1,13 @@
+<template>
+  <template lwc:if={hasRecord}>
+    <c-better-files-embedding
+      view="card"
+      config={cardProps}
+    ></c-better-files-embedding>
+  </template>
+  <template lwc:else
+    ><p class="slds-box slds-theme_default">
+      Select a record to see its files.
+    </p></template
+  >
+</template>

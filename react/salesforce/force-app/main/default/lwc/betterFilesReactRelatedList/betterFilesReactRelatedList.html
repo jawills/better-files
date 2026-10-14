@@ -1,0 +1,13 @@
+<template>
+  <template lwc:if={props}
+    ><c-better-files-embedding
+      view="related"
+      config={props}
+    ></c-better-files-embedding
+  ></template>
+  <template lwc:elseif={showMissingRecord}
+    ><p class="slds-box slds-theme_default">
+      Select a record to see its files.
+    </p></template
+  >
+</template>

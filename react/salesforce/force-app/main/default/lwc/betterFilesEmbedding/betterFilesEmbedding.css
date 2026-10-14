@@ -1,0 +1,11 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+/* The SDK sizes the frame to its content; the record page owns vertical scrolling. */
+lightning-ui-embedding {
+  height: auto;
+  overflow: visible;
+  line-height: 0;
+}
