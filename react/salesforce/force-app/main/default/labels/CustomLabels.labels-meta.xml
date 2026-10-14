@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
-  <!-- Retained for managed-package upgrades; the embed now reads subscriber-controlled custom metadata. -->
-  <labels><fullName>BetterFilesReactAppUrl</fullName><categories>Better Files</categories><language>en_US</language><protected>false</protected><shortDescription>Deprecated: use File Related List Config React App URL</shortDescription><value>Configure React App URL in File Related List Config.</value></labels>
+  <!-- Retained for managed-package upgrades; the embed discovers its app URL automatically. -->
+  <labels><fullName>BetterFilesReactAppUrl</fullName><categories>Better Files</categories><language>en_US</language><protected>false</protected><shortDescription>Deprecated: app URL is resolved automatically</shortDescription><value>Better Files discovers the installed app URL automatically.</value></labels>
 </CustomLabels>

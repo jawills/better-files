@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>React_App_URL__c</fullName>
-    <description>Full URL of the Better Files React app launched from this org's App Launcher. Used by both React Files views.</description>
+    <description>Unused legacy field retained for managed-package upgrade compatibility. The app URL is resolved automatically from AppMenuItem.</description>
     <fieldManageability>SubscriberControlled</fieldManageability>
-    <inlineHelpText>Open Better Files from the App Launcher and paste its https://...salesforce.app/app/file1sync__BetterFilesReact URL here.</inlineHelpText>
+    <inlineHelpText>No longer used. Better Files discovers the installed app URL automatically.</inlineHelpText>
     <label>React App URL</label>
     <required>false</required>
     <type>Url</type>
