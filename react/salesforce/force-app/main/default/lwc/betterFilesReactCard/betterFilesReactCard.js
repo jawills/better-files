@@ -228,8 +228,9 @@ export default class BetterFilesReactCard extends NavigationMixin(
   }
 
   connectedCallback() {
+    // The host HTMLElement is accepted by both Lightning Locker and LWS.
     this.refreshRegistration = registerRefreshHandler(
-      this,
+      this.template.host,
       this.handleRefresh.bind(this)
     );
   }

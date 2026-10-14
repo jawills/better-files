@@ -35,6 +35,7 @@ export default class BetterFilesReactRelatedList extends NavigationMixin(
   enclosingTabId;
   previousTitle;
   appliedTitle;
+  connected = false;
 
   @wire(IsConsoleNavigation)
   navigationMode(value) {
@@ -49,7 +50,7 @@ export default class BetterFilesReactRelatedList extends NavigationMixin(
   }
 
   updateTabIdentity() {
-    if (!this.isConnected || !this.context?.recordId) return;
+    if (!this.connected || !this.context?.recordId) return;
     const label = this.recordName ? `${this.recordName} · Files` : "Files";
     if (this.isConsoleNavigation === true && this.enclosingTabId) {
       // Use this component's tab, even if the user focused another tab while loading.
@@ -92,14 +93,17 @@ export default class BetterFilesReactRelatedList extends NavigationMixin(
     return !this.context?.recordId;
   }
   connectedCallback() {
-    this.refreshRegistration = registerRefreshHandler(this, async () => {
+    this.connected = true;
+    // The host HTMLElement is accepted by both Lightning Locker and LWS.
+    this.refreshRegistration = registerRefreshHandler(this.template.host, async () => {
       if (this.props) this.props = { ...this.props, revision: ++this.revision };
       return true;
     });
     this.mount();
   }
   mount() {
-    if (!this.isConnected || !this.context?.recordId || this.props) return;
+    // Wires can fire before connection; don't access the Locker host at that point.
+    if (!this.connected || !this.context?.recordId || this.props) return;
     const context = { ...this.context };
     const scope = {
       recordId: context.recordId,
@@ -136,7 +140,7 @@ export default class BetterFilesReactRelatedList extends NavigationMixin(
               })
             ]);
             if (
-              this.isConnected &&
+              this.connected &&
               this.context?.recordId === context.recordId
             ) {
               this.recordName = recordName;
@@ -215,6 +219,7 @@ export default class BetterFilesReactRelatedList extends NavigationMixin(
     };
   }
   disconnectedCallback() {
+    this.connected = false;
     if (this.appliedTitle && document.title === this.appliedTitle) {
       document.title = this.previousTitle ?? "Salesforce";
     }

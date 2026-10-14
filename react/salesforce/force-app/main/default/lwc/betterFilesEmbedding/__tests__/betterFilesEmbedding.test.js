@@ -1,9 +1,9 @@
 import { createElement } from "lwc";
 import Embedding from "c/betterFilesEmbedding";
 import completeUpload from "@salesforce/apex/BetterFilesReactUpload.completeUpload";
-import getConfig from "@salesforce/apex/FileListController.getRelatedListConfig";
+import getReactAppUrl from "@salesforce/apex/FileListController.getReactAppUrl";
 jest.mock(
-  "@salesforce/apex/FileListController.getRelatedListConfig",
+  "@salesforce/apex/FileListController.getReactAppUrl",
   () => ({ default: jest.fn() }),
   { virtual: true }
 );
@@ -15,14 +15,14 @@ jest.mock(
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 const subscriberAppUrl = "https://subscriber--file1sync.my.salesforce.app/app/file1sync__BetterFilesReact";
 beforeEach(() => {
-  getConfig.mockResolvedValue({ reactAppUrl: subscriberAppUrl });
+  getReactAppUrl.mockResolvedValue(subscriberAppUrl);
 });
 afterEach(() => {
   document.body.replaceChildren();
   jest.clearAllMocks();
 });
-async function mountComponent() {
-  const element = createElement("c-better-files-embedding", { is: Embedding });
+async function mountComponent(Component = Embedding) {
+  const element = createElement("c-better-files-embedding", { is: Component });
   element.view = "card";
   element.config = {
     context: { recordId: "001a", objectApiName: "Account" },
@@ -35,11 +35,11 @@ async function mountComponent() {
   await flush();
   return element;
 }
-async function mount() {
-  const element = await mountComponent();
+async function mount(Component = Embedding) {
+  const element = await mountComponent(Component);
   return element.shadowRoot.querySelector("lightning-ui-embedding");
 }
-it("uses the subscriber-configured app URL", async () => {
+it("uses the automatically discovered subscriber app URL", async () => {
   const host = await mount();
   expect(host.src).toBe(subscriberAppUrl);
 });
@@ -51,14 +51,14 @@ it.each([
   `${subscriberAppUrl}?redirect=https://attacker.example`,
   "https://user:password@subscriber.salesforce.app/app/file1sync__BetterFilesReact"
 ])("does not create an iframe for a missing or invalid app URL: %s", async (reactAppUrl) => {
-  getConfig.mockResolvedValue({ reactAppUrl });
+  getReactAppUrl.mockResolvedValue(reactAppUrl);
   const element = await mountComponent();
   expect(element.shadowRoot.querySelector("lightning-ui-embedding")).toBeNull();
-  expect(element.shadowRoot.querySelector('[role="alert"]').textContent).toContain("React App URL");
+  expect(element.shadowRoot.querySelector('[role="alert"]').textContent).toContain("app is unavailable");
   expect(completeUpload).not.toHaveBeenCalled();
 });
-it("reports configuration access errors without creating an iframe", async () => {
-  getConfig.mockRejectedValue(new Error("Access denied"));
+it("reports app discovery access errors without creating an iframe", async () => {
+  getReactAppUrl.mockRejectedValue(new Error("Access denied"));
   const element = await mountComponent();
   expect(element.shadowRoot.querySelector("lightning-ui-embedding")).toBeNull();
   expect(element.shadowRoot.querySelector('[role="alert"]').textContent).toContain("permissions");
@@ -109,4 +109,39 @@ it("rejects stale-record requests before calling Apex", async () => {
   await flush();
   expect(completeUpload).not.toHaveBeenCalled();
   expect(replies[0].error).toContain("record changed");
+});
+
+it("loads and replies when Locker hides LightningElement.isConnected", async () => {
+  class LockerEmbedding extends Embedding {
+    get isConnected() {
+      return undefined;
+    }
+  }
+  const host = await mount(LockerEmbedding);
+  expect(host?.src).toBe(subscriberAppUrl);
+  const replies = [];
+  host.addEventListener("bfresponse", (event) =>
+    replies.push(JSON.parse(event.detail))
+  );
+  completeUpload.mockResolvedValue("068locker");
+  host.dispatchEvent(new CustomEvent("bfrequest", {
+    detail: {
+      id: "locker", recordId: "001a", operation: "completeUpload",
+      args: [{ filename: "test.txt", contentBodyId: "05Ta" }]
+    }
+  }));
+  await flush();
+  expect(replies).toEqual([{ id: "locker", result: "068locker" }]);
+});
+
+it("ignores app discovery that finishes after the host disconnects", async () => {
+  let resolveUrl;
+  getReactAppUrl.mockReturnValueOnce(new Promise((resolve) => {
+    resolveUrl = resolve;
+  }));
+  const element = await mountComponent();
+  element.remove();
+  resolveUrl(subscriberAppUrl);
+  await flush();
+  expect(element.shadowRoot.querySelector("lightning-ui-embedding")).toBeNull();
 });
