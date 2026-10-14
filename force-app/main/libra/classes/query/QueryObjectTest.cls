@@ -573,6 +573,82 @@ public class QueryObjectTest {
     }
 
     @IsTest
+    static void userModeQueriesIgnoreCachedRecords() {
+        QueryCache.mock(User.SObjectType, new QueryCache__mdt(
+            CacheFields__c = 'Username',
+            Storage__c = 'Transaction'
+        ));
+        User actual = [SELECT Id, Email, Username FROM User WHERE Id = :UserInfo.getUserId()];
+        QueryCache.get(User.SObjectType).put(new List<User>{
+            new User(Id = actual.Id, Username = actual.Username, Email = 'cached@example.invalid')
+        });
+
+        // Neither fluent-call order nor the explicit access-level API may restore cache access.
+        List<QueryObject> queries = new List<QueryObject>{
+            new TestUserQuery().byUsername(actual.Username).asUser().usingCache(true),
+            new TestUserQuery().byUsername(actual.Username).usingCache(true).asUser(),
+            new TestUserQuery().byUsername(actual.Username).withAccessLevel(AccessLevel.USER_MODE).usingCache(true)
+        };
+        for (QueryObject query : queries) {
+            Integer beforeQuery = Limits.getQueries();
+            User result = (User) query.getFirstOrNull();
+            Assert.areEqual(actual.Email, result.Email, 'User-mode queries must read authorized database results.');
+            Assert.areEqual(beforeQuery + 1, Limits.getQueries(), 'Cached records must not skip user-mode checks.');
+        }
+    }
+
+    @IsTest
+    static void userModeQueriesDoNotPopulateSharedCache() {
+        QueryCache.mock(User.SObjectType, new QueryCache__mdt(
+            CacheFields__c = 'Username',
+            Storage__c = 'Transaction'
+        ));
+        new TestUserQuery().byUsername(UserInfo.getUserName()).asUser().usingCache(true).getList();
+
+        QueryCache.Result cached = QueryCache.get(User.SObjectType).getCachedRecords('Username', UserInfo.getUserName());
+        Assert.isTrue(cached.cachedRecords.isEmpty(), 'User-mode results must not enter a shared record cache.');
+    }
+
+    @IsTest
+    static void restrictedUserCannotReadPrivilegedCachedRecords() {
+        User restricted = new User(
+            ProfileId = [SELECT Id FROM Profile WHERE Name = 'Minimum Access - Salesforce' LIMIT 1].Id,
+            Username = 'cache-security-' + UserInfo.getOrganizationId() + '-' + System.now().getTime() + '@example.invalid',
+            Email = 'cache-security@example.invalid',
+            LastName = 'Cache Security',
+            Alias = 'cachetst',
+            TimeZoneSidKey = 'America/Los_Angeles',
+            LocaleSidKey = 'en_US',
+            EmailEncodingKey = 'UTF-8',
+            LanguageLocaleKey = 'en_US'
+        );
+        System.runAs(new User(Id = UserInfo.getUserId())) {
+            insert restricted;
+        }
+        Account privateRecord = new Account(Name = 'Privileged cache fixture');
+        insert privateRecord;
+        QueryCache.mock(Account.SObjectType, new QueryCache__mdt(
+            CacheFields__c = 'Id',
+            Storage__c = 'Transaction'
+        ));
+        new QueryObject(Account.SObjectType).withFields('Name').byId(privateRecord.Id)
+            .asSystem().usingCache(true).getList();
+        Assert.areEqual(1, QueryCache.get(Account.SObjectType).getCachedRecords('Id', privateRecord.Id).cachedRecords.size());
+
+        System.runAs(restricted) {
+            Assert.isFalse(Account.SObjectType.getDescribe(SObjectDescribeOptions.DEFERRED).isAccessible(), 'The fixture must lack Account read access.');
+            Boolean denied = false;
+            try {
+                new QueryObject(Account.SObjectType).withFields('Name').byId(privateRecord.Id)
+                    .asUser().usingCache(true).getList();
+            } catch (QueryException e) {
+                denied = true;
+            }
+            Assert.isTrue(denied, 'An administrator-populated cache must not bypass the user\'s Account permissions.');
+        }
+    }
+
+    @IsTest
     static void testOrderBy() {
         String soql = new TestUserQuery().orderBy(User.CreatedDate, true, true).toSOQL();
         Assert.isTrue(soql.contains('ORDER BY CreatedDate ASC NULLS FIRST'));

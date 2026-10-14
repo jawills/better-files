@@ -301,7 +301,7 @@ public virtual inherited sharing class QueryObject extends QueryResults {
     * */
 
     /**
-     * Enforces Object and Field level security on records and enforced sharing rules.
+     * Enforces Object and Field level security and sharing rules through database queries, bypassing the record cache.
      * @throws System.NoAccessException No access to entity when user does not have READ permission to sOObject
      * or any of the fields
      */
@@ -346,7 +346,7 @@ public virtual inherited sharing class QueryObject extends QueryResults {
 
 
     /**
-    * Selector will not use cached records to limit SOQLs query limit.
+    * Controls record-cache reads for system-mode queries. User-mode queries always bypass the cache.
     *
     * Since there is no proper way to handle method chaining of builder pattern with inheritance in Apex,
     * this method should be reimplemented where it's needed as public XXXSelector withoutCache();
@@ -667,7 +667,9 @@ public virtual inherited sharing class QueryObject extends QueryResults {
 
             SObject[] records = this.databaseService.query(queryBuilder.toSOQL(), bindings.getMap());
 
-            if (cache != null && !(records instanceof AggregateResult[])) {
+            // The shared cache has no user/permission scope; user-mode results must not populate it.
+            if (cache != null && databaseService.getAccessLevel() == AccessLevel.SYSTEM_MODE
+                && !(records instanceof AggregateResult[])) {
                 cache.put(records);
             }
 
@@ -681,6 +683,7 @@ public virtual inherited sharing class QueryObject extends QueryResults {
 
     /**
     * @return True, if selector can use cached records:
+    * - Database access runs in system mode; user-mode permissions must be checked by the database
     * - Cache is not explicitly forbidden
     * - There is only 1 query criteria
     * - Criteria value is not blank
@@ -689,6 +692,7 @@ public virtual inherited sharing class QueryObject extends QueryResults {
     */
     private Boolean canUseCache() {
         return this.useCache
+            && databaseService.getAccessLevel() == AccessLevel.SYSTEM_MODE
             && this.cache != null
             && whereConditions.size() == 1
             && whereConditions.get(0) instanceof QueryConditions.CacheableCondition

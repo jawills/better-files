@@ -38,6 +38,9 @@ After install:
 
 ## Development
 
+The React replacement is being built in reviewable milestones. See
+[the React implementation and development demo](react/README.md).
+
 ```bash
 npm install
 npm test

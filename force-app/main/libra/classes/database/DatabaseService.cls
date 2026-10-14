@@ -43,7 +43,7 @@ public inherited sharing virtual class DatabaseService {
         String keyPrefix = prefixBySObject.get(sObjectType);
 
         if (String.isBlank(keyPrefix)) {
-            keyPrefix = sObjectType.getDescribe().getKeyPrefix();
+            keyPrefix = sObjectType.getDescribe(SObjectDescribeOptions.DEFERRED).getKeyPrefix();
             prefixBySObject.put(sObjectType, keyPrefix);
         }
 
@@ -118,6 +118,11 @@ public inherited sharing virtual class DatabaseService {
     public DatabaseService withAccessLevel(AccessLevel level) {
         this.options.accessLevel = level;
         return this;
+    }
+
+    /** The effective database mode, including user mode with an additional permission set. */
+    public AccessLevel getAccessLevel() {
+        return this.options.accessLevel;
     }
 
     /**
