@@ -1,13 +1,13 @@
 {
   "packageDirectories": [
     {
-      "versionName": "v2.0.0 React Release",
-      "versionNumber": "2.0.0.NEXT",
-      "ancestorVersion": "1.21.0.1",
+      "versionName": "v2.1.0",
+      "versionNumber": "2.1.0.NEXT",
+      "ancestorVersion": "2.0.0.1",
       "path": "force-app",
       "default": true,
       "package": "Better Files By 1Sync",
-      "versionDescription": "React file card and related list with drag-and-drop uploads up to 100 MB, upload progress and toasts, named tabs, automatic app URL discovery, and Lightning Locker/LWS compatibility."
+      "versionDescription": "improved drag and drop functionality"
     }
   ],
   "name": "1sync-file",
@@ -46,6 +46,7 @@
     "1Sync File App@1.13.0-1": "04tQl000000RwkfIAC",
     "1Sync File App@1.14.0-1": "04tQl000000SRtJIAW",
     "1Sync File App@1.15.0-1": "04tQl000000STOrIAO",
-    "Better Files By 1Sync@1.16.0-1": "04tQl000000Tis5IAC"
+    "Better Files By 1Sync@1.16.0-1": "04tQl000000Tis5IAC",
+    "Better Files By 1Sync@2.1.0-1": "04tQl000000To33IAC"
   }
 }
