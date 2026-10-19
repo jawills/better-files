@@ -37,8 +37,9 @@ are removed after the response. This adapter is absent from deployed builds.
   exposes upload through a menu.
 - `src/components/related-list.tsx`: server-backed query, selection, paging, file
   actions, and delete confirmation.
-- `src/components/upload-file-card.tsx`: shared drop target, picker, upload-status
-  modal, and success/error toasts.
+- `src/components/upload-file-card.tsx`: shared React Dropzone target and picker,
+  upload-status modal, and success/error toasts. Batch validation stays in the
+  upload pipeline so rejected files retain their order and per-file messages.
 - `src/mount.tsx`: `mountFiles` and `mountRelatedList`, each returning `update`
   and `unmount`. One React root per host; unmount before removing that host.
 - `src/embedding/`: UI Bundle entry point, typed host channel, and SDK binary upload transport.

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useDropzone } from "react-dropzone";
 import { CircleAlert, CircleCheck, X } from "lucide-react";
 import { FileCard } from "./file-card";
 import { Button } from "./ui/button";
@@ -40,20 +41,31 @@ type UploadSurfaceProps = Pick<
 };
 
 export function UploadSurface(props: UploadSurfaceProps) {
-  const [dragging, setDragging] = useState(false);
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<Row[]>([]);
   const [running, setRunning] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [refreshError, setRefreshError] = useState("");
-  const input = useRef<HTMLInputElement | null>(null);
-  const region = useRef<HTMLDivElement | null>(null);
   const trigger = useRef<HTMLElement | null>(null);
   const busy = useRef(false);
-  const depth = useRef(0);
   const alive = useRef(true);
   const toastId = useRef(0);
   const portal = usePortalContainer();
+  // Validate the whole batch in start() so rejected files keep their order and messages.
+  const { getRootProps, getInputProps, rootRef, isDragActive, open: openFilePicker } =
+    useDropzone({
+      disabled: !props.upload || running,
+      noClick: true,
+      noKeyboard: true,
+      noPaste: true,
+      useFsAccessApi: false,
+      onDrop: (files, _rejections, event) => {
+        if (!alive.current || busy.current) return;
+        if (event.type === "drop") trigger.current = rootRef.current;
+        void start(files);
+      },
+      onError: (error) => notify("error", error.message)
+    });
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -77,13 +89,11 @@ export function UploadSurface(props: UploadSurfaceProps) {
   }
   async function start(files: File[]) {
     const adapter = props.upload;
-    if (!files.length || !adapter || busy.current) return;
+    if (!files.length || !adapter || busy.current || !alive.current) return;
     busy.current = true;
     setRunning(true);
     setOpen(true);
     setRefreshError("");
-    setDragging(false);
-    depth.current = 0;
     const initial: Row[] = files.map((file) => {
       const message =
         !props.settings.multiple && files.length > 1
@@ -181,65 +191,34 @@ export function UploadSurface(props: UploadSurfaceProps) {
   return (
     <>
       <div
-        className="bf-drop-region"
-        ref={region}
-        tabIndex={-1}
-        onClickCapture={(event) => {
-          if (event.target instanceof Element) {
-            const button = event.target.closest<HTMLElement>("button");
-            if (button) trigger.current = button;
+        {...getRootProps({
+          className: "bf-drop-region",
+          tabIndex: -1,
+          onClickCapture: (event) => {
+            if (event.target instanceof Element) {
+              const button = event.target.closest<HTMLElement>("button");
+              if (button) trigger.current = button;
+            }
           }
-        }}
-        onDragEnter={(event) => {
-          if (!props.upload || !event.dataTransfer.types.includes("Files"))
-            return;
-          event.preventDefault();
-          depth.current++;
-          if (!busy.current) setDragging(true);
-        }}
-        onDragOver={(event) => {
-          if (!props.upload || !event.dataTransfer.types.includes("Files"))
-            return;
-          event.preventDefault();
-          event.dataTransfer.dropEffect = busy.current ? "none" : "copy";
-        }}
-        onDragLeave={() => {
-          depth.current = Math.max(0, depth.current - 1);
-          if (!depth.current) setDragging(false);
-        }}
-        onDrop={(event) => {
-          if (!props.upload || !event.dataTransfer.types.includes("Files"))
-            return;
-          event.preventDefault();
-          depth.current = 0;
-          setDragging(false);
-          trigger.current = region.current;
-          void start(Array.from(event.dataTransfer.files));
-        }}
+        })}
       >
         {props.children(() => {
           if (!props.upload)
             props.actions?.requestUpload(props.context, props.settings);
           else if (busy.current) setOpen(true);
-          else input.current?.click();
+          else openFilePicker();
         })}
         {props.upload && (
           <input
-            ref={input}
-            className="bf-sr-only"
-            type="file"
-            tabIndex={-1}
-            aria-label="Choose files to upload"
-            accept={props.settings.accept}
-            multiple={props.settings.multiple}
-            onChange={(event) => {
-              const files = Array.from(event.target.files ?? []);
-              event.target.value = "";
-              void start(files);
-            }}
+            {...getInputProps({
+              className: "bf-sr-only",
+              "aria-label": "Choose files to upload",
+              accept: props.settings.accept,
+              multiple: props.settings.multiple
+            })}
           />
         )}
-        {dragging && (
+        {isDragActive && !running && props.upload && (
           <div className="bf-drop-overlay">
             <span aria-hidden="true">↥</span>
             <strong>Drop files to upload</strong>

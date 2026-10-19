@@ -39,13 +39,27 @@ function renderCard(value = props()) {
     </FileSurface>
   );
   const region = result.container.querySelector(".bf-drop-region");
-  if (!region) throw new Error("Missing drop region");
+  if (!(region instanceof HTMLDivElement)) throw new Error("Missing drop region");
   return { ...result, region, value };
 }
 const file = (name: string) =>
   new File(["example"], name, { type: "text/plain" });
-const drop = (target: Element, files: File[]) =>
-  fireEvent.drop(target, { dataTransfer: { types: ["Files"], files } });
+const fileDrag = (files: File[]) => ({
+  dataTransfer: {
+    types: ["Files"],
+    files,
+    items: files.map((file) => ({
+      kind: "file",
+      type: file.type,
+      getAsFile: () => file
+    }))
+  }
+});
+const drop = async (target: Element, files: File[]) => {
+  await act(async () => {
+    fireEvent.drop(target, fileDrag(files));
+  });
+};
 
 it("uploads a dropped batch sequentially, reports mixed outcomes, and refreshes once without duplicating on a second drop", async () => {
   const value = props();
@@ -62,10 +76,10 @@ it("uploads a dropped batch sequentially, reports mixed outcomes, and refreshes 
     .mockResolvedValue(undefined);
   value.upload = { send, refresh: vi.fn() };
   const { region } = renderCard(value);
-  drop(region, [file("one.txt"), file("two.txt"), file("three.txt")]);
+  await drop(region, [file("one.txt"), file("two.txt"), file("three.txt")]);
   expect(screen.getByRole("dialog")).toHaveTextContent("Uploading files");
   expect(send).toHaveBeenCalledTimes(1);
-  drop(region, [file("duplicate.txt")]);
+  await drop(region, [file("duplicate.txt")]);
   await act(async () => finish());
   await screen.findByText("Upload results");
   expect(send).toHaveBeenCalledTimes(3);
@@ -103,14 +117,14 @@ it("rejects type, empty, oversize, and multiple-file violations before sending",
     )
   ).toContain("2 MB");
   const { region, value } = renderCard();
-  drop(region, [file("unsafe.html"), new File([], "empty.txt")]);
+  await drop(region, [file("unsafe.html"), new File([], "empty.txt")]);
   await screen.findByText("Upload results");
   expect(value.upload?.send).not.toHaveBeenCalled();
   cleanup();
   const single = props();
   single.settings = { ...defaultSettings, multiple: false };
   const second = renderCard(single);
-  drop(second.region, [file("one.txt"), file("two.txt")]);
+  await drop(second.region, [file("one.txt"), file("two.txt")]);
   expect(
     within(screen.getByRole("dialog")).getAllByText(
       "Choose one file at a time."
@@ -141,15 +155,50 @@ it("uses the file picker and restores focus, and reports refresh failure without
   await waitFor(() => expect(button).toHaveFocus());
 });
 
-it("keeps the overlay over nested children and ignores non-file drags", () => {
+it("keeps the overlay over nested children and ignores non-file drags", async () => {
   const { region } = renderCard();
   fireEvent.dragEnter(region, { dataTransfer: { types: ["text/plain"] } });
   expect(screen.queryByText("Drop files to upload")).toBeNull();
-  const event = { dataTransfer: { types: ["Files"] } };
-  fireEvent.dragEnter(region, event);
-  fireEvent.dragEnter(region.querySelector("header")!, event);
+  fireEvent.dragLeave(region, { dataTransfer: { types: ["text/plain"] } });
+  const event = fileDrag([file("one.txt")]);
+  await act(async () => {
+    fireEvent.dragEnter(region, event);
+    fireEvent.dragEnter(region.querySelector("header")!, event);
+  });
   fireEvent.dragLeave(region.querySelector("header")!, event);
   expect(screen.getByText("Drop files to upload")).toBeInTheDocument();
   fireEvent.dragLeave(region, event);
   expect(screen.queryByText("Drop files to upload")).toBeNull();
+});
+
+it("opens the picker only from Upload Files and allows choosing the same file again", async () => {
+  const { region, value } = renderCard();
+  const user = userEvent.setup();
+  const input = screen.getByLabelText<HTMLInputElement>("Choose files to upload");
+  const click = vi.spyOn(input, "click");
+  await user.click(screen.getByRole("button", { name: "Files (0)" }));
+  region.focus();
+  await user.keyboard("{Enter}");
+  expect(click).not.toHaveBeenCalled();
+  expect(value.actions.viewAll).toHaveBeenCalledOnce();
+
+  const selectedFile = file("repeat.txt");
+  for (let count = 1; count <= 2; count++) {
+    await user.click(screen.getAllByRole("button", { name: "Upload Files" })[0]);
+    expect(click).toHaveBeenCalledTimes(count);
+    await user.upload(input, selectedFile);
+    await screen.findByText("Upload results");
+    expect(value.upload?.send).toHaveBeenCalledTimes(count);
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  }
+});
+
+it("does not upload when the surface unmounts before dropped files are extracted", async () => {
+  const { region, value, unmount } = renderCard();
+  await act(async () => {
+    fireEvent.drop(region, fileDrag([file("old-record.txt")]));
+    unmount();
+  });
+  expect(value.upload?.send).not.toHaveBeenCalled();
 });
