@@ -1,4 +1,5 @@
-import { useId, type CSSProperties } from "react";
+import { useId } from "react";
+import { cn } from "@/lib/utils";
 import { ChevronDown, File, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +23,20 @@ function formatSize(bytes: number) {
   return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
 }
 
-type GridStyle = CSSProperties & { "--bf-columns": number };
+// Literal utilities keep every supported host-configured column count in the build.
+const gridColumns = [
+  "bf:grid-cols-1",
+  "bf:grid-cols-2",
+  "bf:grid-cols-3",
+  "bf:grid-cols-4",
+  "bf:grid-cols-5",
+  "bf:grid-cols-6",
+  "bf:grid-cols-7",
+  "bf:grid-cols-8",
+  "bf:grid-cols-9",
+  "bf:grid-cols-10",
+  "bf:grid-cols-11"
+] as const;
 
 /** Pure UI: supplied state is already filtered, counted, and limited by the host. */
 export function FileCard({ context, settings, state, actions }: FileCardProps) {
@@ -33,37 +47,46 @@ export function FileCard({ context, settings, state, actions }: FileCardProps) {
     settings.filesPerRow < 12
       ? settings.filesPerRow
       : 3;
-  const style: GridStyle = { "--bf-columns": columns };
+  const gridClassName = cn(
+    "bf:grid bf:gap-x-[18px] bf:gap-y-3.5 bf:px-3 bf:pb-3 bf:@max-[600px]:grid-cols-1 bf:@max-[600px]:gap-3",
+    gridColumns[columns - 1]
+  );
   const upload = () => actions.requestUpload(context, settings);
   const viewAll = () => actions.viewAll(context, settings);
   const isEmpty = state.status === "ready" && state.total === 0;
 
   return (
-    <div className="bf-card-container">
+    <div className="bf:@container">
       <section
-        className="bf-card"
+        className="bf:rounded-lg bf:border bf:border-panel-border bf:bg-background"
         aria-labelledby={titleId}
         aria-busy={state.status === "loading"}
       >
-        <header className="bf-header">
-          <span className="bf-badge">
+        <header className="bf:flex bf:min-h-[59px] bf:items-center bf:gap-3 bf:p-3">
+          <span className="bf:flex bf:size-7 bf:shrink-0 bf:items-center bf:justify-center bf:rounded-md bf:bg-icon">
             <File
               size={21}
-              fill="white"
-              stroke="var(--files-color-icon)"
+              className="bf:fill-white bf:stroke-icon"
               aria-hidden="true"
             />
           </span>
-          <h2 id={titleId}>
-            <button type="button" className="bf-title-link" onClick={viewAll}>
+          <h2
+            id={titleId}
+            className="bf:min-w-0 bf:flex-1 bf:text-card-title bf:font-semibold"
+          >
+            <button
+              type="button"
+              className="bf:[font:inherit] bf:text-foreground bf:hover:underline"
+              onClick={viewAll}
+            >
               {state.status === "ready" ? `Files (${state.total})` : "Files"}
             </button>
           </h2>
-          <Button className="bf-upload-wide" onClick={upload}>
+          <Button className="bf:@max-[600px]:hidden" onClick={upload}>
             <Plus size={15} aria-hidden="true" />
             Upload Files
           </Button>
-          <div className="bf-upload-narrow">
+          <div className="bf:hidden bf:@max-[600px]:block">
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger
                 render={<Button size="icon" />}
@@ -80,15 +103,18 @@ export function FileCard({ context, settings, state, actions }: FileCardProps) {
           </div>
         </header>
         {state.status === "loading" && (
-          <div className="bf-loading" role="status">
-            <span className="bf-sr-only">Loading files</span>
-            <div className="bf-grid" style={style} aria-hidden="true">
+          <div role="status">
+            <span className="bf:sr-only">Loading files</span>
+            <div className={gridClassName} aria-hidden="true">
               {Array.from({ length: 6 }, (_, index) => (
-                <div className="bf-skeleton" key={index}>
-                  <span />
-                  <div>
-                    <i />
-                    <i />
+                <div
+                  className="bf:flex bf:h-[38px] bf:items-center bf:gap-2.5"
+                  key={index}
+                >
+                  <span className="bf:h-8 bf:w-[27px] bf:bg-divider" />
+                  <div className="bf:flex-1">
+                    <i className="bf:block bf:h-2 bf:w-4/5 bf:bg-divider" />
+                    <i className="bf:mt-2 bf:block bf:h-1.5 bf:w-[55%] bf:bg-divider" />
                   </div>
                 </div>
               ))}
@@ -96,33 +122,39 @@ export function FileCard({ context, settings, state, actions }: FileCardProps) {
           </div>
         )}
         {state.status === "error" && (
-          <div className="bf-message" role="alert">
+          <div
+            className="bf:px-4 bf:pt-3 bf:pb-6 bf:text-center bf:[&>p]:mb-3"
+            role="alert"
+          >
             <p>Unable to load files.</p>
-            <p className="bf-error-detail">{state.message}</p>
+            <p className="bf:text-sm bf:text-muted">{state.message}</p>
             <Button onClick={actions.retry}>Try Again</Button>
           </div>
         )}
         {isEmpty && (
-          <div className="bf-message">
+          <div className="bf:px-4 bf:pt-3 bf:pb-6 bf:text-center bf:[&>p]:mb-3">
             <p>No files yet.</p>
             <Button onClick={upload}>Upload Files</Button>
           </div>
         )}
         {state.status === "ready" && !isEmpty && (
-          <ul className="bf-grid" style={style}>
+          <ul className={gridClassName}>
             {state.files.map((file) => (
-              <li key={file.versionId}>
+              <li key={file.versionId} className="bf:min-w-0">
                 <button
                   type="button"
-                  className="bf-file"
+                  data-file-preview
+                  className="bf:group/file bf:flex bf:w-full bf:items-center bf:gap-2 bf:text-left"
                   onClick={() => actions.preview(file)}
                   title={file.title}
                   aria-label={`Preview ${file.title}`}
                 >
                   <FileThumbnail file={file} enabled={settings.filePreview} />
-                  <span className="bf-file-copy">
-                    <span className="bf-filename">{file.title}</span>
-                    <span className="bf-metadata">
+                  <span className="bf:min-w-0 bf:flex-1">
+                    <span className="bf:block bf:truncate bf:leading-normal bf:text-primary bf:group-hover/file:underline">
+                      {file.title}
+                    </span>
+                    <span className="bf:block bf:truncate bf:text-sm bf:leading-normal bf:text-muted">
                       {dateFormat.format(new Date(file.modifiedAt))} ·{" "}
                       {formatSize(file.sizeBytes)}
                       {file.extension && ` · ${file.extension.toUpperCase()}`}
@@ -134,7 +166,7 @@ export function FileCard({ context, settings, state, actions }: FileCardProps) {
           </ul>
         )}
         {state.status === "ready" && !isEmpty && (
-          <footer className="bf-footer">
+          <footer className="bf:border-t bf:border-divider bf:px-3 bf:py-1 bf:text-center">
             <Button variant="link" onClick={viewAll}>
               View All
             </Button>

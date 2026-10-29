@@ -21,7 +21,6 @@ import {
 import type { RelatedListProps } from "../related-list";
 import { createHostTransport, type HostOperations } from "./transport";
 import { EMBEDDED_MAX_UPLOAD_BYTES, uploadBinary } from "./upload";
-import "../styles.css";
 import "./styles.css";
 
 type HostProps = {
@@ -72,17 +71,17 @@ function EmbeddedFiles({ sdk, data }: { sdk: ViewSDK; data: DataSDK }) {
   useEffect(() => {
     const ui = sdk.getUiState?.();
     if (!ui) return;
-    document.documentElement.classList.add("bf-embedded");
+    document.documentElement.dataset.embedded = "";
     setProps(hostProps(ui.state.props));
     const unsubscribe = ui.subscribe((next) => setProps(hostProps(next.props)));
     return () => {
       unsubscribe();
-      document.documentElement.classList.remove("bf-embedded");
+      delete document.documentElement.dataset.embedded;
     };
   }, [sdk]);
   if (!props)
     return (
-      <p className="embedding-status">
+      <p className="bf:p-4 bf:font-sans bf:text-base bf:leading-normal">
         Open Files from a Salesforce record page.
       </p>
     );
@@ -176,7 +175,7 @@ function ConnectedFiles({
         }
       : (host.state ?? { status: "loading" });
   return (
-    <FileSurface>
+    <FileSurface theme={settings.theme}>
       {actionError && <p role="alert">{actionError}</p>}
       {host.view === "card" ? (
         <UploadFileCard
@@ -263,7 +262,10 @@ function SalesforceConnection() {
   }, []);
   if (connection) return <EmbeddedFiles {...connection} />;
   return (
-    <p className="embedding-status" role={failed ? "alert" : "status"}>
+    <p
+      className="bf:p-4 bf:font-sans bf:text-base bf:leading-normal"
+      role={failed ? "alert" : "status"}
+    >
       {failed
         ? "Unable to connect to Salesforce. Refresh the page to try again."
         : "Loading files…"}

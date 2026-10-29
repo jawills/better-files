@@ -22,4 +22,8 @@
         <field>Show_Owner__c</field>
         <value xsi:type="xsd:boolean">true</value>
     </values>
+    <values>
+        <field>Theme__c</field>
+        <value xsi:type="xsd:string">cosmos</value>
+    </values>
 </CustomMetadata>

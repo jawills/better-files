@@ -12,8 +12,34 @@ export function Dialog(props: ComponentProps<typeof DialogPrimitive.Root>) {
     <DialogPrimitive.Root {...props} modal={false} disablePointerDismissal />
   );
 }
-export const DialogTitle = DialogPrimitive.Title;
-export const DialogDescription = DialogPrimitive.Description;
+export function DialogTitle({
+  className,
+  ...props
+}: Omit<DialogPrimitive.Title.Props, "className"> & { className?: string }) {
+  return (
+    <DialogPrimitive.Title
+      {...props}
+      className={cn(
+        "bf:m-0 bf:pr-5 bf:text-heading bf:font-semibold bf:wrap-anywhere",
+        className
+      )}
+    />
+  );
+}
+
+export function DialogDescription({
+  className,
+  ...props
+}: Omit<DialogPrimitive.Description.Props, "className"> & {
+  className?: string;
+}) {
+  return (
+    <DialogPrimitive.Description
+      {...props}
+      className={cn("bf:my-3 bf:text-muted", className)}
+    />
+  );
+}
 
 // Center without transforms so fixed notifications inside a dialog use the viewport.
 // The portal and keyboard-focus boundary remain within the Salesforce host.
@@ -31,10 +57,10 @@ export function DialogContent({
   if (!container) return null;
   return (
     <DialogPrimitive.Portal container={container}>
-      <DialogPrimitive.Backdrop className="bf-dialog-backdrop bf:fixed bf:inset-0 bf:bg-black/40" />
+      <DialogPrimitive.Backdrop className="bf:z-[9000] bf:fixed bf:inset-0 bf:bg-black/40" />
       <DialogPrimitive.Popup
         className={cn(
-          "bf-dialog bf:fixed bf:inset-0 bf:m-auto bf:h-fit bf:w-[calc(100%-32px)] bf:max-w-md bf:rounded-lg bf:border bf:border-border bf:bg-background bf:p-6 bf:shadow-lg",
+          "bf:z-[9001] bf:fixed bf:inset-0 bf:m-auto bf:h-fit bf:w-[calc(100%-32px)] bf:max-w-md bf:rounded-lg bf:border bf:border-border bf:bg-background bf:p-[1.5rem] bf:shadow-lg",
           className
         )}
         {...props}
@@ -75,7 +101,7 @@ export function DialogContent({
       >
         {children}
         <DialogPrimitive.Close
-          className="bf-dialog-close"
+          className="bf:absolute bf:top-3.5 bf:right-3.5"
           aria-label={closeLabel}
         >
           <X size={16} aria-hidden="true" />

@@ -6,7 +6,9 @@
 .sfdx/
 .sf/
 
-# Generated React bundle (npm run build:salesforce --prefix react)
+# Generated React bundle (npm run build:salesforce)
+force-app/main/default/uiBundles/betterFiles/dist/
+# Obsolete build output from the separate React Salesforce project
 react/salesforce/force-app/main/default/staticresources/betterFilesReact/
 
 # LWC VSCode autocomplete

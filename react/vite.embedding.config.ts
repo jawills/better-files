@@ -15,7 +15,7 @@ export default defineConfig({
     modulePreload: { polyfill: false },
     outDir: fileURLToPath(
       new URL(
-        "./salesforce/force-app/main/default/uiBundles/betterFiles/dist",
+        "../force-app/main/default/uiBundles/betterFiles/dist",
         import.meta.url
       )
     ),

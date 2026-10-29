@@ -11,6 +11,10 @@ export type FileRecord = {
 
 export type RecordContext = { recordId: string; objectApiName: string };
 
+/** Wisty UI's Salesforce themes, or Better Files' original approved look. */
+export const fileThemes = ["cosmos", "lightning-blue", "better-files"] as const;
+export type FileTheme = (typeof fileThemes)[number];
+
 export const defaultSettings = {
   accept:
     ".pdf,.doc,.docx,.rtf,.txt,.xls,.xlsx,.csv,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.zip",
@@ -19,7 +23,8 @@ export const defaultSettings = {
   fileLimit: 6,
   filesPerRow: 3,
   includeEmails: true,
-  minimumFileSizeKb: 0
+  minimumFileSizeKb: 0,
+  theme: "cosmos" as FileTheme
 };
 
 export type FileSettings = typeof defaultSettings;

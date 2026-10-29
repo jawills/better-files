@@ -1,13 +1,13 @@
 {
   "packageDirectories": [
     {
-      "versionName": "v2.1.0",
-      "versionNumber": "2.1.0.NEXT",
-      "ancestorVersion": "2.0.0.1",
+      "versionName": "v2.2.0",
+      "versionNumber": "2.2.0.NEXT",
+      "ancestorVersion": "2.1.0.1",
       "path": "force-app",
       "default": true,
       "package": "Better Files By 1Sync",
-      "versionDescription": "improved drag and drop functionality"
+      "versionDescription": "Salesforce Cosmos and Lightning Blue themes for the React card and View All list, chosen in File Related List Config (Cosmos by default)"
     }
   ],
   "name": "1sync-file",
@@ -47,6 +47,7 @@
     "1Sync File App@1.14.0-1": "04tQl000000SRtJIAW",
     "1Sync File App@1.15.0-1": "04tQl000000STOrIAO",
     "Better Files By 1Sync@1.16.0-1": "04tQl000000Tis5IAC",
-    "Better Files By 1Sync@2.1.0-1": "04tQl000000To33IAC"
+    "Better Files By 1Sync@2.1.0-1": "04tQl000000To33IAC",
+    "Better Files By 1Sync@2.2.0-1": "04tQl000000U261IAC"
   }
 }

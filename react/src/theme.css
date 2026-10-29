@@ -1,70 +1,86 @@
-/* Option A styling with approved typography B. No SLDS stylesheet or runtime hooks. */
-.better-files {
-  --files-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+/* Approved Salesforce palette and typography, shared by all Tailwind utilities. */
+@theme {
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  --files-text-body: 16px;
-  --files-text-meta: 14px;
-  --files-text-card-title: 20px;
-  --files-text-heading: 24px;
-  --files-line-height: 1.45;
-  --files-weight-heading: 600;
-  --files-radius-panel: 12px;
-  --files-radius-control: 8px;
-  --files-radius-small: 4px;
-  --files-radius-button: 999px;
-  --files-control-height: 36px;
-  --files-space-1: 4px;
-  --files-space-2: 8px;
-  --files-space-3: 12px;
-  --files-space-4: 16px;
-  --files-color-background: #fff;
-  --files-color-foreground: #181818;
-  --files-color-muted: #525966;
-  --files-color-link: #065fcc;
-  --files-color-brand: #066afe;
-  --files-color-icon: #1686e0;
-  --files-color-border: #c9cdd3;
-  --files-color-panel-border: #d6dae0;
-  --files-color-divider: #e6e9ed;
-  --files-color-header: #f3f5f8;
-  --files-color-table-header: #fafbfc;
-  --files-color-accent: #eef4ff;
-  --files-color-on-accent: #064fac;
-  --files-color-success: #205635;
-  --files-color-success-surface: #f0faf3;
-  --files-color-success-border: #a0c7ae;
-  --files-color-error: #ba0517;
-  --files-color-error-surface: #fff1f2;
-  --files-color-error-border: #e8acb3;
-  --files-color-toast-success: #2e7546;
-  --files-color-toast-error: #ba0517;
-  --files-color-toast-text: #fff;
-
-  /* Unlayered so the host's global typography cannot replace the chosen theme. */
-  color: var(--files-color-foreground);
-  font: var(--files-text-body) / var(--files-line-height)
-    var(--files-font-family);
-  text-align: left;
-  color-scheme: light;
+  /* Keep Salesforce's pixel-based spacing independent of the host's root font size. */
+  --spacing: 4px;
+  --text-xs: 12px;
+  --text-xs--line-height: 1.45;
+  --text-sm: 14px;
+  --text-sm--line-height: 1.45;
+  --text-base: 16px;
+  --text-base--line-height: 1.45;
+  --text-card-title: 20px;
+  --text-card-title--line-height: 1.2;
+  --text-heading: 24px;
+  --text-heading--line-height: 1.25;
+  --leading-normal: 1.45;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-button: 999px;
+  --spacing-control: 36px;
+  --color-background: #fff;
+  --color-foreground: #181818;
+  --color-muted: #525966;
+  --color-primary: #065fcc;
+  --color-brand: #066afe;
+  --color-brand-hover: #065fcc;
+  --color-icon: #1686e0;
+  --color-border: #c9cdd3;
+  --color-panel-border: #d6dae0;
+  --color-divider: #e6e9ed;
+  --color-header: #f3f5f8;
+  --color-table-header: #fafbfc;
+  --color-accent: #eef4ff;
+  --color-accent-foreground: #064fac;
+  --color-popover: #fff;
+  --color-popover-foreground: #181818;
+  --color-success: #205635;
+  --color-error: #ba0517;
+  --color-toast-success: #2e7546;
+  --color-toast-error: #ba0517;
+  --color-toast-text: #fff;
 }
 
-/* Tailwind/shadcn and component CSS consume the same scoped values. */
-@theme inline {
-  --font-sans: var(--files-font-family);
-  --text-sm: var(--files-text-meta);
-  --text-base: var(--files-text-body);
-  --color-background: var(--files-color-background);
-  --color-foreground: var(--files-color-foreground);
-  --color-primary: var(--files-color-link);
-  --color-brand: var(--files-color-brand);
-  --color-border: var(--files-color-border);
-  --color-accent: var(--files-color-accent);
-  --color-accent-foreground: var(--files-color-on-accent);
-  --color-popover: var(--files-color-background);
-  --color-popover-foreground: var(--files-color-foreground);
-  --radius-sm: var(--files-radius-small);
-  --radius-md: var(--files-radius-control);
-  --radius-lg: var(--files-radius-panel);
-  --radius-button: var(--files-radius-button);
-  --spacing-control: var(--files-control-height);
+/* Wisty UI's Salesforce themes (styles/wisty) under FileSurface's data-theme.
+   Both theme files define the same SLDS 2 variables, so one mapping serves
+   both. Unlayered, it overrides the theme layer's defaults above. */
+:is([data-theme="cosmos"], [data-theme="lightning-blue"]) {
+  --bf-font-sans: var(--font-family-sans);
+  --bf-text-sm: var(--card-description-size);
+  --bf-text-sm--line-height: var(--line-height-base);
+  --bf-text-base: var(--font-size-base);
+  --bf-text-base--line-height: var(--line-height-base);
+  --bf-text-card-title: var(--card-title-size);
+  --bf-text-card-title--line-height: var(--card-title-line-height);
+  --bf-text-heading: var(--modal-title-size);
+  --bf-leading-normal: var(--line-height-base);
+  --bf-radius-sm: var(--radius-1);
+  --bf-radius-md: var(--radius-2);
+  --bf-radius-lg: var(--card-radius);
+  --bf-radius-button: var(--button-radius);
+  --bf-spacing-control: var(--control-height);
+  --bf-color-background: var(--background);
+  --bf-color-foreground: var(--foreground);
+  --bf-color-muted: var(--muted-foreground);
+  --bf-color-primary: var(--link);
+  --bf-color-brand: var(--primary);
+  --bf-color-brand-hover: var(--primary-hover);
+  /* SLDS's standard:file icon background. */
+  --bf-color-icon: #939393;
+  --bf-color-border: var(--border);
+  --bf-color-panel-border: var(--card-border);
+  --bf-color-divider: var(--container);
+  --bf-color-header: var(--page-header-background);
+  --bf-color-table-header: var(--table-header-background);
+  --bf-color-accent: var(--accent);
+  --bf-color-accent-foreground: var(--accent-foreground);
+  --bf-color-popover: var(--popover);
+  --bf-color-popover-foreground: var(--popover-foreground);
+  --bf-color-success: var(--success);
+  --bf-color-error: var(--destructive);
+  /* Toasts stay solid with white text, as in Lightning Blue. */
+  --bf-color-toast-success: var(--success);
+  --bf-color-toast-error: var(--destructive);
 }

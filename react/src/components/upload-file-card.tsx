@@ -12,6 +12,7 @@ import {
 } from "./ui/dialog";
 import { usePortalContainer } from "./portal-context";
 import { MAX_UPLOAD_BYTES, validateUpload } from "@/upload";
+import { cn } from "@/lib/utils";
 import type { FileCardProps } from "@/model";
 
 type Row = {
@@ -52,20 +53,25 @@ export function UploadSurface(props: UploadSurfaceProps) {
   const toastId = useRef(0);
   const portal = usePortalContainer();
   // Validate the whole batch in start() so rejected files keep their order and messages.
-  const { getRootProps, getInputProps, rootRef, isDragActive, open: openFilePicker } =
-    useDropzone({
-      disabled: !props.upload || running,
-      noClick: true,
-      noKeyboard: true,
-      noPaste: true,
-      useFsAccessApi: false,
-      onDrop: (files, _rejections, event) => {
-        if (!alive.current || busy.current) return;
-        if (event.type === "drop") trigger.current = rootRef.current;
-        void start(files);
-      },
-      onError: (error) => notify("error", error.message)
-    });
+  const {
+    getRootProps,
+    getInputProps,
+    rootRef,
+    isDragActive,
+    open: openFilePicker
+  } = useDropzone({
+    disabled: !props.upload || running,
+    noClick: true,
+    noKeyboard: true,
+    noPaste: true,
+    useFsAccessApi: false,
+    onDrop: (files, _rejections, event) => {
+      if (!alive.current || busy.current) return;
+      if (event.type === "drop") trigger.current = rootRef.current;
+      void start(files);
+    },
+    onError: (error) => notify("error", error.message)
+  });
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -152,29 +158,37 @@ export function UploadSurface(props: UploadSurfaceProps) {
     }
   }
   const toastView = (
-    <div className="bf-upload-toasts">
+    <div className="bf:pointer-events-none bf:fixed bf:top-4 bf:left-1/2 bf:z-[9010] bf:grid bf:max-h-[calc(100dvh-32px)] bf:w-[min(580px,calc(100vw-32px))] bf:-translate-x-1/2 bf:gap-2 bf:overflow-auto bf:p-1">
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className={`bf-upload-toast bf-upload-toast-${toast.kind}`}
+          className={cn(
+            "bf:pointer-events-auto bf:flex bf:items-center bf:gap-3 bf:rounded-md bf:px-3.5 bf:py-3 bf:text-base bf:leading-normal bf:text-toast-text bf:shadow-[0_3px_10px_#18181820]",
+            toast.kind === "success"
+              ? "bf:bg-toast-success"
+              : "bf:bg-toast-error"
+          )}
           role={toast.kind === "error" ? "alert" : "status"}
         >
           {toast.kind === "success" ? (
             <CircleCheck
-              className="bf-upload-toast-icon"
+              className="bf:mt-1 bf:self-start bf:fill-toast-text bf:stroke-toast-success"
               size={24}
               aria-hidden="true"
             />
           ) : (
             <CircleAlert
-              className="bf-upload-toast-icon"
+              className="bf:mt-1 bf:self-start bf:fill-toast-text bf:stroke-toast-error"
               size={24}
               aria-hidden="true"
             />
           )}
-          <span className="bf-upload-toast-message">{toast.message}</span>
+          <span className="bf:min-w-0 bf:flex-1 bf:wrap-anywhere">
+            {toast.message}
+          </span>
           <button
             type="button"
+            className="bf:grid bf:size-8 bf:shrink-0 bf:self-start bf:place-items-center bf:rounded-sm bf:p-1.5 bf:text-inherit bf:hover:bg-white/15 bf:focus-visible:outline-toast-text"
             aria-label={`Dismiss ${toast.kind} notification`}
             onClick={() => dismiss(toast.id)}
           >
@@ -191,8 +205,9 @@ export function UploadSurface(props: UploadSurfaceProps) {
   return (
     <>
       <div
+        data-file-drop
         {...getRootProps({
-          className: "bf-drop-region",
+          className: "bf:relative",
           tabIndex: -1,
           onClickCapture: (event) => {
             if (event.target instanceof Element) {
@@ -211,7 +226,7 @@ export function UploadSurface(props: UploadSurfaceProps) {
         {props.upload && (
           <input
             {...getInputProps({
-              className: "bf-sr-only",
+              className: "bf:sr-only",
               "aria-label": "Choose files to upload",
               accept: props.settings.accept,
               multiple: props.settings.multiple
@@ -219,8 +234,10 @@ export function UploadSurface(props: UploadSurfaceProps) {
           />
         )}
         {isDragActive && !running && props.upload && (
-          <div className="bf-drop-overlay">
-            <span aria-hidden="true">↥</span>
+          <div className="bf:pointer-events-none bf:absolute bf:inset-0.5 bf:z-10 bf:flex bf:min-h-[100px] bf:flex-col bf:items-center bf:justify-center bf:gap-1.5 bf:rounded-lg bf:border-2 bf:border-dashed bf:border-primary bf:bg-accent/96 bf:text-accent-foreground">
+            <span className="bf:text-[28px]" aria-hidden="true">
+              ↥
+            </span>
             <strong>Drop files to upload</strong>
             <span>Attach to this record</span>
           </div>
@@ -233,30 +250,35 @@ export function UploadSurface(props: UploadSurfaceProps) {
         <DialogContent
           finalFocus={trigger}
           closeLabel="Close upload status"
-          className="bf-upload-dialog"
+          className="bf:max-h-[calc(100vh-40px)] bf:overflow-visible"
         >
-          <DialogTitle className="bf-dialog-title">
+          <DialogTitle>
             {running ? "Uploading files" : "Upload results"}
           </DialogTitle>
-          <DialogDescription className="bf-dialog-description">
+          <DialogDescription>
             {successful} of {rows.length} files uploaded.{" "}
             {running
               ? "Uploads continue if you close this window."
               : `${Math.floor((props.upload?.maxBytes ?? MAX_UPLOAD_BYTES) / 1024 / 1024)} MB limit per file.`}
           </DialogDescription>
           <progress
-            className="bf-upload-progress"
+            className="bf:mb-3 bf:block bf:h-1.5 bf:w-full bf:appearance-none bf:border-0 bf:bg-divider bf:[&::-webkit-progress-bar]:bg-divider bf:[&::-webkit-progress-value]:bg-primary bf:[&::-moz-progress-bar]:bg-primary"
             value={completed}
             max={Math.max(rows.length, 1)}
             aria-label="Files processed"
           />
-          <ul className="bf-upload-rows">
+          <ul className="bf:max-h-[45vh] bf:overflow-auto">
             {rows.map((row, i) => (
-              <li key={i}>
-                <div>
-                  <strong>{row.name}</strong>
+              <li key={i} className="bf:border-b bf:border-divider bf:py-2.5">
+                <div className="bf:flex bf:items-baseline bf:justify-between bf:gap-4">
+                  <strong className="bf:text-base bf:font-normal bf:wrap-anywhere">
+                    {row.name}
+                  </strong>
                   <span
-                    className={`bf-upload-state bf-upload-state-${row.status}`}
+                    className={cn("bf:shrink-0 bf:text-sm", {
+                      "bf:text-success": row.status === "uploaded",
+                      "bf:text-error": row.status === "failed"
+                    })}
                   >
                     {
                       {
@@ -268,12 +290,16 @@ export function UploadSurface(props: UploadSurfaceProps) {
                     }
                   </span>
                 </div>
-                {row.message && <p>{row.message}</p>}
+                {row.message && (
+                  <p className="bf:pt-1.5 bf:text-sm bf:text-error">
+                    {row.message}
+                  </p>
+                )}
               </li>
             ))}
           </ul>
           {refreshError && <p role="alert">{refreshError}</p>}
-          <div className="bf-upload-footer">
+          <div className="bf:mt-4 bf:flex bf:justify-end bf:gap-2 bf:[&>button]:min-w-18 bf:[&>button]:px-4">
             <Button variant="primary" onClick={() => setOpen(false)}>
               {running ? "Close" : "Done"}
             </Button>

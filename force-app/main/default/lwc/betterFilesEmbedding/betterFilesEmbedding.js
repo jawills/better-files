@@ -1,5 +1,6 @@
 import { LightningElement, api } from "lwc";
 import getReactAppUrl from "@salesforce/apex/FileListController.getReactAppUrl";
+import getTheme from "@salesforce/apex/FileListController.getTheme";
 import completeUpload from "@salesforce/apex/BetterFilesReactUpload.completeUpload";
 
 /** The channel carries cloneable props and a small allowlist of commands, never file bytes. */
@@ -9,6 +10,7 @@ export default class BetterFilesEmbedding extends LightningElement {
   appUrl;
   error;
   host;
+  theme;
 
   connectedCallback() {
     this.loadAppUrl();
@@ -16,8 +18,14 @@ export default class BetterFilesEmbedding extends LightningElement {
 
   async loadAppUrl() {
     let appUrl;
+    let theme;
     try {
-      appUrl = await getReactAppUrl();
+      // The app waits for the org's theme so it doesn't first paint in another.
+      // Without one, it uses its own default.
+      [appUrl, theme] = await Promise.all([
+        getReactAppUrl(),
+        getTheme().catch(() => undefined)
+      ]);
     } catch {
       if (this.template.host.isConnected)
         this.error = "Unable to find the Better Files app. Check your Better Files permissions and refresh the page.";
@@ -25,6 +33,7 @@ export default class BetterFilesEmbedding extends LightningElement {
     }
     // Locker doesn't expose LightningElement.isConnected; the HTML host does.
     if (!this.template.host.isConnected) return;
+    this.theme = theme;
     try {
       const url = new URL(appUrl?.trim());
       // Only the packaged app on a Salesforce-hosted origin may receive record data.
@@ -48,7 +57,8 @@ export default class BetterFilesEmbedding extends LightningElement {
       payload: JSON.stringify({
         view: this.view,
         context: config?.context,
-        settings: config?.settings,
+        // Both views take the org-wide theme from File Related List Config.
+        settings: { ...config?.settings, theme: this.theme },
         state: config?.state,
         initialFilter: config?.initialFilter,
         revision: config?.revision,

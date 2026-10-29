@@ -1,46 +1,50 @@
 import { useState } from "react";
 import type { FileRecord } from "@/model";
+import { cn } from "@/lib/utils";
 
-function fileColor(extension: string) {
+function fileFill(extension: string) {
   switch (extension.toLowerCase()) {
     case "pdf":
-      return "#ba3026";
+      return "bf:fill-[#ba3026]";
     case "xls":
     case "xlsx":
     case "csv":
-      return "#2e844a";
+      return "bf:fill-[#2e844a]";
     case "doc":
     case "docx":
-      return "#1b74b8";
+      return "bf:fill-[#1b74b8]";
     case "png":
     case "jpg":
     case "jpeg":
     case "gif":
-      return "#0b827c";
+      return "bf:fill-[#0b827c]";
     default:
-      return "#706e6b";
+      return "bf:fill-[#706e6b]";
   }
 }
 
-export function FileIcon({ extension }: Pick<FileRecord, "extension">) {
+export function FileIcon({
+  extension,
+  className
+}: Pick<FileRecord, "extension"> & { className?: string }) {
   return (
-    <svg className="bf-file-icon" viewBox="0 0 80 96" aria-hidden="true">
-      <path d="M12 2h38l20 20v69H12z" fill={fileColor(extension)} />
-      <path d="M50 2v20h20" fill="#fff" opacity=".35" />
+    <svg
+      className={cn("bf:h-[34px] bf:w-[27px] bf:shrink-0", className)}
+      viewBox="0 0 80 96"
+      aria-hidden="true"
+    >
+      <path d="M12 2h38l20 20v69H12z" className={fileFill(extension)} />
+      <path d="M50 2v20h20" className="bf:fill-white bf:opacity-35" />
       <path
         d="M24 38h33M24 47h33M24 56h24"
-        stroke="#fff"
-        opacity=".8"
+        className="bf:stroke-white bf:opacity-80"
         strokeWidth="3"
       />
       <text
         x="40"
         y="79"
-        fill="#fff"
+        className="bf:fill-white bf:font-[Arial] bf:text-[13px] bf:font-bold"
         textAnchor="middle"
-        fontFamily="Arial"
-        fontWeight="bold"
-        fontSize="13"
       >
         {extension.slice(0, 4).toUpperCase() || "FILE"}
       </text>
@@ -58,7 +62,7 @@ export function FileThumbnail({
   const [failedUrl, setFailedUrl] = useState<string>();
   return enabled && file.thumbnailUrl && file.thumbnailUrl !== failedUrl ? (
     <img
-      className="bf-thumbnail"
+      className="bf:h-[34px] bf:w-[27px] bf:shrink-0 bf:border bf:border-panel-border bf:object-cover"
       src={file.thumbnailUrl}
       alt=""
       onError={() => setFailedUrl(file.thumbnailUrl)}

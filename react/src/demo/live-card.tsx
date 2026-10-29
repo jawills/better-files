@@ -76,9 +76,12 @@ export function LiveCard({
   }
   return (
     <FileSurface
+      theme={settings.theme}
       onClickCapture={(event) => {
         if (event.target instanceof Element) {
-          const button = event.target.closest<HTMLButtonElement>(".bf-file");
+          const button = event.target.closest<HTMLButtonElement>(
+            "[data-file-preview]"
+          );
           if (button) trigger.current = button;
         }
       }}
@@ -126,23 +129,22 @@ export function LiveCard({
           if (!open) setSelected(null);
         }}
       >
-        <DialogContent finalFocus={trigger} className="local-file-dialog">
-          <DialogTitle className="bf-dialog-title">
-            {selected?.title}
-          </DialogTitle>
-          <DialogDescription className="bf-dialog-description">
-            File from better-files.
-          </DialogDescription>
+        <DialogContent
+          finalFocus={trigger}
+          className="bf:w-[min(900px,calc(100vw-32px))] bf:max-w-[900px] bf:max-h-[calc(100vh-32px)] bf:overflow-auto"
+        >
+          <DialogTitle>{selected?.title}</DialogTitle>
+          <DialogDescription>File from better-files.</DialogDescription>
           {selected &&
             (/^(png|jpg|jpeg|gif|webp)$/.test(selected.extension) ? (
               <img
-                className="local-file-image"
+                className="bf:mx-auto bf:my-4 bf:block bf:max-h-[65vh] bf:max-w-full bf:object-contain"
                 src={contentUrl(selected.versionId)}
                 alt={selected.title}
               />
             ) : /^(pdf|txt|csv)$/.test(selected.extension) ? (
               <iframe
-                className="local-file-frame"
+                className="bf:mb-3 bf:block bf:h-[65vh] bf:w-full bf:border-0"
                 src={contentUrl(selected.versionId)}
                 title={selected.title}
               />

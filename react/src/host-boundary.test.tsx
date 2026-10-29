@@ -76,6 +76,37 @@ describe("Salesforce host boundary", () => {
     container.remove();
   });
 
+  it("applies the host's theme setting to the surface and its overlays", async () => {
+    const user = userEvent.setup();
+    const container = document.createElement("div");
+    document.body.append(container);
+    const initial = props();
+    let view: ReturnType<typeof mountFiles>;
+    await act(async () => {
+      view = mountFiles(container, initial);
+    });
+    const surface = container.querySelector("[data-files-surface]");
+    expect(surface).toHaveAttribute("data-theme", "cosmos");
+    await act(async () =>
+      view.update({
+        ...initial,
+        settings: { ...defaultSettings, theme: "lightning-blue" }
+      })
+    );
+    expect(container.querySelector("[data-files-surface]")).toBe(surface);
+    expect(surface).toHaveAttribute("data-theme", "lightning-blue");
+    within(container)
+      .getByRole("button", { name: "Show file actions" })
+      .focus();
+    await user.keyboard("{ArrowDown}");
+    const item = await within(container).findByRole("menuitem", {
+      name: "Upload Files"
+    });
+    expect(item.closest("[data-theme]")).toBe(surface);
+    await act(async () => view.unmount());
+    container.remove();
+  });
+
   it("contains a preview in the correct instance and restores keyboard focus after Escape", async () => {
     const user = userEvent.setup();
     const { container, unmount } = render(
@@ -89,7 +120,7 @@ describe("Salesforce host boundary", () => {
     });
     await user.click(triggers[1]);
     const dialog = screen.getByRole("dialog");
-    const surfaces = container.querySelectorAll(".better-files");
+    const surfaces = container.querySelectorAll("[data-files-surface]");
     expect(surfaces[1]).toContainElement(dialog);
     expect(surfaces[0]).not.toContainElement(dialog);
     await waitFor(() =>
@@ -119,7 +150,9 @@ describe("Salesforce host boundary", () => {
     screen.getByRole("button", { name: "Show file actions" }).focus();
     await user.keyboard("{ArrowDown}");
     const item = await screen.findByRole("menuitem", { name: "Upload Files" });
-    expect(container.querySelector(".better-files")).toContainElement(item);
+    expect(container.querySelector("[data-files-surface]")).toContainElement(
+      item
+    );
     await user.keyboard("{Enter}");
     expect(
       screen.getByRole("status", { name: "Main card action" })

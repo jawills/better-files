@@ -180,7 +180,7 @@ Existing Lightning pages that saved these values will continue to deploy; values
 
 ### View All — Custom Metadata
 
-Because `fileRelatedList` is URL-addressable, it cannot expose App Builder design attributes. Column visibility and filter mode are controlled org-wide via:
+Because `fileRelatedList` is URL-addressable, it cannot expose App Builder design attributes. Column visibility, filter mode, and the React components' theme are controlled org-wide via:
 
 **Setup → Custom Metadata Types → File Related List Config → Manage Records → Default**
 
@@ -191,6 +191,7 @@ Because `fileRelatedList` is URL-addressable, it cannot expose App Builder desig
 | `Show_Last_Modified_Date__c` | `true` | Last Modified Date column |
 | `Show_Last_Modified_By__c` | `true` | Last Modified By column |
 | `Show_File_Size__c` | `true` | File Size column |
+| `Theme__c` | `cosmos` | Look of the Better Files React card and its View All list: Cosmos, Lightning Blue, or Better Files. Blank uses Cosmos |
 
 The Title and Actions columns are always shown.
 
@@ -237,6 +238,7 @@ Previewable on the record card and via row actions:
 | `getRelatedListFileCount` | No | Unique count matching View All filters and search |
 | `getRelatedListFileExtensions` | No | Unique eligible extensions for the whole record, independent of search and pagination |
 | `getRelatedListConfig` | Yes | Column flags and filter mode from CMDT |
+| `getTheme` | Yes | React components' theme from CMDT; Cosmos when blank |
 | `searchContentVersions` | Yes | Legacy title search (up to 25 results) |
 | `getRecordName` | Yes | Breadcrumb label for parent record |
 | `uploadFile` | No | Base64 upload + link to record |
@@ -261,7 +263,7 @@ Previewable on the record card and via row actions:
 1. Install the managed package.
 2. Assign the **Better Files** permission set to users who need file management.
 3. Add **Better Files** to record pages via Lightning App Builder.
-4. (Optional) Edit **File Related List Config → Default** to tune View All columns and select **Basic** or **Advanced** filtering.
+4. (Optional) Edit **File Related List Config → Default** to tune View All columns, select **Basic** or **Advanced** filtering, or choose the React components' theme.
 
 ### Dependencies
 
@@ -290,7 +292,7 @@ Record Page                    View All (URL-addressable)
  Query                Query           Query
                         │
                         ▼
-         File_Related_List_Config__mdt (columns, filter mode)
+         File_Related_List_Config__mdt (columns, filter mode, React theme)
 ```
 
 ---

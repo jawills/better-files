@@ -1,11 +1,15 @@
 <!doctype html>
-<html lang="en">
+<!-- Embedding hooks retain Salesforce's banner/height workaround using Tailwind variants. -->
+<html
+  lang="en"
+  class="bf:m-0 bf:bg-background bf:data-embedded:bg-transparent bf:data-embedded:overflow-hidden bf:data-embedded:[&_body]:bg-transparent bf:data-embedded:[&_body]:flow-root bf:data-embedded:[&_sf-session-banner]:hidden bf:data-embedded:[&_body.sf-session-banner-active]:pt-0"
+>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Files</title>
   </head>
-  <body>
+  <body class="bf:m-0 bf:bg-background bf:has-[[role=dialog]]:min-h-[560px]">
     <div id="root"></div>
     <script type="module" src="../src/embedding/app.tsx"></script>
   </body>

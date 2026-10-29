@@ -7,11 +7,14 @@ jobs:
       - name: Check out files
         uses: actions/checkout@v4
 
-      # PREREQUISITES - Only needed if runner doesn't already satisfy these requirements
-      - name: Ensure node v20.9.0 or greater
+      - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: ">=20.9.0"
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            react/package-lock.json
       - name: Ensure java v11 or greater
         uses: actions/setup-java@v4
         with:
@@ -28,16 +31,17 @@ jobs:
       - name: Install Latest Salesforce Code Analyzer CLI Plugin
         run: sf plugins install code-analyzer@latest
 
-      - name: Run Salesforce Code Analyzer
-        id: run-code-analyzer
-        uses: forcedotcom/run-code-analyzer@v2
-        with:
-          run-arguments: --workspace . --view detail --output-file sfca_results.html --output-file sfca_results.json  --target force-app/main/default
-          results-artifact-name: salesforce-code-analyzer-results
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm ci --prefix react
 
-      - name: Check the outputs to determine whether to fail
-        if: |
-          steps.run-code-analyzer.outputs.exit-code > 0 ||
-          steps.run-code-analyzer.outputs.num-sev1-violations > 0 ||
-          steps.run-code-analyzer.outputs.num-sev2-violations > 0
-        run: exit 1
+      - name: Build and scan source and UIBundle
+        run: npm run scan
+
+      - name: Upload analyzer reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: salesforce-code-analyzer-results
+          path: analyzer/
