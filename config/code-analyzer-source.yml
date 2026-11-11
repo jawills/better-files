@@ -1,0 +1,17 @@
+# Compiled assets get their own integrity and dependency scan. Lint authored code.
+ignores:
+  files:
+    - "**/uiBundles/**"
+    - "**/__tests__/**"
+    - "**/*.test.ts"
+    - "**/*.test.tsx"
+    - "react/src/demo/**"
+    - "react/src/test-setup.ts"
+engines:
+  # ESLint scans modern JS/TS. PMD's Rhino parser crashes on optional catch bindings.
+  pmd:
+    file_extensions:
+      javascript: []
+  # This package contains no Flow metadata.
+  flow:
+    disable_engine: true

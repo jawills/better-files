@@ -7,15 +7,17 @@
   "scripts": {
     "dev:react": "npm run dev --prefix react",
     "build:react": "npm run build --prefix react",
+    "build:salesforce": "npm run build:salesforce --prefix react",
     "test:react": "npm test --prefix react",
-    "test:react:lwc": "cd react/salesforce && ../../node_modules/.bin/sfdx-lwc-jest",
+    "test:react:lwc": "sfdx-lwc-jest -- --testPathPattern=betterFiles",
     "test": "npm run test:unit",
     "test:unit": "sfdx-lwc-jest",
     "test:unit:watch": "sfdx-lwc-jest --watch",
     "test:unit:coverage": "sfdx-lwc-jest --coverage",
     "ts-build": "tsc",
+    "preversion-create": "npm run build:salesforce",
     "version-create": "sf package version create --package \"Better Files By 1Sync\"  --code-coverage --installation-key-bypass --wait 10",
-    "scan": "sf code-analyzer run --rule-selector Recommended --rule-selector AppExchange --output-file analyzer/code-analyzer-results.json --output-file analyzer/code-analyzer-report.html --target force-app/main/default"
+    "scan": "npm run build:salesforce && node scripts/scan.mjs"
   },
   "author": "jawills",
   "devDependencies": {

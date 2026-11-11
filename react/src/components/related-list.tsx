@@ -224,7 +224,10 @@ export function RelatedList(props: RelatedListProps) {
           : "none"
       }
     >
-      <button onClick={() => sort(field)}>
+      <button
+        className="bf:[font:inherit] bf:text-inherit"
+        onClick={() => sort(field)}
+      >
         {label}{" "}
         {query.sortBy === field && (query.sortDirection === "asc" ? "↑" : "↓")}
       </button>
@@ -248,17 +251,20 @@ export function RelatedList(props: RelatedListProps) {
     >
       {(requestUpload) => (
         <section
-          className="bf-related"
+          className="bf:rounded-lg bf:border bf:border-panel-border bf:bg-background bf:text-base bf:text-foreground"
           aria-label="Related files"
           onClickCapture={rememberActionTrigger}
           onKeyDownCapture={rememberActionTrigger}
         >
-          <header className="bf-related-header">
-            <span className="bf-related-badge">
+          <header className="bf:flex bf:items-center bf:gap-3 bf:rounded-t-[calc(var(--bf-radius-lg)-1px)] bf:bg-header bf:p-4 bf:max-[601px]:gap-2 bf:max-[601px]:p-3">
+            <span className="bf:grid bf:size-8 bf:shrink-0 bf:place-items-center bf:rounded-md bf:bg-icon bf:text-white">
               <Files size={24} />
             </span>
-            <div className="bf-related-heading">
-              <nav aria-label="Breadcrumb">
+            <div className="bf:min-w-0 bf:flex-1">
+              <nav
+                aria-label="Breadcrumb"
+                className="bf:flex bf:flex-wrap bf:gap-2 bf:text-sm bf:text-muted bf:[&>button]:text-primary bf:[&>button]:text-left"
+              >
                 <button onClick={actions.object}>
                   {props.context.objectApiName === "Account"
                     ? "Accounts"
@@ -269,15 +275,18 @@ export function RelatedList(props: RelatedListProps) {
                   {info?.recordName || "Record"}
                 </button>
               </nav>
-              <h2>Files {loading && !files.length ? "" : `(${total})`}</h2>
+              <h2 className="bf:mt-0.5 bf:text-heading bf:font-semibold">
+                Files {loading && !files.length ? "" : `(${total})`}
+              </h2>
             </div>
             {adapter.upload && (
               <Button onClick={requestUpload}>Upload Files</Button>
             )}
           </header>
-          <div className="bf-related-toolbar">
+          <div className="bf:flex bf:flex-wrap bf:items-center bf:gap-2 bf:px-4 bf:py-2.5">
             <input
               ref={searchInput}
+              className="bf:max-w-full bf:min-h-control bf:rounded-md bf:border bf:border-border bf:bg-background bf:px-2.5 bf:py-1 bf:[font:inherit] bf:text-foreground bf:w-[250px] bf:max-[601px]:min-w-[150px] bf:max-[601px]:flex-1"
               type="search"
               aria-label="Search files"
               placeholder="Search files…"
@@ -288,6 +297,7 @@ export function RelatedList(props: RelatedListProps) {
               }}
             />
             <select
+              className="bf:max-w-full bf:min-h-control bf:rounded-md bf:border bf:border-border bf:bg-background bf:px-2.5 bf:py-1 bf:[font:inherit] bf:text-foreground"
               aria-label="File type"
               value={query.fileTypeFilter}
               onChange={(e) => {
@@ -309,7 +319,10 @@ export function RelatedList(props: RelatedListProps) {
                 </>
               )}
             </select>
-            <div className="bf-related-selection" role="status">
+            <div
+              className="bf:ml-auto bf:text-sm bf:text-muted bf:max-[601px]:ml-0"
+              role="status"
+            >
               {chosen.length
                 ? `${chosen.length} selected`
                 : "Select files to take action"}
@@ -324,7 +337,10 @@ export function RelatedList(props: RelatedListProps) {
             )}
           </div>
           {infoError && (
-            <div role="alert" className="bf-related-message">
+            <div
+              role="alert"
+              className="bf:m-0 bf:flex bf:items-center bf:gap-3 bf:p-4"
+            >
               {infoError}{" "}
               <Button onClick={() => setRevision((v) => v + 1)}>
                 Retry settings
@@ -332,7 +348,10 @@ export function RelatedList(props: RelatedListProps) {
             </div>
           )}
           {notice && (
-            <div role="status" className="bf-related-message">
+            <div
+              role="status"
+              className="bf:m-0 bf:flex bf:items-center bf:gap-3 bf:p-4"
+            >
               {notice}
               <button
                 aria-label="Dismiss notification"
@@ -343,17 +362,21 @@ export function RelatedList(props: RelatedListProps) {
             </div>
           )}
           <div
-            className="bf-related-scroll"
+            className="bf:overflow-x-auto"
             tabIndex={0}
             role="region"
             aria-label="Files table"
           >
-            <table className="bf-related-table" aria-busy={loading}>
+            <table
+              className="bf:w-full bf:border-collapse bf:text-left bf:whitespace-nowrap bf:[&_th]:bg-table-header bf:[&_th]:text-sm bf:[&_th]:font-semibold bf:[&_th]:text-muted bf:[&_th]:py-2 bf:[&_td]:py-[11px] bf:[&_th]:px-2.5 bf:[&_td]:px-2.5 bf:[&_th]:border-t bf:[&_td]:border-t bf:[&_th]:border-divider bf:[&_td]:border-divider bf:[&_th:first-child]:w-10 bf:[&_td:first-child]:w-10 bf:[&_th:first-child]:pl-4 bf:[&_td:first-child]:pl-4 bf:[&_th:last-child]:w-[50px] bf:[&_td:last-child]:w-[50px] bf:[&_th:last-child]:pr-4 bf:[&_td:last-child]:pr-4 bf:[&_a]:text-primary bf:[&_a]:no-underline bf:[&_a:hover]:underline bf:[&_button:hover]:underline"
+              aria-busy={loading}
+            >
               <thead>
                 <tr>
                   <th scope="col">
                     <input
                       type="checkbox"
+                      className="bf:size-4 bf:accent-primary bf:align-middle"
                       aria-label="Select all loaded files"
                       disabled={!files.length || loading}
                       checked={
@@ -383,7 +406,7 @@ export function RelatedList(props: RelatedListProps) {
                     heading("LastModifiedBy", "Modified by")}
                   {config.showFileSize && heading("ContentSize", "Size")}
                   <th scope="col">
-                    <span className="bf-sr-only">Actions</span>
+                    <span className="bf:sr-only">Actions</span>
                   </th>
                 </tr>
               </thead>
@@ -392,14 +415,13 @@ export function RelatedList(props: RelatedListProps) {
                   <tr
                     key={file.documentId}
                     className={
-                      selected.has(file.documentId)
-                        ? "bf-related-selected"
-                        : undefined
+                      selected.has(file.documentId) ? "bf:bg-accent" : undefined
                     }
                   >
                     <td>
                       <input
                         type="checkbox"
+                        className="bf:size-4 bf:accent-primary bf:align-middle"
                         aria-label={`Select ${file.title}`}
                         checked={selected.has(file.documentId)}
                         disabled={loading}
@@ -414,9 +436,15 @@ export function RelatedList(props: RelatedListProps) {
                       />
                     </td>
                     <td>
-                      <div className="bf-related-title">
-                        <FileIcon extension={file.extension} />
-                        <button onClick={() => actions.preview(file)}>
+                      <div className="bf:flex bf:min-w-[200px] bf:items-center bf:gap-2.5">
+                        <FileIcon
+                          extension={file.extension}
+                          className="bf:h-[26px] bf:w-[21px] bf:flex-[0_0_21px]"
+                        />
+                        <button
+                          className="bf:max-w-[420px] bf:text-left bf:whitespace-normal bf:text-primary bf:wrap-anywhere"
+                          onClick={() => actions.preview(file)}
+                        >
                           {file.title}
                         </button>
                       </div>
@@ -436,7 +464,7 @@ export function RelatedList(props: RelatedListProps) {
                     <td>
                       <DropdownMenu>
                         <DropdownMenuTrigger
-                          className="bf-related-menu"
+                          className="bf:grid bf:size-[26px] bf:cursor-pointer bf:place-items-center bf:rounded-md bf:border bf:border-border bf:bg-background bf:text-muted"
                           aria-label={`Actions for ${file.title}`}
                         >
                           <ChevronDown size={14} />
@@ -466,19 +494,25 @@ export function RelatedList(props: RelatedListProps) {
             </table>
           </div>
           {loading && (
-            <p role="status" className="bf-related-message">
+            <p
+              role="status"
+              className="bf:m-0 bf:flex bf:items-center bf:gap-3 bf:p-4"
+            >
               Loading files…
             </p>
           )}
           {!loading && !error && !files.length && (
-            <p className="bf-related-empty">
+            <p className="bf:m-0 bf:px-4 bf:py-10 bf:text-center">
               {query.searchTerm || query.fileTypeFilter !== "all"
                 ? "No files match your search."
                 : "No files attached yet. Drop files here to upload."}
             </p>
           )}
           {error && (
-            <div className="bf-related-message" role="alert">
+            <div
+              className="bf:m-0 bf:flex bf:items-center bf:gap-3 bf:p-4"
+              role="alert"
+            >
               {error}{" "}
               <Button
                 onClick={() => {
@@ -493,7 +527,7 @@ export function RelatedList(props: RelatedListProps) {
               </Button>
             </div>
           )}
-          <footer className="bf-related-footer">
+          <footer className="bf:flex bf:min-h-[38px] bf:items-center bf:justify-between bf:border-t bf:border-divider bf:px-4 bf:py-[9px] bf:text-sm bf:text-muted">
             <span>
               {files.length} of {total} files loaded
             </span>
@@ -523,19 +557,19 @@ export function RelatedList(props: RelatedListProps) {
               }
               closeLabel="Cancel deletion"
             >
-              <DialogTitle className="bf-dialog-title">
+              <DialogTitle>
                 Delete{" "}
                 {deleting.length === 1
                   ? deleting[0]?.title
                   : `${deleting.length} files`}
                 ?
               </DialogTitle>
-              <DialogDescription className="bf-dialog-description">
+              <DialogDescription>
                 This deletes the files from Salesforce, including other records
                 where they are shared.
               </DialogDescription>
               {deleteError && <p role="alert">{deleteError}</p>}
-              <div className="bf-upload-footer">
+              <div className="bf:mt-4 bf:flex bf:justify-end bf:gap-2 bf:[&>button]:min-w-18 bf:[&>button]:px-4">
                 <Button disabled={deleteBusy} onClick={() => setDeleting([])}>
                   Cancel
                 </Button>

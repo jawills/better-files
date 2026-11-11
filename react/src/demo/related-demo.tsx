@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { FileSurface } from "@/components/file-surface";
 import { RelatedList } from "@/components/related-list";
-import { defaultSettings } from "@/model";
+import { cn } from "@/lib/utils";
+import { defaultSettings, type FileTheme } from "@/model";
 import {
   defaultRelatedConfig,
   relatedPageSize,
@@ -10,7 +11,7 @@ import {
 } from "@/related-list";
 import { fixtureContext, fixtureFiles } from "./fixtures";
 
-export function RelatedDemo() {
+export function RelatedDemo({ theme }: { theme: FileTheme }) {
   const [notice, setNotice] = useState("");
   const adapter = useMemo<RelatedListProps["adapter"]>(() => {
     let files: RelatedFile[] = Array.from({ length: 58 }, (_, i) => ({
@@ -87,19 +88,25 @@ export function RelatedDemo() {
     };
   }, []);
   return (
-    <main className="demo">
-      <h1>
-        Better Files <span>Related list</span>
+    <main className="bf:mx-auto bf:box-border bf:max-w-[1280px] bf:p-6 bf:max-[601px]:p-4">
+      <h1 className="bf:mt-0 bf:mb-2 bf:text-[23px]">
+        Better Files{" "}
+        <span className="bf:ml-3 bf:text-sm bf:font-normal">Related list</span>
       </h1>
-      <p className="demo-intro">
+      <p className="bf:mt-0 bf:mb-6">
         Fixture preview. Uploads and deletes affect this preview only.{" "}
-        <a href="/">Record card</a>
+        <a href={`/?theme=${theme}`}>Record card</a>
       </p>
       {notice && <p role="status">{notice}</p>}
-      <FileSurface>
+      <FileSurface
+        theme={theme}
+        className={cn(
+          theme !== "better-files" && "bf:rounded-[6px] bf:bg-(--page) bf:p-4"
+        )}
+      >
         <RelatedList
           context={fixtureContext}
-          settings={defaultSettings}
+          settings={{ ...defaultSettings, theme }}
           adapter={adapter}
           actions={{
             preview: (file) => setNotice(`Preview requested: ${file.title}`),

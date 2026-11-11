@@ -1,6 +1,13 @@
 public with sharing class FileListController {
   public static final Integer FILE_LIMIT_FALLBACK = 6;
   public static final Integer PAGE_SIZE = 25;
+  /** Theme__c picklist values, which are also the React app's theme ids. */
+  private static final Set<String> THEMES = new Set<String>{
+    'cosmos',
+    'lightning-blue',
+    'better-files'
+  };
+  private static final String DEFAULT_THEME = 'cosmos';
 
   public class FileRow {
     @AuraEnabled
@@ -71,6 +78,20 @@ public with sharing class FileListController {
         : 'Basic';
     }
     return config;
+  }
+
+  /** The org-wide theme for both React views. Blank or unknown values use Cosmos. */
+  @AuraEnabled(cacheable=true)
+  public static String getTheme() {
+    List<File_Related_List_Config__mdt> rows = [
+      SELECT Theme__c
+      FROM File_Related_List_Config__mdt
+      WHERE DeveloperName = :RELATED_LIST_CONFIG_DEVELOPER_NAME
+      WITH USER_MODE
+      LIMIT 1
+    ];
+    String theme = rows.isEmpty() ? null : rows[0].Theme__c;
+    return THEMES.contains(theme) ? theme : DEFAULT_THEME;
   }
 
   @AuraEnabled(cacheable=true)

@@ -3,17 +3,20 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "bf:inline-flex bf:items-center bf:justify-center bf:gap-2 bf:rounded-button bf:whitespace-nowrap bf:disabled:pointer-events-none bf:disabled:opacity-50",
+  "bf:inline-flex bf:items-center bf:justify-center bf:gap-[0.5rem] bf:rounded-button bf:font-semibold bf:whitespace-nowrap bf:disabled:pointer-events-none bf:disabled:opacity-50",
   {
     variants: {
       variant: {
         primary:
-          "bf:border bf:border-brand bf:bg-brand bf:text-white bf:hover:bg-primary",
+          "bf:border bf:border-brand bf:bg-brand bf:text-white bf:hover:bg-brand-hover",
         outline:
           "bf:border bf:border-border bf:bg-background bf:text-primary bf:hover:bg-accent",
         link: "bf:text-primary bf:hover:underline"
       },
-      size: { default: "bf:h-control bf:px-3", icon: "bf:size-control" }
+      size: {
+        default: "bf:h-control bf:px-[15px]",
+        icon: "bf:size-control bf:p-0"
+      }
     },
     defaultVariants: { variant: "outline", size: "default" }
   }
@@ -29,11 +32,7 @@ export function Button({
   VariantProps<typeof buttonVariants> & { className?: string }) {
   return (
     <ButtonPrimitive
-      className={cn(
-        size === "icon" ? "bf-button-icon" : "bf-button",
-        buttonVariants({ variant, size }),
-        className
-      )}
+      className={cn(buttonVariants({ variant, size }), className)}
       {...props}
     />
   );

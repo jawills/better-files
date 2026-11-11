@@ -38,8 +38,9 @@ function renderCard(value = props()) {
       <UploadFileCard {...value} />
     </FileSurface>
   );
-  const region = result.container.querySelector(".bf-drop-region");
-  if (!(region instanceof HTMLDivElement)) throw new Error("Missing drop region");
+  const region = result.container.querySelector("[data-file-drop]");
+  if (!(region instanceof HTMLDivElement))
+    throw new Error("Missing drop region");
   return { ...result, region, value };
 }
 const file = (name: string) =>
@@ -95,12 +96,22 @@ it("uploads a dropped batch sequentially, reports mixed outcomes, and refreshes 
 });
 
 it("rejects unsafe filename characters while allowing Unicode filenames", () => {
-  for (const name of ["folder/file.txt", "folder\\file.txt", "null\u0000.txt", "control\u001f.txt"]) {
-    expect(validateUpload({ name, size: 1, type: "text/plain" }, defaultSettings))
-      .toContain("filename without path separators");
+  for (const name of [
+    "folder/file.txt",
+    "folder\\file.txt",
+    "null\u0000.txt",
+    "control\u001f.txt"
+  ]) {
+    expect(
+      validateUpload({ name, size: 1, type: "text/plain" }, defaultSettings)
+    ).toContain("filename without path separators");
   }
-  expect(validateUpload({ name: "Résumé 📄.txt", size: 1, type: "text/plain" }, defaultSettings))
-    .toBeUndefined();
+  expect(
+    validateUpload(
+      { name: "Résumé 📄.txt", size: 1, type: "text/plain" },
+      defaultSettings
+    )
+  ).toBeUndefined();
 });
 
 it("rejects type, empty, oversize, and multiple-file violations before sending", async () => {
@@ -148,7 +159,7 @@ it("uses the file picker and restores focus, and reports refresh failure without
   await screen.findByText("Upload results");
   expect(screen.getByRole("dialog")).toHaveTextContent("1 of 1 files uploaded");
   expect(screen.getByRole("alert")).toHaveTextContent("list could not refresh");
-  expect(container.querySelector(".bf-portals")).toContainElement(
+  expect(container.querySelector("[data-files-portals]")).toContainElement(
     screen.getByRole("dialog")
   );
   await user.keyboard("{Escape}");
@@ -174,7 +185,9 @@ it("keeps the overlay over nested children and ignores non-file drags", async ()
 it("opens the picker only from Upload Files and allows choosing the same file again", async () => {
   const { region, value } = renderCard();
   const user = userEvent.setup();
-  const input = screen.getByLabelText<HTMLInputElement>("Choose files to upload");
+  const input = screen.getByLabelText<HTMLInputElement>(
+    "Choose files to upload"
+  );
   const click = vi.spyOn(input, "click");
   await user.click(screen.getByRole("button", { name: "Files (0)" }));
   region.focus();
@@ -184,7 +197,9 @@ it("opens the picker only from Upload Files and allows choosing the same file ag
 
   const selectedFile = file("repeat.txt");
   for (let count = 1; count <= 2; count++) {
-    await user.click(screen.getAllByRole("button", { name: "Upload Files" })[0]);
+    await user.click(
+      screen.getAllByRole("button", { name: "Upload Files" })[0]
+    );
     expect(click).toHaveBeenCalledTimes(count);
     await user.upload(input, selectedFile);
     await screen.findByText("Upload results");

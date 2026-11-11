@@ -1,0 +1,4 @@
+# The bundle scan selects uibundle and retire-js only.
+engines:
+  flow:
+    disable_engine: true

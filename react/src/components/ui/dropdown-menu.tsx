@@ -26,7 +26,7 @@ export function DropdownMenuContent({
       >
         <Menu.Popup
           className={cn(
-            "bf:min-w-36 bf:rounded-md bf:border bf:border-border bf:bg-popover bf:p-1 bf:text-popover-foreground bf:shadow-md",
+            "bf:min-w-[9rem] bf:rounded-md bf:border bf:border-border bf:bg-popover bf:p-[0.25rem] bf:text-popover-foreground bf:shadow-md",
             className
           )}
           {...props}
@@ -43,7 +43,7 @@ export function DropdownMenuItem({
   return (
     <Menu.Item
       className={cn(
-        "bf:flex bf:cursor-pointer bf:items-center bf:gap-2 bf:rounded-sm bf:px-3 bf:py-2 bf:outline-none bf:data-highlighted:bg-accent bf:data-highlighted:text-accent-foreground",
+        "bf:flex bf:cursor-pointer bf:items-center bf:gap-[0.5rem] bf:rounded-sm bf:px-[0.75rem] bf:py-[0.5rem] bf:outline-none bf:data-highlighted:bg-accent bf:data-highlighted:text-accent-foreground",
         className
       )}
       {...props}

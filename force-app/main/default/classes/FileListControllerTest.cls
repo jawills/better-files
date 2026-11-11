@@ -935,4 +935,13 @@ public with sharing class FileListControllerTest {
       'Existing filters are the default'
     );
   }
+
+  @isTest
+  static void testThemeDefault() {
+    System.assertEquals(
+      'cosmos',
+      FileListController.getTheme(),
+      'Cosmos is the default theme'
+    );
+  }
 }

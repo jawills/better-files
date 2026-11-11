@@ -39,7 +39,7 @@ export function mountFiles(container: HTMLElement, props: FileCardProps) {
   return mountView(
     container,
     (next) => (
-      <FileSurface>
+      <FileSurface theme={next.settings.theme}>
         <UploadFileCard {...next} />
       </FileSurface>
     ),
@@ -54,7 +54,7 @@ export function mountRelatedList(
   return mountView(
     container,
     (next) => (
-      <FileSurface>
+      <FileSurface theme={next.settings.theme}>
         <RelatedList
           key={`${next.context.recordId}:${next.settings.includeEmails}:${next.settings.minimumFileSizeKb}`}
           {...next}

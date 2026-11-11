@@ -2,8 +2,14 @@ import { createElement } from "lwc";
 import Embedding from "c/betterFilesEmbedding";
 import completeUpload from "@salesforce/apex/BetterFilesReactUpload.completeUpload";
 import getReactAppUrl from "@salesforce/apex/FileListController.getReactAppUrl";
+import getTheme from "@salesforce/apex/FileListController.getTheme";
 jest.mock(
   "@salesforce/apex/FileListController.getReactAppUrl",
+  () => ({ default: jest.fn() }),
+  { virtual: true }
+);
+jest.mock(
+  "@salesforce/apex/FileListController.getTheme",
   () => ({ default: jest.fn() }),
   { virtual: true }
 );
@@ -16,6 +22,7 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 const subscriberAppUrl = "https://subscriber--file1sync.my.salesforce.app/app/file1sync__BetterFilesReact";
 beforeEach(() => {
   getReactAppUrl.mockResolvedValue(subscriberAppUrl);
+  getTheme.mockResolvedValue("lightning-blue");
 });
 afterEach(() => {
   document.body.replaceChildren();
@@ -26,7 +33,7 @@ async function mountComponent(Component = Embedding) {
   element.view = "card";
   element.config = {
     context: { recordId: "001a", objectApiName: "Account" },
-    settings: {},
+    settings: { fileLimit: 4 },
     state: { status: "loading" },
     upload: { refresh: jest.fn() },
     actions: { preview: jest.fn() }
@@ -42,6 +49,19 @@ async function mount(Component = Embedding) {
 it("uses the automatically discovered subscriber app URL", async () => {
   const host = await mount();
   expect(host.src).toBe(subscriberAppUrl);
+});
+it("adds the org theme to the host's settings", async () => {
+  const host = await mount();
+  expect(JSON.parse(host.props.payload).settings).toEqual({
+    fileLimit: 4,
+    theme: "lightning-blue"
+  });
+});
+it("loads the app with its default theme when the theme lookup fails", async () => {
+  getTheme.mockRejectedValue(new Error("Access denied"));
+  const host = await mount();
+  expect(host.src).toBe(subscriberAppUrl);
+  expect(JSON.parse(host.props.payload).settings).toEqual({ fileLimit: 4 });
 });
 it.each([
   undefined,

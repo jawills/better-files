@@ -1,4 +1,5 @@
 import { Component, type PropsWithChildren } from "react";
+import { FileSurface } from "./file-surface";
 
 /** Keep a library or host compatibility failure visible instead of blanking the card. */
 export class RenderBoundary extends Component<
@@ -14,9 +15,9 @@ export class RenderBoundary extends Component<
   render() {
     if (this.state.message) {
       return (
-        <div className="better-files">
+        <FileSurface>
           <p role="alert">Unable to display files: {this.state.message}</p>
-        </div>
+        </FileSurface>
       );
     }
     return this.props.children;

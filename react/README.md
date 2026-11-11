@@ -48,13 +48,13 @@ are removed after the response. This adapter is absent from deployed builds.
 - `src/demo/`: localhost harness and fixtures, excluded from the Salesforce bundle.
 
 The shadcn primitives use Base UI. Portals and focus guards stay inside each
-`.better-files` host for Lightning Web Security. Dialogs use local keyboard-focus
+`[data-files-surface]` host for Lightning Web Security. Dialogs use local keyboard-focus
 wrapping and backdrop dismissal rules; cancelling deletion restores focus to its
 trigger, while deleting that trigger returns focus to Search Files.
 
 ## Theme
 
-Approved [option A styling](https://hmsar0grfxmy.postplan.dev/v/1) with
+The `better-files` theme is the approved [option A styling](https://hmsar0grfxmy.postplan.dev/v/1) with
 [typography B](https://hmsar0grfxmy.postplan.dev/v/3): system fonts, 16px body,
 14px labels/metadata, 20px card headings, and 24px page/dialog headings. Panels
 use 12px corners, inputs/menus 8px corners, and buttons rounded ends with 36px height.
@@ -64,15 +64,44 @@ white 16px text, status icons, and 8px corners. They stay centered near the top 
 the viewport with the upload modal open or closed; dismiss controls remain within
 the modal's keyboard-focus boundary while it is open.
 
-`src/theme.css` owns the scoped `--files-*` values and maps them into Tailwind’s
-`bf`-prefixed theme. Use these shared values for custom styling. No SLDS stylesheet
-or `design-system-react` dependency is bundled. White surfaces and light native
-controls are intentional. Global Tailwind preflight is omitted; targeted unlayered
-rules protect typography and button spacing from Salesforce’s global resets.
+All React styling uses `bf:`-prefixed Tailwind utilities, including container queries,
+media queries, dialogs, progress bars, toasts, and the local demo. `src/theme.css`
+defines the shared Tailwind theme tokens. Use utilities and these tokens when
+changing styles; do not add component CSS selectors or parallel stylesheets.
+
+`settings.theme` selects the look: [Wisty UI](https://ui.wisty.ai)'s Salesforce
+themes `cosmos` (the default, SLDS 2) and `lightning-blue` (SLDS 1's look), or
+`better-files` (the approved values above). `FileSurface` writes it to `data-theme`, and
+the mapping at the end of `src/theme.css` points the same tokens at that theme's
+variables, so components need no theme-specific classes. Dialogs, menus, and
+toasts portal inside the surface and follow it. The demo has a Theme control and
+accepts `?theme=better-files`. In Salesforce, admins choose it with **Theme** on
+**Setup → Custom Metadata Types → File Related List Config → Default**; a blank
+value uses Cosmos.
+
+`src/styles/wisty/` holds Wisty UI's theme files, copied unmodified from
+`registry/themes/` at wisty-labs/wisty-ui@f9388e2; update them by copying newer
+files, not by editing. Wisty UI's code is MIT (`LICENSE.md`), but the theme values
+are Salesforce's, under the Terms of Use in `THIRD_PARTY_NOTICES.md`.
+`components.json` registers the `@wisty` shadcn registry. Its components use
+shadcn's token meanings, which differ here for `muted`, `primary`, and `heading`,
+so adapt them rather than adding them unchanged.
+
+The file card uses a CSS container query below 600px; responsive layout does not
+measure widths in JavaScript. The demo slider supplies a runtime CSS variable to
+a Tailwind max-width utility for testing different container sizes.
+
+No SLDS stylesheet or `design-system-react` dependency is bundled; the Wisty
+themes contribute CSS variables only. White surfaces
+and light native controls are intentional. Global Preflight is omitted; `FileSurface`
+provides scoped reset utilities. Tailwind utilities are important to withstand
+Salesforce’s unlayered global rules, and `cn` merges classes using the `bf` prefix.
+Each entry point lists its Tailwind sources so demo utilities stay out of the
+Salesforce bundle.
 
 ## Salesforce components
 
-The separate project in `salesforce/` contains only the retained integration:
+The main Salesforce project in `../force-app/main/default/` contains the integration:
 
 - `betterFilesReactCard`: record-page LWC, labelled **Better Files React** in App Builder.
 - `betterFilesReactRelatedList`: URL-addressable related list opened by View All.
@@ -82,6 +111,7 @@ The separate project in `salesforce/` contains only the retained integration:
 - `BetterFilesReactUpload` and its Apex tests: user-mode file upload service.
 - `Better_Files_React`: permission set granting app and upload-service access.
 - `FileListController.getReactAppUrl`: discovers the installed app URL from `AppMenuItem` in user mode, scoped to the `file1sync` namespace and requiring app access. Both React views share this lookup.
+- `FileListController.getTheme`: reads the Theme picklist on `File_Related_List_Config__mdt` in user mode. `betterFilesEmbedding` fetches it with the app URL and adds it to both views' settings; if the lookup fails, the app uses its default.
 - The legacy `BetterFilesReact` Trusted URL was removed from the package in 1.21 and remains absent in 2.0. The unused `React_App_URL__c` field (removed from the settings layout) and `BetterFilesReactAppUrl` label remain solely for managed-package upgrade compatibility.
 
 The existing `FileListController` handles reads, server-side search/sorting,
@@ -97,7 +127,8 @@ label. Navigation away preserves the next page’s title.
 After installation in each org:
 
 1. Assign the **Better Files** and **Better Files React** permission sets to the intended users.
-2. Refresh the record page. The card and View All discover this org's installed app URL automatically, including related-list tabs opened directly. No React URL configuration is required.
+2. Follow the [installation and upgrade verification steps](../README.md#react-installation-and-upgrades), including activation when the installed bundle is inactive.
+3. Refresh the record page. The card and View All discover this org's installed app URL automatically, including related-list tabs opened directly. No React URL configuration is required.
 
 No iframe is created until discovery returns an HTTPS Salesforce app URL for Better Files. Missing app access or an invalid URL displays an error. The package does not enable a Trusted URL. In the tested `1sync` org, Lightning's existing `frame-src https:` policy permits the embed with the legacy entry inactive. If another org's CSP blocks the frame, its admin must allow the discovered app origin for `frame-src` in Trusted URLs. This does not grant app, API, record, or field access.
 
@@ -112,7 +143,7 @@ minimum file size. It refreshes through RefreshView and remounts on record chang
 In `better-files`, the existing `Account_Record_Page3` already hosts the working
 card. The embedding experiment’s spike LWC, review app, and duplicate review page
 have been removed; the active record page and its assignments are preserved.
-The original package’s `force-app/` components remain separate from this project.
+The original and React components are packaged together from the root `force-app/`.
 
 The wrappers register RefreshView handlers with `this.template.host`, which works
 with both Lightning Locker and LWS. Locker does not expose
@@ -129,16 +160,20 @@ folder before deployment. It is no longer a build output. The obsolete
 Build before deploying from the repository root:
 
 ```sh
-npm run build:salesforce --prefix react
-cd react/salesforce
+npm run build:salesforce
 sf project deploy start --target-org better-files --source-dir force-app/main/default \
-  --test-level RunSpecifiedTests --tests BetterFilesReactUploadTest
+  --test-level RunSpecifiedTests --tests BetterFilesReactUploadTest --tests FileListControllerTest
 sf org assign permset --target-org better-files --name Better_Files_React
 ```
 
 Also grant the existing Better Files permission set and appropriate record/file
-access. Users need **API Enabled** for the Data SDK; the current React permission
-set grants app visibility and Apex access but does not grant API Enabled.
+access. The React permission set grants app visibility and Apex access without
+granting **API Enabled**. Reads and file actions use the LWC's Apex bridge;
+binary uploads use the Data SDK for the Connect upload-configuration endpoint
+and file-body transport. Salesforce's general Multi-Framework access guidance
+requires API Enabled, but enforcement for this embedded upload path has not been
+verified with a user lacking that permission. Test that user scenario before
+adding a broader permission grant.
 The CLI assignment above applies only to the authenticated development user.
 
 [Open the account](https://1sync-file-dev-ed.develop.lightning.force.com/lightning/r/Account/001fL000009dbKKQAY/view)
@@ -175,9 +210,10 @@ affects every record sharing that Salesforce file.
 
 ```sh
 npm run test:react
-npm run test:react:lwc -- -- --runInBand
+npm run test:react:lwc -- --runInBand
 npm run build:react
-npm run build:salesforce --prefix react
+npm run build:salesforce
+npm run scan
 ```
 
 Focused React, LWC, and Apex tests cover the retained functionality, including
@@ -200,22 +236,25 @@ Download navigation is tested, but browser download completion was not independe
 verified. Source-deployed card and related-list loading were verified in a temporary
 scratch org under both Lightning Locker and LWS, including automatic URL
 discovery and tab naming.
-Salesforce mobile, restricted-user access, and managed-package installation remain
-unverified. Resumable uploads and user-controlled cancellation are not implemented.
+Salesforce mobile and restricted-user access remain unverified. Resumable uploads
+and user-controlled cancellation are not implemented.
 
 Combined package builds have succeeded, including released versions 1.17.0.2 and 1.18.0.1.
-[Standalone UI Bundles support 2GP packaging](https://developer.salesforce.com/docs/platform/multiframework/guide/mfw-packaging.html),
-but Salesforce's [internally hosted embedding documentation](https://developer.salesforce.com/docs/platform/microfrontend/guide/internal-ui-bundles.html)
-still marks this embedding path beta and lists packaging and dynamic URL resolution as unavailable. Successful builds do not establish subscriber runtime support. The app URL is discovered automatically through `AppMenuItem`; no development-org endpoint is shipped.
-The root package-version script includes only `force-app/`. The combined builds use a temporary packaging project containing both `force-app/` and `react/salesforce/force-app/`, with API version 68.0.
+The project owner has confirmed that packaged embedding works. The app URL is
+discovered automatically through `AppMenuItem`; no development-org endpoint is shipped.
+The main package now includes all integration metadata under `force-app/`, with API
+version 68.0. `npm run version-create` rebuilds the bundle before creating a version.
 
-Before considering customer distribution, resolve the embedding support limit,
-verify installation/upgrades and restricted-user access in a clean org, and run
-Code Analyzer `uibundle` checks for AppExchange review. The embedding build emits
-sourcemaps for every JavaScript chunk; the root analyzer command still excludes
-this separate React project. For source-integrity checks, the current analyzer
-also needs `src` beside the bundle's `dist`; temporarily link it to `react/src`
-while scanning and remove the link before deployment.
+`npm run scan` and CI check both authored source and the compiled bundle. The
+UIBundle scan uses a temporary copy with repository-relative source paths beside
+`dist`, so all integrity checks run without putting source links into the package.
+The embedding build emits sourcemaps for every JavaScript chunk. Reports are in
+`analyzer/`; high/critical findings, engine errors, and skipped integrity checks
+fail the scan.
+
+Follow the [installation and upgrade runbook](../README.md#react-installation-and-upgrades)
+for each subscriber release, including checking the namespace, installed state,
+activation, and rendering. Verify restricted-user access separately.
 [Salesforce's access guidance](https://developer.salesforce.com/docs/platform/multiframework/guide/mfw-manage.html)
 distinguishes app visibility/API access from object, field, and record permissions;
 successful admin testing does not establish ordinary-user access.
@@ -225,7 +264,7 @@ while a dialog is open. The frame follows the body's height, uses a transparent
 background around rounded panels, and leaves page scrolling to Lightning.
 The native file preview still opens through the LWC host.
 
-Once the SDK connects to an embedding host, scoped CSS hides Salesforce's
+Once the SDK connects to an embedding host, Tailwind data-attribute variants hide Salesforce's
 `sf-session-banner` and removes its reserved body padding. Standalone launches
 retain the banner. This is a workaround using platform markup, not a documented
 SDK option; recheck these selectors after Salesforce updates.

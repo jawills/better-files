@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Theme__c</fullName>
+    <description>Look of the Better Files React card and its View All list. Cosmos and Lightning Blue are Salesforce's SLDS 2 themes; Better Files is the original React design. Values are the theme ids the React app uses.</description>
+    <fieldManageability>SubscriberControlled</fieldManageability>
+    <inlineHelpText>Applies to the Better Files React card and its View All list. Blank uses Cosmos.</inlineHelpText>
+    <label>Theme</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>cosmos</fullName>
+                <default>true</default>
+                <label>Cosmos</label>
+            </value>
+            <value>
+                <fullName>lightning-blue</fullName>
+                <default>false</default>
+                <label>Lightning Blue</label>
+            </value>
+            <value>
+                <fullName>better-files</fullName>
+                <default>false</default>
+                <label>Better Files</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

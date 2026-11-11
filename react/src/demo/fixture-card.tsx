@@ -29,10 +29,13 @@ export function FixtureCard({
 
   return (
     <FileSurface
+      theme={settings.theme}
       onClickCapture={(event) => {
         // LWS retargets document.activeElement; keep the actual file button for focus restoration.
         if (event.target instanceof Element) {
-          const button = event.target.closest<HTMLButtonElement>(".bf-file");
+          const button = event.target.closest<HTMLButtonElement>(
+            "[data-file-preview]"
+          );
           if (button) previewTrigger.current = button;
         }
       }}
@@ -63,7 +66,7 @@ export function FixtureCard({
         }}
       />
       <p
-        className="bf-demo-notice"
+        className="bf:mt-2.5 bf:text-sm bf:wrap-anywhere bf:empty:hidden"
         role="status"
         aria-label={`${label} action`}
       >
@@ -76,15 +79,16 @@ export function FixtureCard({
         }}
       >
         <DialogContent finalFocus={previewTrigger}>
-          <DialogTitle className="bf-dialog-title">
-            {selectedFile?.title}
-          </DialogTitle>
-          <DialogDescription className="bf-dialog-description">
+          <DialogTitle>{selectedFile?.title}</DialogTitle>
+          <DialogDescription>
             Sample file preview. Live records use Salesforce’s native preview.
           </DialogDescription>
           {selectedFile && (
-            <div className="bf-fixture-preview">
-              <FileIcon extension={selectedFile.extension} />
+            <div className="bf:flex bf:items-center bf:gap-3.5 bf:bg-header bf:px-4 bf:py-6 bf:wrap-anywhere">
+              <FileIcon
+                extension={selectedFile.extension}
+                className="bf:h-[62px] bf:w-[50px]"
+              />
               <span>{selectedFile.title}</span>
             </div>
           )}

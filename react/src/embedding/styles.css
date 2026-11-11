@@ -1,34 +1,4 @@
-html,
-body {
-  margin: 0;
-  background: #fff;
-}
-/* Let the rounded React panels reveal the surrounding Lightning page. */
-html.bf-embedded,
-html.bf-embedded body {
-  background: transparent;
-}
-/* The SDK fits the frame to the body; keep scrolling on the Lightning page. */
-html.bf-embedded {
-  overflow: hidden;
-}
-html.bf-embedded body {
-  display: flow-root;
-}
-/* Salesforce has no documented banner toggle; scope these platform hooks to embedding. */
-html.bf-embedded sf-session-banner {
-  display: none !important;
-}
-html.bf-embedded body.sf-session-banner-active {
-  padding-top: 0 !important;
-}
-.embedding-status {
-  padding: 16px;
-  font:
-    16px system-ui,
-    sans-serif;
-}
-/* Fixed dialogs must fit inside the embedding frame; avoid viewport-height resize loops. */
-body:has([role="dialog"]) {
-  min-height: 560px;
-}
+@import "../styles.css";
+
+@source ".";
+@source "../../embedding/index.html";
